@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 import type { LoginResponse } from "../types/auth";
 import type { Admin } from "../types/admin";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://157.66.35.108:3000/api";
 
 const api = axios.create({
   baseURL: API_URL,
