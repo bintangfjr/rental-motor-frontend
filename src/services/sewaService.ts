@@ -1,3 +1,4 @@
+// services/sewaService.ts
 import api from "./api";
 import {
   Sewa,
@@ -5,6 +6,7 @@ import {
   UpdateSewaData,
   SelesaiSewaData,
 } from "../types/sewa";
+import { convertToWIBISOString, convertDateToWIBISO } from "../utils/date";
 
 // Interface untuk response selesai sewa
 export interface SelesaiSewaResponse {
@@ -73,6 +75,65 @@ const getErrorMessage = (error: unknown, defaultMessage: string): string => {
   return defaultMessage;
 };
 
+// Helper untuk validasi dan konversi data create
+const prepareCreateData = (data: CreateSewaData): CreateSewaData => {
+  // Pastikan tanggal sudah dalam format WIB
+  const preparedData = { ...data };
+
+  if (preparedData.tgl_sewa && !preparedData.tgl_sewa.includes("+07:00")) {
+    preparedData.tgl_sewa = convertToWIBISOString(preparedData.tgl_sewa);
+  }
+
+  if (
+    preparedData.tgl_kembali &&
+    !preparedData.tgl_kembali.includes("+07:00")
+  ) {
+    preparedData.tgl_kembali = convertToWIBISOString(preparedData.tgl_kembali);
+  }
+
+  return preparedData;
+};
+
+// Helper untuk validasi dan konversi data update
+const prepareUpdateData = (data: UpdateSewaData): UpdateSewaData => {
+  const preparedData = { ...data };
+
+  if (
+    preparedData.tgl_kembali &&
+    !preparedData.tgl_kembali.includes("+07:00")
+  ) {
+    preparedData.tgl_kembali = convertToWIBISOString(preparedData.tgl_kembali);
+  }
+
+  return preparedData;
+};
+
+// Helper untuk validasi dan konversi data selesai
+const prepareSelesaiData = (data: SelesaiSewaData): SelesaiSewaData => {
+  const preparedData = { ...data };
+
+  if (
+    preparedData.tgl_selesai &&
+    !preparedData.tgl_selesai.includes("+07:00")
+  ) {
+    // Untuk selesai sewa, gunakan current time jika dari datetime-local
+    if (
+      preparedData.tgl_selesai.includes("T") &&
+      preparedData.tgl_selesai.length === 16
+    ) {
+      preparedData.tgl_selesai = convertToWIBISOString(
+        preparedData.tgl_selesai
+      );
+    } else {
+      preparedData.tgl_selesai = convertDateToWIBISO(
+        new Date(preparedData.tgl_selesai)
+      );
+    }
+  }
+
+  return preparedData;
+};
+
 export const sewaService = {
   // Get all active sewas
   async getAll(): Promise<Sewa[]> {
@@ -100,11 +161,13 @@ export const sewaService = {
   // Create new sewa
   async create(data: CreateSewaData): Promise<Sewa> {
     try {
-      console.log("Mengirim data create sewa:", data);
-      const response = await api.post("/sewas", data);
+      const preparedData = prepareCreateData(data);
+      console.log("🆕 Mengirim data create sewa:", preparedData);
+
+      const response = await api.post("/sewas", preparedData);
       return getResponseData<Sewa>(response);
     } catch (error: unknown) {
-      console.error("Error creating sewa:", error);
+      console.error("❌ Error creating sewa:", error);
 
       const errorMessage = getErrorMessage(error, "Gagal membuat sewa baru");
       throw new Error(errorMessage);
@@ -114,12 +177,13 @@ export const sewaService = {
   // Update sewa dengan support additional costs
   async update(id: number, data: UpdateSewaData): Promise<Sewa> {
     try {
-      console.log(`Mengirim data update sewa ID ${id}:`, data);
+      const preparedData = prepareUpdateData(data);
+      console.log(`🔄 Mengirim data update sewa ID ${id}:`, preparedData);
 
-      const response = await api.put(`/sewas/${id}`, data);
+      const response = await api.put(`/sewas/${id}`, preparedData);
       return getResponseData<Sewa>(response);
     } catch (error: unknown) {
-      console.error(`Error updating sewa ID ${id}:`, error);
+      console.error(`❌ Error updating sewa ID ${id}:`, error);
 
       const errorMessage = getErrorMessage(
         error,
@@ -135,11 +199,13 @@ export const sewaService = {
     data: SelesaiSewaData
   ): Promise<SelesaiSewaResponse> {
     try {
-      console.log(`Menyelesaikan sewa ID ${id}:`, data);
-      const response = await api.post(`/sewas/${id}/selesai`, data);
+      const preparedData = prepareSelesaiData(data);
+      console.log(`✅ Menyelesaikan sewa ID ${id}:`, preparedData);
+
+      const response = await api.post(`/sewas/${id}/selesai`, preparedData);
       return getResponseData<SelesaiSewaResponse>(response);
     } catch (error: unknown) {
-      console.error(`Error completing sewa ID ${id}:`, error);
+      console.error(`❌ Error completing sewa ID ${id}:`, error);
 
       const errorMessage = getErrorMessage(
         error,
@@ -194,16 +260,15 @@ export const sewaService = {
   },
 
   // Extend sewa duration
-  async extendSewa(
-    id: number,
-    newTglKembali: string
-    // ✅ PERBAIKAN: Hapus parameter alasan yang tidak digunakan
-  ): Promise<Sewa> {
+  async extendSewa(id: number, newTglKembali: string): Promise<Sewa> {
     try {
+      const convertedTglKembali = convertToWIBISOString(newTglKembali);
+
       const payload: UpdateSewaData = {
-        tgl_kembali: newTglKembali,
+        tgl_kembali: convertedTglKembali,
       };
 
+      console.log(`📅 Memperpanjang sewa ID ${id}:`, payload);
       return await this.update(id, payload);
     } catch (error: unknown) {
       return handleServiceError(error, `Gagal memperpanjang sewa ID ${id}`);
@@ -218,7 +283,7 @@ export const sewaService = {
       });
       return getResponseData<Sewa>(response);
     } catch (error: unknown) {
-      console.error(`Error updating notes for sewa ID ${id}:`, error);
+      console.error(`❌ Error updating notes for sewa ID ${id}:`, error);
 
       const errorMessage = getErrorMessage(
         error,

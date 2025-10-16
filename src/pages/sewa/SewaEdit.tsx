@@ -1,3 +1,4 @@
+// pages/sewa/SewaEdit.tsx
 import React, { useState, useEffect, lazy } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { sewaService } from "../../services/sewaService";
@@ -29,6 +30,7 @@ interface Penyewa {
 const SewaEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const [sewa, setSewa] = useState<Sewa | null>(null);
   const [motors, setMotors] = useState<Motor[]>([]);
   const [penyewas, setPenyewas] = useState<Penyewa[]>([]);
@@ -39,6 +41,7 @@ const SewaEdit: React.FC = () => {
     type: "success" | "error";
   } | null>(null);
 
+  // ✅ Load data sewa, motor, penyewa
   useEffect(() => {
     const loadData = async () => {
       if (!id) return;
@@ -50,6 +53,7 @@ const SewaEdit: React.FC = () => {
           motorService.getAll(),
           penyewaService.getAll(),
         ]);
+
         setSewa(sewaData);
         setMotors(Array.isArray(motorsData) ? motorsData : []);
         setPenyewas(Array.isArray(penyewasData) ? penyewasData : []);
@@ -64,8 +68,9 @@ const SewaEdit: React.FC = () => {
     };
 
     loadData();
-  }, [id]); // Hanya id sebagai dependency
+  }, [id]);
 
+  // ✅ Handle submit update
   const handleSubmit = async (data: UpdateSewaData) => {
     if (!id) return;
 

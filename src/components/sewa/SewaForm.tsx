@@ -1,5 +1,5 @@
 // components/sewa/SewaForm.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,6 +10,10 @@ import RentalSummary from "./RentalSummary";
 import BasicInfoSection from "./SewaFormSections/BasicInfoSection";
 import FormActions from "./SewaFormSections/FormActions";
 import EditModeInfo from "./SewaFormSections/EditModeInfo";
+import {
+  formatDateTimeForInputNoTZ,
+  convertToWIBISOString,
+} from "../../utils/date";
 
 // ✅ Schema untuk create dan update
 const sewaSchema = z.object({
@@ -77,12 +81,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
       ? {
           motor_id: sewa.motor_id,
           penyewa_id: sewa.penyewa_id,
-          tgl_sewa: sewa.tgl_sewa
-            ? new Date(sewa.tgl_sewa).toISOString().slice(0, 16)
-            : "",
-          tgl_kembali: sewa.tgl_kembali
-            ? new Date(sewa.tgl_kembali).toISOString().slice(0, 16)
-            : "",
+          tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa),
+          tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali),
           jaminan: Array.isArray(sewa.jaminan)
             ? sewa.jaminan
             : typeof sewa.jaminan === "string"
@@ -109,29 +109,35 @@ const SewaForm: React.FC<SewaFormProps> = ({
   const watchCatatanTambahan = watch("catatan_tambahan");
 
   const handleFormSubmit = (data: SewaFormData) => {
+    console.log("📝 Data dari form:", data);
+
     if (sewa) {
-      // ✅ Untuk update sewa
+      // ✅ UPDATE MODE - Konversi tgl_kembali ke WIB
       const updateData: UpdateSewaData = {
-        tgl_kembali: data.tgl_kembali,
+        tgl_kembali: convertToWIBISOString(data.tgl_kembali),
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
         catatan_tambahan: data.catatan_tambahan,
       };
+
+      console.log("🔄 Data update yang dikirim:", updateData);
       onSubmit(updateData);
     } else {
-      // ✅ Untuk create sewa baru - SEMUA DATA SUDAH TERMASUK
+      // ✅ CREATE MODE - Konversi kedua tanggal ke WIB
       const createData: CreateSewaData = {
         motor_id: data.motor_id,
         penyewa_id: data.penyewa_id,
-        tgl_sewa: data.tgl_sewa,
-        tgl_kembali: data.tgl_kembali,
+        tgl_sewa: convertToWIBISOString(data.tgl_sewa),
+        tgl_kembali: convertToWIBISOString(data.tgl_kembali),
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
-        catatan_tambahan: data.catatan_tambahan, // ✅ Catatan sudah termasuk
+        catatan_tambahan: data.catatan_tambahan,
         satuan_durasi: "hari",
       };
+
+      console.log("🆕 Data create yang dikirim:", createData);
       onSubmit(createData);
     }
   };
@@ -149,6 +155,14 @@ const SewaForm: React.FC<SewaFormProps> = ({
 
   const selectedMotor = motors.find((m) => m.id === watchIdMotor);
 
+  // ✅ Sinkronisasi backend -> input ketika edit
+  useEffect(() => {
+    if (sewa) {
+      setValue("tgl_sewa", formatDateTimeForInputNoTZ(sewa.tgl_sewa));
+      setValue("tgl_kembali", formatDateTimeForInputNoTZ(sewa.tgl_kembali));
+    }
+  }, [sewa, setValue]);
+
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <BasicInfoSection
@@ -162,18 +176,16 @@ const SewaForm: React.FC<SewaFormProps> = ({
         getMinReturnDateTime={getMinReturnDateTime}
       />
 
-      {/* ✅ Catatan Tambahan Section - DIPERBAIKI */}
       <div className="border rounded-lg p-4">
         <h3 className="font-semibold text-gray-800 mb-3">Catatan Tambahan</h3>
         <SewaNotes
           sewaId={sewa?.id || 0}
           currentNote={watchCatatanTambahan}
           onNoteUpdated={(note) => setValue("catatan_tambahan", note)}
-          isCreateMode={!sewa} // ✅ TAMBAHAN: Flag untuk create mode
+          isCreateMode={!sewa}
         />
       </div>
 
-      {/* ✅ Additional Costs Section */}
       <AdditionalCostsSection
         additionalCosts={watchAdditionalCosts}
         onAddCost={() => {
@@ -200,7 +212,6 @@ const SewaForm: React.FC<SewaFormProps> = ({
         }}
       />
 
-      {/* ✅ Rental Summary Section */}
       {watchTglSewa && watchTglKembali && watchIdMotor && (
         <RentalSummary
           tglSewa={watchTglSewa}
