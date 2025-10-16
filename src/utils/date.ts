@@ -1,4 +1,4 @@
-// utils/date.ts - PERBAIKI
+// utils/date.ts - PERBAIKI dengan konversi UTC->WIB
 export const formatDateTimeForInputNoTZ = (
   dateString: string | Date
 ): string => {
@@ -13,25 +13,31 @@ export const formatDateTimeForInputNoTZ = (
       return "";
     }
 
-    // ✅ KONVERSI: Tangani timezone offset
-    // Karena new Date() menginterpretasi database time sebagai UTC
-    const timezoneOffset = date.getTimezoneOffset() * 60 * 1000; // offset dalam ms
-    const localDate = new Date(date.getTime() + timezoneOffset);
+    console.log("🕐 DEBUG formatDateTimeForInputNoTZ:", {
+      input: dateString,
+      utc: date.toISOString(),
+      local: date.toLocaleString("id-ID"),
+    });
+
+    // ✅ KONVERSI UTC ke WIB untuk datetime-local input
+    // Karena database menyimpan UTC, tapi kita mau edit sebagai WIB
+    const wibOffset = 7 * 60 * 60 * 1000; // UTC+7
+    const wibDate = new Date(date.getTime() + wibOffset);
 
     // Format ke datetime-local: "YYYY-MM-DDTHH:mm"
-    const year = localDate.getFullYear();
-    const month = String(localDate.getMonth() + 1).padStart(2, "0");
-    const day = String(localDate.getDate()).padStart(2, "0");
-    const hours = String(localDate.getHours()).padStart(2, "0");
-    const minutes = String(localDate.getMinutes()).padStart(2, "0");
+    const year = wibDate.getUTCFullYear();
+    const month = String(wibDate.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(wibDate.getUTCDate()).padStart(2, "0");
+    const hours = String(wibDate.getUTCHours()).padStart(2, "0");
+    const minutes = String(wibDate.getUTCMinutes()).padStart(2, "0");
 
     const result = `${year}-${month}-${day}T${hours}:${minutes}`;
 
-    console.log("🕐 Format for input (Timezone fix):", {
+    console.log("🕐 Format for input (UTC->WIB):", {
       input: dateString,
-      original: date.toISOString(),
-      local: result,
-      timezoneOffset: timezoneOffset / (60 * 1000), // dalam menit
+      utc_time: date.toISOString(),
+      wib_time: wibDate.toISOString(),
+      wib_display: result,
     });
 
     return result;
