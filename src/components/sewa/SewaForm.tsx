@@ -12,7 +12,7 @@ import FormActions from "./SewaFormSections/FormActions";
 import EditModeInfo from "./SewaFormSections/EditModeInfo";
 import {
   formatDateTimeForInputNoTZ,
-  convertToWIBISOString,
+  // HAPUS convertToWIBISOString - tidak perlu lagi
 } from "../../utils/date";
 
 // ✅ Schema untuk create dan update
@@ -81,8 +81,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
       ? {
           motor_id: sewa.motor_id,
           penyewa_id: sewa.penyewa_id,
-          tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa),
-          tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali),
+          tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa as string), // ✅ FIX: Type assertion
+          tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali as string), // ✅ FIX: Type assertion
           jaminan: Array.isArray(sewa.jaminan)
             ? sewa.jaminan
             : typeof sewa.jaminan === "string"
@@ -109,27 +109,27 @@ const SewaForm: React.FC<SewaFormProps> = ({
   const watchCatatanTambahan = watch("catatan_tambahan");
 
   const handleFormSubmit = (data: SewaFormData) => {
-    console.log("📝 Data dari form:", data);
+    console.log("📝 Data dari form (SIMPLE FORMAT):", data);
 
     if (sewa) {
-      // ✅ UPDATE MODE - Konversi tgl_kembali ke WIB
+      // ✅ UPDATE MODE - KIRIM FORMAT SIMPLE (tanpa konversi)
       const updateData: UpdateSewaData = {
-        tgl_kembali: convertToWIBISOString(data.tgl_kembali),
+        tgl_kembali: data.tgl_kembali, // "2024-01-16T10:30" - SIMPLE FORMAT
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
         catatan_tambahan: data.catatan_tambahan,
       };
 
-      console.log("🔄 Data update yang dikirim:", updateData);
+      console.log("🔄 Data update yang dikirim (SIMPLE):", updateData);
       onSubmit(updateData);
     } else {
-      // ✅ CREATE MODE - Konversi kedua tanggal ke WIB
+      // ✅ CREATE MODE - KIRIM FORMAT SIMPLE (tanpa konversi)
       const createData: CreateSewaData = {
         motor_id: data.motor_id,
         penyewa_id: data.penyewa_id,
-        tgl_sewa: convertToWIBISOString(data.tgl_sewa),
-        tgl_kembali: convertToWIBISOString(data.tgl_kembali),
+        tgl_sewa: data.tgl_sewa, // "2024-01-15T10:30" - SIMPLE FORMAT
+        tgl_kembali: data.tgl_kembali, // "2024-01-16T10:30" - SIMPLE FORMAT
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
@@ -137,7 +137,7 @@ const SewaForm: React.FC<SewaFormProps> = ({
         satuan_durasi: "hari",
       };
 
-      console.log("🆕 Data create yang dikirim:", createData);
+      console.log("🆕 Data create yang dikirim (SIMPLE):", createData);
       onSubmit(createData);
     }
   };
@@ -158,8 +158,11 @@ const SewaForm: React.FC<SewaFormProps> = ({
   // ✅ Sinkronisasi backend -> input ketika edit
   useEffect(() => {
     if (sewa) {
-      setValue("tgl_sewa", formatDateTimeForInputNoTZ(sewa.tgl_sewa));
-      setValue("tgl_kembali", formatDateTimeForInputNoTZ(sewa.tgl_kembali));
+      setValue("tgl_sewa", formatDateTimeForInputNoTZ(sewa.tgl_sewa as string));
+      setValue(
+        "tgl_kembali",
+        formatDateTimeForInputNoTZ(sewa.tgl_kembali as string)
+      );
     }
   }, [sewa, setValue]);
 

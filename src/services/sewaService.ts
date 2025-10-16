@@ -6,7 +6,7 @@ import {
   UpdateSewaData,
   SelesaiSewaData,
 } from "../types/sewa";
-import { convertToWIBISOString, convertDateToWIBISO } from "../utils/date";
+// HAPUS import convertToWIBISOString, convertDateToWIBISO - tidak perlu lagi
 
 // Interface untuk response selesai sewa
 export interface SelesaiSewaResponse {
@@ -75,61 +75,51 @@ const getErrorMessage = (error: unknown, defaultMessage: string): string => {
   return defaultMessage;
 };
 
-// Helper untuk validasi dan konversi data create
+// ✅ SOLUSI 1: HAPUS konversi WIB - kirim format simple langsung
 const prepareCreateData = (data: CreateSewaData): CreateSewaData => {
-  // Pastikan tanggal sudah dalam format WIB
+  // ✅ KIRIM FORMAT SIMPLE LANGSUNG: "2024-01-15T10:30"
   const preparedData = { ...data };
 
-  if (preparedData.tgl_sewa && !preparedData.tgl_sewa.includes("+07:00")) {
-    preparedData.tgl_sewa = convertToWIBISOString(preparedData.tgl_sewa);
-  }
-
-  if (
-    preparedData.tgl_kembali &&
-    !preparedData.tgl_kembali.includes("+07:00")
-  ) {
-    preparedData.tgl_kembali = convertToWIBISOString(preparedData.tgl_kembali);
-  }
+  console.log("🕐 [SIMPLE FORMAT] Prepare create data:", {
+    tgl_sewa: preparedData.tgl_sewa,
+    tgl_kembali: preparedData.tgl_kembali,
+    strategy: "Simple format -> MariaDB WIB",
+  });
 
   return preparedData;
 };
 
-// Helper untuk validasi dan konversi data update
+// ✅ SOLUSI 1: HAPUS konversi WIB untuk update
 const prepareUpdateData = (data: UpdateSewaData): UpdateSewaData => {
+  // ✅ KIRIM FORMAT SIMPLE LANGSUNG
   const preparedData = { ...data };
 
-  if (
-    preparedData.tgl_kembali &&
-    !preparedData.tgl_kembali.includes("+07:00")
-  ) {
-    preparedData.tgl_kembali = convertToWIBISOString(preparedData.tgl_kembali);
-  }
+  console.log("🕐 [SIMPLE FORMAT] Prepare update data:", {
+    tgl_kembali: preparedData.tgl_kembali,
+    strategy: "Simple format -> MariaDB WIB",
+  });
 
   return preparedData;
 };
 
-// Helper untuk validasi dan konversi data selesai
+// ✅ SOLUSI 1: Untuk selesai sewa, tetap perlu konversi ke ISO format
 const prepareSelesaiData = (data: SelesaiSewaData): SelesaiSewaData => {
   const preparedData = { ...data };
 
+  // Untuk selesai sewa, kita perlu format ISO yang valid
   if (
     preparedData.tgl_selesai &&
-    !preparedData.tgl_selesai.includes("+07:00")
+    preparedData.tgl_selesai.includes("T") &&
+    preparedData.tgl_selesai.length === 16
   ) {
-    // Untuk selesai sewa, gunakan current time jika dari datetime-local
-    if (
-      preparedData.tgl_selesai.includes("T") &&
-      preparedData.tgl_selesai.length === 16
-    ) {
-      preparedData.tgl_selesai = convertToWIBISOString(
-        preparedData.tgl_selesai
-      );
-    } else {
-      preparedData.tgl_selesai = convertDateToWIBISO(
-        new Date(preparedData.tgl_selesai)
-      );
-    }
+    // Format datetime-local -> tambahkan seconds dan timezone
+    preparedData.tgl_selesai = preparedData.tgl_selesai + ":00+07:00";
   }
+
+  console.log("🕐 [SIMPLE FORMAT] Prepare selesai data:", {
+    tgl_selesai: preparedData.tgl_selesai,
+    strategy: "Selesai needs ISO format",
+  });
 
   return preparedData;
 };
@@ -158,11 +148,14 @@ export const sewaService = {
     }
   },
 
-  // Create new sewa
+  // Create new sewa - SIMPLE FORMAT
   async create(data: CreateSewaData): Promise<Sewa> {
     try {
       const preparedData = prepareCreateData(data);
-      console.log("🆕 Mengirim data create sewa:", preparedData);
+      console.log(
+        "🆕 Mengirim data create sewa (SIMPLE FORMAT):",
+        preparedData
+      );
 
       const response = await api.post("/sewas", preparedData);
       return getResponseData<Sewa>(response);
@@ -174,11 +167,14 @@ export const sewaService = {
     }
   },
 
-  // Update sewa dengan support additional costs
+  // Update sewa - SIMPLE FORMAT
   async update(id: number, data: UpdateSewaData): Promise<Sewa> {
     try {
       const preparedData = prepareUpdateData(data);
-      console.log(`🔄 Mengirim data update sewa ID ${id}:`, preparedData);
+      console.log(
+        `🔄 Mengirim data update sewa ID ${id} (SIMPLE FORMAT):`,
+        preparedData
+      );
 
       const response = await api.put(`/sewas/${id}`, preparedData);
       return getResponseData<Sewa>(response);
@@ -193,7 +189,7 @@ export const sewaService = {
     }
   },
 
-  // Complete sewa
+  // Complete sewa - BUTUH FORMAT ISO
   async selesai(
     id: number,
     data: SelesaiSewaData
@@ -259,16 +255,15 @@ export const sewaService = {
     }
   },
 
-  // Extend sewa duration
+  // Extend sewa duration - SIMPLE FORMAT
   async extendSewa(id: number, newTglKembali: string): Promise<Sewa> {
     try {
-      const convertedTglKembali = convertToWIBISOString(newTglKembali);
-
+      // ✅ KIRIM FORMAT SIMPLE LANGSUNG
       const payload: UpdateSewaData = {
-        tgl_kembali: convertedTglKembali,
+        tgl_kembali: newTglKembali, // "2024-01-16T10:30" - SIMPLE FORMAT
       };
 
-      console.log(`📅 Memperpanjang sewa ID ${id}:`, payload);
+      console.log(`📅 Memperpanjang sewa ID ${id} (SIMPLE FORMAT):`, payload);
       return await this.update(id, payload);
     } catch (error: unknown) {
       return handleServiceError(error, `Gagal memperpanjang sewa ID ${id}`);
