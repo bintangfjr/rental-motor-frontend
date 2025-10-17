@@ -1,40 +1,44 @@
 // utils/date.ts
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-const WIB_TZ = "Asia/Jakarta";
 
 /**
- * Format untuk input datetime-local dari string UTC
- * DB menyimpan UTC, frontend butuh WIB
+ * Konversi dari string UTC (misal dari DB) ke format datetime-local untuk input.
+ * Output: "YYYY-MM-DDTHH:mm" (WIB)
  */
-export const formatDateTimeForInputNoTZ = (
-  utcString: string | Date
-): string => {
-  if (!utcString) return "";
-  try {
-    const wibDate = dayjs(utcString).tz(WIB_TZ);
-    return wibDate.format("YYYY-MM-DDTHH:mm"); // untuk <input type="datetime-local">
-  } catch (error) {
-    console.error("Error formatting date for input:", error);
-    return "";
-  }
+export const formatUTCtoWIBForInput = (dateString: string | Date): string => {
+  if (!dateString) return "";
+  const date =
+    typeof dateString === "string" ? new Date(dateString) : dateString;
+
+  if (isNaN(date.getTime())) return "";
+
+  // Tambahkan offset +7 jam (UTC -> WIB)
+  const wibOffset = 7 * 60 * 60 * 1000;
+  const wibDate = new Date(date.getTime() + wibOffset);
+
+  const year = wibDate.getUTCFullYear();
+  const month = String(wibDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(wibDate.getUTCDate()).padStart(2, "0");
+  const hours = String(wibDate.getUTCHours()).padStart(2, "0");
+  const minutes = String(wibDate.getUTCMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 /**
- * Convert input datetime-local (WIB) → UTC string untuk backend/DB
+ * Konversi input dari datetime-local (WIB) ke UTC string (untuk backend)
+ * Input: "YYYY-MM-DDTHH:mm" (WIB)
+ * Output: ISO string UTC
  */
-export const convertInputToUTC = (localString: string): string => {
-  if (!localString) return "";
-  try {
-    const utcDate = dayjs.tz(localString, WIB_TZ).utc();
-    return utcDate.toISOString();
-  } catch (error) {
-    console.error("Error converting local input to UTC:", error);
-    return "";
-  }
+export const convertInputToUTC = (input: string): string => {
+  if (!input) return "";
+
+  // Buat date dari input (anggap input WIB)
+  const [datePart, timePart] = input.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hours, minutes] = timePart.split(":").map(Number);
+
+  // Buat date di UTC dengan mengurangi 7 jam
+  const date = new Date(Date.UTC(year, month - 1, day, hours - 7, minutes));
+
+  return date.toISOString(); // ISO string UTC
 };

@@ -9,12 +9,9 @@ import RentalSummary from "./RentalSummary";
 import BasicInfoSection from "./SewaFormSections/BasicInfoSection";
 import FormActions from "./SewaFormSections/FormActions";
 import EditModeInfo from "./SewaFormSections/EditModeInfo";
-import {
-  formatDateTimeForInputNoTZ,
-  convertInputToUTC,
-} from "../../utils/date";
+import { formatUTCtoWIBForInput, convertInputToUTC } from "../../utils/date";
 
-// Schema untuk create dan update
+// Schema untuk create/update
 const sewaSchema = z.object({
   motor_id: z.number().min(1, "Pilih motor"),
   penyewa_id: z.number().min(1, "Pilih penyewa"),
@@ -80,8 +77,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
       ? {
           motor_id: sewa.motor_id,
           penyewa_id: sewa.penyewa_id,
-          tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa as string),
-          tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali as string),
+          tgl_sewa: formatUTCtoWIBForInput(sewa.tgl_sewa as string),
+          tgl_kembali: formatUTCtoWIBForInput(sewa.tgl_kembali as string),
           jaminan: Array.isArray(sewa.jaminan)
             ? sewa.jaminan
             : typeof sewa.jaminan === "string"
@@ -107,6 +104,7 @@ const SewaForm: React.FC<SewaFormProps> = ({
   const watchAdditionalCosts = watch("additional_costs") || [];
   const watchCatatanTambahan = watch("catatan_tambahan");
 
+  // Submit handler
   const handleFormSubmit = (data: SewaFormData) => {
     if (sewa) {
       const updateData: UpdateSewaData = {
@@ -133,8 +131,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
     }
   };
 
+  // Minimal tanggal/waktu untuk input
   const getMinDateTime = () => new Date().toISOString().slice(0, 16);
-
   const getMinReturnDateTime = () => {
     if (!watchTglSewa) return getMinDateTime();
     const minDate = new Date(watchTglSewa);
@@ -144,12 +142,13 @@ const SewaForm: React.FC<SewaFormProps> = ({
 
   const selectedMotor = motors.find((m) => m.id === watchIdMotor);
 
+  // Sync backend -> input saat edit
   useEffect(() => {
     if (sewa) {
-      setValue("tgl_sewa", formatDateTimeForInputNoTZ(sewa.tgl_sewa as string));
+      setValue("tgl_sewa", formatUTCtoWIBForInput(sewa.tgl_sewa as string));
       setValue(
         "tgl_kembali",
-        formatDateTimeForInputNoTZ(sewa.tgl_kembali as string)
+        formatUTCtoWIBForInput(sewa.tgl_kembali as string)
       );
     }
   }, [sewa, setValue]);
