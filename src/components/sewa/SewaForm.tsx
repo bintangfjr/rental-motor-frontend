@@ -1,4 +1,3 @@
-// components/sewa/SewaForm.tsx
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,10 +11,10 @@ import FormActions from "./SewaFormSections/FormActions";
 import EditModeInfo from "./SewaFormSections/EditModeInfo";
 import {
   formatDateTimeForInputNoTZ,
-  // HAPUS convertToWIBISOString - tidak perlu lagi
+  convertInputToUTC,
 } from "../../utils/date";
 
-// ✅ Schema untuk create dan update
+// Schema untuk create dan update
 const sewaSchema = z.object({
   motor_id: z.number().min(1, "Pilih motor"),
   penyewa_id: z.number().min(1, "Pilih penyewa"),
@@ -81,8 +80,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
       ? {
           motor_id: sewa.motor_id,
           penyewa_id: sewa.penyewa_id,
-          tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa as string), // ✅ FIX: Type assertion
-          tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali as string), // ✅ FIX: Type assertion
+          tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa as string),
+          tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali as string),
           jaminan: Array.isArray(sewa.jaminan)
             ? sewa.jaminan
             : typeof sewa.jaminan === "string"
@@ -109,42 +108,32 @@ const SewaForm: React.FC<SewaFormProps> = ({
   const watchCatatanTambahan = watch("catatan_tambahan");
 
   const handleFormSubmit = (data: SewaFormData) => {
-    console.log("📝 Data dari form (SIMPLE FORMAT):", data);
-
     if (sewa) {
-      // ✅ UPDATE MODE - KIRIM FORMAT SIMPLE (tanpa konversi)
       const updateData: UpdateSewaData = {
-        tgl_kembali: data.tgl_kembali, // "2024-01-16T10:30" - SIMPLE FORMAT
+        tgl_kembali: convertInputToUTC(data.tgl_kembali),
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
         catatan_tambahan: data.catatan_tambahan,
       };
-
-      console.log("🔄 Data update yang dikirim (SIMPLE):", updateData);
       onSubmit(updateData);
     } else {
-      // ✅ CREATE MODE - KIRIM FORMAT SIMPLE (tanpa konversi)
       const createData: CreateSewaData = {
         motor_id: data.motor_id,
         penyewa_id: data.penyewa_id,
-        tgl_sewa: data.tgl_sewa, // "2024-01-15T10:30" - SIMPLE FORMAT
-        tgl_kembali: data.tgl_kembali, // "2024-01-16T10:30" - SIMPLE FORMAT
+        tgl_sewa: convertInputToUTC(data.tgl_sewa),
+        tgl_kembali: convertInputToUTC(data.tgl_kembali),
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
         catatan_tambahan: data.catatan_tambahan,
         satuan_durasi: "hari",
       };
-
-      console.log("🆕 Data create yang dikirim (SIMPLE):", createData);
       onSubmit(createData);
     }
   };
 
-  const getMinDateTime = () => {
-    return new Date().toISOString().slice(0, 16);
-  };
+  const getMinDateTime = () => new Date().toISOString().slice(0, 16);
 
   const getMinReturnDateTime = () => {
     if (!watchTglSewa) return getMinDateTime();
@@ -155,7 +144,6 @@ const SewaForm: React.FC<SewaFormProps> = ({
 
   const selectedMotor = motors.find((m) => m.id === watchIdMotor);
 
-  // ✅ Sinkronisasi backend -> input ketika edit
   useEffect(() => {
     if (sewa) {
       setValue("tgl_sewa", formatDateTimeForInputNoTZ(sewa.tgl_sewa as string));
@@ -191,20 +179,18 @@ const SewaForm: React.FC<SewaFormProps> = ({
 
       <AdditionalCostsSection
         additionalCosts={watchAdditionalCosts}
-        onAddCost={() => {
-          const newCost = {
-            description: "",
-            amount: 0,
-            type: "additional" as const,
-          };
-          setValue("additional_costs", [...watchAdditionalCosts, newCost]);
-        }}
-        onRemoveCost={(index) => {
-          const updatedCosts = watchAdditionalCosts.filter(
-            (_, i) => i !== index
-          );
-          setValue("additional_costs", updatedCosts);
-        }}
+        onAddCost={() =>
+          setValue("additional_costs", [
+            ...watchAdditionalCosts,
+            { description: "", amount: 0, type: "additional" as const },
+          ])
+        }
+        onRemoveCost={(index) =>
+          setValue(
+            "additional_costs",
+            watchAdditionalCosts.filter((_, i) => i !== index)
+          )
+        }
         onUpdateCost={(index, field, value) => {
           const updatedCosts = [...watchAdditionalCosts];
           updatedCosts[index] = {
@@ -226,7 +212,6 @@ const SewaForm: React.FC<SewaFormProps> = ({
       )}
 
       <FormActions isEdit={!!sewa} isLoading={isLoading} />
-
       {sewa && <EditModeInfo />}
     </form>
   );
