@@ -1,44 +1,70 @@
-// utils/date.ts
-
-/**
- * Konversi dari string UTC (misal dari DB) ke format datetime-local untuk input.
- * Output: "YYYY-MM-DDTHH:mm" (WIB)
- */
-export const formatUTCtoWIBForInput = (dateString: string | Date): string => {
+// utils/date.ts - PERBAIKI dengan konversi UTC->WIB
+export const formatDateTimeForInputNoTZ = (
+  dateString: string | Date
+): string => {
   if (!dateString) return "";
-  const date =
-    typeof dateString === "string" ? new Date(dateString) : dateString;
 
-  if (isNaN(date.getTime())) return "";
+  try {
+    const date =
+      typeof dateString === "string" ? new Date(dateString) : dateString;
 
-  // Tambahkan offset +7 jam (UTC -> WIB)
-  const wibOffset = 7 * 60 * 60 * 1000;
-  const wibDate = new Date(date.getTime() + wibOffset);
+    if (isNaN(date.getTime())) {
+      console.error("Invalid date for input:", dateString);
+      return "";
+    }
 
-  const year = wibDate.getUTCFullYear();
-  const month = String(wibDate.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(wibDate.getUTCDate()).padStart(2, "0");
-  const hours = String(wibDate.getUTCHours()).padStart(2, "0");
-  const minutes = String(wibDate.getUTCMinutes()).padStart(2, "0");
+    console.log("🕐 DEBUG formatDateTimeForInputNoTZ:", {
+      input: dateString,
+      utc: date.toISOString(),
+      local: date.toLocaleString("id-ID"),
+    });
 
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+    // ✅ KONVERSI UTC ke WIB untuk datetime-local input
+    // Karena database menyimpan UTC, tapi kita mau edit sebagai WIB
+    const wibOffset = 7 * 60 * 60 * 1000; // UTC+7
+    const wibDate = new Date(date.getTime() + wibOffset);
+
+    // ✅ GUNAKAN getHours(), getDate(), BUKAN getUTCHours(), getUTCDate()
+    // Karena wibDate sudah dalam waktu lokal (WIB)
+    const year = wibDate.getFullYear();
+    const month = String(wibDate.getMonth() + 1).padStart(2, "0");
+    const day = String(wibDate.getDate()).padStart(2, "0");
+    const hours = String(wibDate.getHours()).padStart(2, "0");
+    const minutes = String(wibDate.getMinutes()).padStart(2, "0");
+
+    const result = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+    console.log("🕐 Format for input (UTC->WIB):", {
+      input: dateString,
+      utc_time: date.toISOString(),
+      wib_time: wibDate.toISOString(),
+      wib_display: result,
+      wib_hours: wibDate.getHours(),
+      wib_minutes: wibDate.getMinutes(),
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error formatting date for input:", error);
+    return "";
+  }
 };
 
-/**
- * Konversi input dari datetime-local (WIB) ke UTC string (untuk backend)
- * Input: "YYYY-MM-DDTHH:mm" (WIB)
- * Output: ISO string UTC
- */
-export const convertInputToUTC = (input: string): string => {
-  if (!input) return "";
+// ✅ Fungsi untuk konversi WIB ke UTC sebelum kirim ke backend
+export const formatWIBToUTCForBackend = (wibDateTime: string): string => {
+  if (!wibDateTime) return "";
 
-  // Buat date dari input (anggap input WIB)
-  const [datePart, timePart] = input.split("T");
-  const [year, month, day] = datePart.split("-").map(Number);
-  const [hours, minutes] = timePart.split(":").map(Number);
+  try {
+    // Parse tanggal dari input WIB
+    const wibDate = new Date(wibDateTime);
 
-  // Buat date di UTC dengan mengurangi 7 jam
-  const date = new Date(Date.UTC(year, month - 1, day, hours - 7, minutes));
+    // Konversi WIB ke UTC (kurangi 7 jam)
+    const utcDate = new Date(wibDate.getTime() - 7 * 60 * 60 * 1000);
 
-  return date.toISOString(); // ISO string UTC
+    // Format ke ISO string untuk backend
+    return utcDate.toISOString();
+  } catch (error) {
+    console.error("Error converting WIB to UTC:", error);
+    return "";
+  }
 };

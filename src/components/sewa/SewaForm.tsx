@@ -1,3 +1,4 @@
+// components/sewa/SewaForm.tsx
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,9 +10,12 @@ import RentalSummary from "./RentalSummary";
 import BasicInfoSection from "./SewaFormSections/BasicInfoSection";
 import FormActions from "./SewaFormSections/FormActions";
 import EditModeInfo from "./SewaFormSections/EditModeInfo";
-import { formatUTCtoWIBForInput, convertInputToUTC } from "../../utils/date";
+import {
+  formatDateTimeForInputNoTZ,
+  formatWIBToUTCForBackend, // ✅ Import fungsi baru
+} from "../../utils/date";
 
-// Schema untuk create/update
+// ✅ Schema tetap sama
 const sewaSchema = z.object({
   motor_id: z.number().min(1, "Pilih motor"),
   penyewa_id: z.number().min(1, "Pilih penyewa"),
@@ -77,8 +81,9 @@ const SewaForm: React.FC<SewaFormProps> = ({
       ? {
           motor_id: sewa.motor_id,
           penyewa_id: sewa.penyewa_id,
-          tgl_sewa: formatUTCtoWIBForInput(sewa.tgl_sewa as string),
-          tgl_kembali: formatUTCtoWIBForInput(sewa.tgl_kembali as string),
+          // ✅ UTC dari database dikonversi ke WIB untuk ditampilkan
+          tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa as string),
+          tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali as string),
           jaminan: Array.isArray(sewa.jaminan)
             ? sewa.jaminan
             : typeof sewa.jaminan === "string"
@@ -104,37 +109,51 @@ const SewaForm: React.FC<SewaFormProps> = ({
   const watchAdditionalCosts = watch("additional_costs") || [];
   const watchCatatanTambahan = watch("catatan_tambahan");
 
-  // Submit handler
   const handleFormSubmit = (data: SewaFormData) => {
+    console.log("📝 Data dari form (WIB):", data);
+
     if (sewa) {
+      // ✅ UPDATE MODE - KONVERSI WIB ke UTC sebelum kirim ke backend
       const updateData: UpdateSewaData = {
-        tgl_kembali: convertInputToUTC(data.tgl_kembali),
+        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali), // WIB -> UTC
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
         catatan_tambahan: data.catatan_tambahan,
       };
+
+      console.log("🔄 Data update yang dikirim (UTC):", updateData);
       onSubmit(updateData);
     } else {
+      // ✅ CREATE MODE - KONVERSI WIB ke UTC sebelum kirim ke backend
       const createData: CreateSewaData = {
         motor_id: data.motor_id,
         penyewa_id: data.penyewa_id,
-        tgl_sewa: convertInputToUTC(data.tgl_sewa),
-        tgl_kembali: convertInputToUTC(data.tgl_kembali),
+        tgl_sewa: formatWIBToUTCForBackend(data.tgl_sewa), // WIB -> UTC
+        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali), // WIB -> UTC
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
         catatan_tambahan: data.catatan_tambahan,
         satuan_durasi: "hari",
       };
+
+      console.log("🆕 Data create yang dikirim (UTC):", createData);
       onSubmit(createData);
     }
   };
 
-  // Minimal tanggal/waktu untuk input
-  const getMinDateTime = () => new Date().toISOString().slice(0, 16);
+  const getMinDateTime = () => {
+    // Untuk create mode, gunakan waktu WIB saat ini
+    const now = new Date();
+    const nowWIB = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    return nowWIB.toISOString().slice(0, 16);
+  };
+
   const getMinReturnDateTime = () => {
     if (!watchTglSewa) return getMinDateTime();
+
+    // Tambah 1 jam dari tanggal sewa (dalam WIB)
     const minDate = new Date(watchTglSewa);
     minDate.setHours(minDate.getHours() + 1);
     return minDate.toISOString().slice(0, 16);
@@ -142,13 +161,15 @@ const SewaForm: React.FC<SewaFormProps> = ({
 
   const selectedMotor = motors.find((m) => m.id === watchIdMotor);
 
-  // Sync backend -> input saat edit
+  // ✅ Sinkronisasi backend -> input ketika edit
   useEffect(() => {
     if (sewa) {
-      setValue("tgl_sewa", formatUTCtoWIBForInput(sewa.tgl_sewa as string));
-      setValue(
-        "tgl_kembali",
-        formatUTCtoWIBForInput(sewa.tgl_kembali as string)
+      // Data dari backend (UTC) sudah dikonversi ke WIB di defaultValues
+      // Tidak perlu setValue lagi di sini
+      console.log("🕐 Tanggal sewa dari backend:", sewa.tgl_sewa);
+      console.log(
+        "🕐 Tanggal sewa setelah konversi WIB:",
+        formatDateTimeForInputNoTZ(sewa.tgl_sewa as string)
       );
     }
   }, [sewa, setValue]);
@@ -178,18 +199,20 @@ const SewaForm: React.FC<SewaFormProps> = ({
 
       <AdditionalCostsSection
         additionalCosts={watchAdditionalCosts}
-        onAddCost={() =>
-          setValue("additional_costs", [
-            ...watchAdditionalCosts,
-            { description: "", amount: 0, type: "additional" as const },
-          ])
-        }
-        onRemoveCost={(index) =>
-          setValue(
-            "additional_costs",
-            watchAdditionalCosts.filter((_, i) => i !== index)
-          )
-        }
+        onAddCost={() => {
+          const newCost = {
+            description: "",
+            amount: 0,
+            type: "additional" as const,
+          };
+          setValue("additional_costs", [...watchAdditionalCosts, newCost]);
+        }}
+        onRemoveCost={(index) => {
+          const updatedCosts = watchAdditionalCosts.filter(
+            (_, i) => i !== index
+          );
+          setValue("additional_costs", updatedCosts);
+        }}
         onUpdateCost={(index, field, value) => {
           const updatedCosts = [...watchAdditionalCosts];
           updatedCosts[index] = {
@@ -211,7 +234,10 @@ const SewaForm: React.FC<SewaFormProps> = ({
       )}
 
       <FormActions isEdit={!!sewa} isLoading={isLoading} />
-      {sewa && <EditModeInfo />}
+
+      {sewa && (
+        <EditModeInfo additionalInfo="Waktu ditampilkan dalam WIB (UTC+7)" />
+      )}
     </form>
   );
 };
