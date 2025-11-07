@@ -1,5 +1,7 @@
 import React from "react";
 import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme";
+import { getStatusColor } from "../../utils/statusUtils";
 
 export type StatusType =
   | "active"
@@ -20,6 +22,7 @@ interface StatusBadgeProps {
   children: React.ReactNode;
   className?: string;
   size?: "sm" | "md" | "lg";
+  variant?: "solid" | "outline";
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
@@ -27,21 +30,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   children,
   className,
   size = "md",
+  variant = "solid",
 }) => {
-  const statusClasses: Record<StatusType, string> = {
-    active: "bg-green-100 text-green-800",
-    inactive: "bg-gray-100 text-gray-800",
-    pending: "bg-yellow-100 text-yellow-800",
-    completed: "bg-blue-100 text-blue-800",
-    cancelled: "bg-red-100 text-red-800",
-    warning: "bg-yellow-100 text-yellow-800",
-    error: "bg-red-100 text-red-800",
-    success: "bg-green-100 text-green-800",
-    available: "bg-green-100 text-green-800",
-    rented: "bg-blue-100 text-blue-800",
-    maintenance: "bg-yellow-100 text-yellow-800",
-    blacklisted: "bg-red-100 text-red-800",
-  };
+  const { isDark } = useTheme();
 
   const sizeClasses = {
     sm: "px-2 py-0.5 text-xs",
@@ -49,49 +40,42 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     lg: "px-3 py-1 text-base",
   };
 
+  const variantClasses = {
+    solid: getStatusColor(status, isDark),
+    outline: isDark
+      ? "bg-transparent border text-dark-primary border-dark-border"
+      : "bg-transparent border text-gray-700 border-gray-300",
+  };
+
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full font-medium",
-        statusClasses[status],
+        "inline-flex items-center rounded-full font-medium border transition-colors duration-200",
+        variantClasses[variant],
         sizeClasses[size],
         className
       )}
     >
+      {/* Status dot indicator */}
+      <span
+        className={cn("w-1.5 h-1.5 rounded-full mr-1.5", {
+          "bg-green-500": [
+            "active",
+            "success",
+            "available",
+            "completed",
+          ].includes(status),
+          "bg-gray-500": ["inactive"].includes(status),
+          "bg-yellow-500": ["pending", "warning", "maintenance"].includes(
+            status
+          ),
+          "bg-blue-500": ["rented"].includes(status),
+          "bg-red-500": ["cancelled", "error", "blacklisted"].includes(status),
+        })}
+      />
       {children}
     </span>
   );
 };
 
-// Utility function untuk mapping status motor
-export const getMotorStatus = (status: string): StatusType => {
-  const statusMap: Record<string, StatusType> = {
-    available: "available",
-    tersedia: "available",
-    rented: "rented",
-    disewa: "rented",
-    maintenance: "maintenance",
-    perawatan: "maintenance",
-  };
-
-  return statusMap[status.toLowerCase()] || "inactive";
-};
-
-// Utility function untuk mapping status penyewa
-export const getPenyewaStatus = (isBlacklisted: boolean): StatusType => {
-  return isBlacklisted ? "blacklisted" : "active";
-};
-
-// Utility function untuk mapping status sewa
-export const getSewaStatus = (status: string): StatusType => {
-  const statusMap: Record<string, StatusType> = {
-    pending: "pending",
-    active: "active",
-    completed: "completed",
-    cancelled: "cancelled",
-    selesai: "completed",
-    dibatalkan: "cancelled",
-  };
-
-  return statusMap[status.toLowerCase()] || "pending";
-};
+export default StatusBadge;

@@ -58,7 +58,7 @@ export const dashboardService = {
       }
 
       throw new Error(
-        response.data?.message || "Dashboard data kosong atau tidak valid"
+        response.data?.message || "Dashboard data kosong atau tidak valid",
       );
     } catch (error: unknown) {
       console.error("Error fetching dashboard data:", error);

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface CheckboxOption {
   value: string;
@@ -8,7 +9,7 @@ export interface CheckboxOption {
 export interface CheckboxGroupProps {
   label?: string;
   options: CheckboxOption[];
-  value?: string[]; // ✅ Jadikan optional
+  value?: string[];
   onChange: (value: string[]) => void;
   direction?: "row" | "col";
   required?: boolean;
@@ -19,13 +20,15 @@ export interface CheckboxGroupProps {
 export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   label,
   options,
-  value = [], // ✅ Berikan default value array kosong
+  value = [],
   onChange,
   direction = "col",
   required = false,
   error,
   animation = "scale",
 }) => {
+  const { isDark } = useTheme();
+
   // ✅ Validasi value untuk memastikan selalu array
   const safeValue = Array.isArray(value) ? value : [];
 
@@ -53,15 +56,21 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
     }
   };
 
-  // ✅ Checkbox animation styles
+  // ✅ Checkbox animation styles dengan dark theme
   const getCheckboxAnimation = (isChecked: boolean) => {
     const baseClasses =
       "h-4 w-4 rounded border-2 transition-all duration-300 ease-in-out transform";
 
     if (isChecked) {
-      return `${baseClasses} border-blue-500 bg-blue-500 scale-110 shadow-md`;
+      return `${baseClasses} border-brand-blue bg-brand-blue scale-110 ${
+        isDark ? "shadow-lg" : "shadow-md"
+      }`;
     } else {
-      return `${baseClasses} border-gray-300 bg-white hover:border-blue-400 hover:scale-105`;
+      return `${baseClasses} ${
+        isDark
+          ? "border-dark-border bg-dark-accent hover:border-brand-blue"
+          : "border-gray-300 bg-white hover:border-blue-400"
+      } hover:scale-105`;
     }
   };
 
@@ -92,12 +101,29 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
     </span>
   );
 
+  // ✅ Background hover styles untuk dark theme
+  const getHoverBackground = (isChecked: boolean) => {
+    if (isChecked) {
+      return isDark
+        ? "bg-blue-900/20 border-blue-700/30"
+        : "bg-blue-50 border-blue-200";
+    } else {
+      return isDark
+        ? "hover:bg-dark-hover hover:border-dark-border"
+        : "hover:bg-blue-50 hover:border-blue-100";
+    }
+  };
+
   return (
     <div className="space-y-3">
-      {/* ✅ Label dengan animasi */}
+      {/* ✅ Label dengan animasi dan dark theme */}
       {label && (
         <div className="flex items-center gap-2">
-          <label className="block text-sm font-medium text-gray-700 transition-colors duration-200">
+          <label
+            className={`block text-sm font-medium transition-colors duration-200 ${
+              isDark ? "text-dark-primary" : "text-gray-700"
+            }`}
+          >
             {label}
           </label>
           {required && <PulseDot />}
@@ -111,7 +137,7 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
         }`}
       >
         {options.map((opt, index) => {
-          const isChecked = safeValue.includes(opt.value); // ✅ Gunakan safeValue
+          const isChecked = safeValue.includes(opt.value);
 
           return (
             <label
@@ -119,9 +145,10 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
               className={`
                 inline-flex items-center gap-3 cursor-pointer group
                 ${getAnimationClass()}
-                p-2 rounded-lg border border-transparent
-                hover:bg-blue-50 hover:border-blue-100
-                ${isChecked ? "bg-blue-50 border-blue-200 shadow-sm" : ""}
+                p-2 rounded-lg border transition-all duration-200
+                ${getHoverBackground(isChecked)}
+                ${isDark ? "border-dark-border" : "border-transparent"}
+                ${isChecked ? (isDark ? "shadow-lg" : "shadow-sm") : ""}
               `}
               style={{
                 animationDelay: `${index * 50}ms`,
@@ -134,7 +161,7 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
                   value={opt.value}
                   checked={isChecked}
                   onChange={() => handleChange(opt.value)}
-                  required={required && safeValue.length === 0} // ✅ Gunakan safeValue
+                  required={required && safeValue.length === 0}
                   className="sr-only"
                 />
                 <div className={getCheckboxAnimation(isChecked)}>
@@ -146,20 +173,29 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
                 {/* ✅ Ripple effect on click */}
                 <div
                   className={`
-                  absolute inset-0 rounded-full bg-blue-200 opacity-0 
-                  transition-all duration-500 ease-out
-                  ${isChecked ? "animate-ripple scale-150 opacity-0" : ""}
+                  absolute inset-0 rounded-full transition-all duration-500 ease-out
+                  ${
+                    isChecked
+                      ? `animate-ripple scale-150 opacity-0 ${
+                          isDark ? "bg-blue-400" : "bg-blue-200"
+                        }`
+                      : ""
+                  }
                 `}
                 />
               </div>
 
-              {/* ✅ Label dengan animasi */}
+              {/* ✅ Label dengan animasi dan dark theme */}
               <span
                 className={`
                 text-sm font-medium transition-all duration-300 ease-in-out
                 ${
                   isChecked
-                    ? "text-blue-700 font-semibold transform translate-x-0.5"
+                    ? `font-semibold transform translate-x-0.5 ${
+                        isDark ? "text-blue-300" : "text-blue-700"
+                      }`
+                    : isDark
+                    ? "text-dark-secondary group-hover:text-dark-primary"
                     : "text-gray-700 group-hover:text-gray-900"
                 }
               `}
@@ -167,14 +203,18 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
                 {opt.label}
               </span>
 
-              {/* ✅ Hover indicator */}
+              {/* ✅ Hover indicator dengan dark theme */}
               <div
                 className={`
-                w-1 h-1 rounded-full bg-blue-500 transition-all duration-300 ease-out
+                w-1 h-1 rounded-full transition-all duration-300 ease-out
                 ${
                   isChecked
-                    ? "opacity-100 scale-100"
-                    : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+                    ? `opacity-100 scale-100 ${
+                        isDark ? "bg-blue-400" : "bg-blue-500"
+                      }`
+                    : `opacity-0 scale-50 ${
+                        isDark ? "bg-blue-400" : "bg-blue-500"
+                      } group-hover:opacity-100 group-hover:scale-100`
                 }
               `}
               />
@@ -183,10 +223,14 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
         })}
       </div>
 
-      {/* ✅ Error message dengan animasi */}
+      {/* ✅ Error message dengan animasi dan dark theme */}
       {error && (
         <div className="animate-shake">
-          <p className="text-red-500 text-sm font-medium flex items-center gap-2">
+          <p
+            className={`text-sm font-medium flex items-center gap-2 ${
+              isDark ? "text-red-400" : "text-red-500"
+            }`}
+          >
             <svg
               className="w-4 h-4 animate-pulse"
               fill="currentColor"
@@ -203,10 +247,20 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
         </div>
       )}
 
-      {/* ✅ Selection counter */}
-      {safeValue.length > 0 && ( // ✅ Gunakan safeValue
-        <div className="flex items-center gap-2 text-xs text-gray-500 animate-fadeIn">
-          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+      {/* ✅ Selection counter dengan dark theme */}
+      {safeValue.length > 0 && (
+        <div
+          className={`flex items-center gap-2 text-xs animate-fadeIn ${
+            isDark ? "text-dark-muted" : "text-gray-500"
+          }`}
+        >
+          <span
+            className={`px-2 py-1 rounded-full font-medium ${
+              isDark
+                ? "bg-blue-900/30 text-blue-300"
+                : "bg-blue-100 text-blue-700"
+            }`}
+          >
             {safeValue.length} terpilih
           </span>
           <span>dari {options.length} opsi</span>

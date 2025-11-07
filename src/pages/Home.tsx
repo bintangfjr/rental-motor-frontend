@@ -1,11 +1,11 @@
-import React, { useState, useEffect, lazy } from 'react';
-import { Link } from 'react-router-dom';
-import { reportService } from '../services/reportService';
-import { motorService } from '../services/motorService';
-import { penyewaService } from '../services/penyewaService';
-import { sewaService } from '../services/sewaService';
-import { Button } from '../components/ui/Button';
-import { formatCurrency } from '../utils/formatters';
+import React, { useState, useEffect, lazy } from "react";
+import { Link } from "react-router-dom";
+import { reportService } from "../services/reportService";
+import { motorService } from "../services/motorService";
+import { penyewaService } from "../services/penyewaService";
+import { sewaService } from "../services/sewaService";
+import { Button } from "../components/ui/Button";
+import { formatCurrency } from "../utils/formatters";
 
 const Home: React.FC = () => {
   const [stats, setStats] = useState({
@@ -25,17 +25,12 @@ const Home: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      
-      const [
-        motors,
-        penyewas,
-        sewas,
-        dashboardStats
-      ] = await Promise.all([
+
+      const [motors, penyewas, sewas, dashboardStats] = await Promise.all([
         motorService.getAll(),
         penyewaService.getAll(),
         sewaService.getAll(),
-        reportService.getDashboardStats()
+        reportService.getDashboardStats(),
       ]);
 
       setStats({
@@ -49,7 +44,7 @@ const Home: React.FC = () => {
       // Get recent rentals (last 5)
       setRecentActivity(sewas.slice(0, 5));
     } catch (err) {
-      console.error('Error loading dashboard data:', err);
+      console.error("Error loading dashboard data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -57,33 +52,33 @@ const Home: React.FC = () => {
 
   const quickActions = [
     {
-      title: 'Tambah Sewa',
-      description: 'Buat transaksi sewa baru',
-      icon: '📝',
-      link: '/sewas/create',
-      color: 'bg-blue-500'
+      title: "Tambah Sewa",
+      description: "Buat transaksi sewa baru",
+      icon: "📝",
+      link: "/sewas/create",
+      color: "bg-blue-500",
     },
     {
-      title: 'Kelola Motor',
-      description: 'Lihat dan kelola daftar motor',
-      icon: '🏍️',
-      link: '/motors',
-      color: 'bg-green-500'
+      title: "Kelola Motor",
+      description: "Lihat dan kelola daftar motor",
+      icon: "🏍️",
+      link: "/motors",
+      color: "bg-green-500",
     },
     {
-      title: 'Data Penyewa',
-      description: 'Kelola data penyewa',
-      icon: '👥',
-      link: '/penyewas',
-      color: 'bg-purple-500'
+      title: "Data Penyewa",
+      description: "Kelola data penyewa",
+      icon: "👥",
+      link: "/penyewas",
+      color: "bg-purple-500",
     },
     {
-      title: 'Laporan',
-      description: 'Lihat laporan dan statistik',
-      icon: '📊',
-      link: '/reports',
-      color: 'bg-orange-500'
-    }
+      title: "Laporan",
+      description: "Lihat laporan dan statistik",
+      icon: "📊",
+      link: "/reports",
+      color: "bg-orange-500",
+    },
   ];
 
   if (isLoading) {
@@ -159,7 +154,9 @@ const Home: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-600">Pendapatan Bulan Ini</p>
-              <p className="text-2xl font-bold">{formatCurrency(stats.monthlyRevenue)}</p>
+              <p className="text-2xl font-bold">
+                {formatCurrency(stats.monthlyRevenue)}
+              </p>
             </div>
           </div>
         </div>
@@ -186,13 +183,17 @@ const Home: React.FC = () => {
           <h2 className="text-lg font-semibold mb-4">Sewa Terbaru</h2>
           <div className="space-y-3">
             {recentActivity.map((sewa, index) => (
-              <div key={index} className="flex items-center justify-between py-2 border-b">
+              <div
+                key={index}
+                className="flex items-center justify-between py-2 border-b"
+              >
                 <div>
                   <p className="font-medium">
                     {sewa.motor.merk} {sewa.motor.model}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {sewa.penyewa.nama} • {new Date(sewa.tgl_sewa).toLocaleDateString('id-ID')}
+                    {sewa.penyewa.nama} •{" "}
+                    {new Date(sewa.tgl_sewa).toLocaleDateString("id-ID")}
                   </p>
                 </div>
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
@@ -201,7 +202,9 @@ const Home: React.FC = () => {
               </div>
             ))}
             {recentActivity.length === 0 && (
-              <p className="text-gray-500 text-center py-4">Belum ada sewa aktif</p>
+              <p className="text-gray-500 text-center py-4">
+                Belum ada sewa aktif
+              </p>
             )}
           </div>
           <Link to="/sewas">

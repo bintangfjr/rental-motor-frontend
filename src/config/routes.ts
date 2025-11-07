@@ -1,41 +1,45 @@
-import { lazy } from 'react';
-import { ROUTE_PATHS } from '../utils/constants';
+import { lazy } from "react";
+import { ROUTE_PATHS } from "../utils/constants";
 
 // Lazy load pages untuk code splitting
-const Login = lazy(() => import('../pages/auth/Login'));
-const Home = lazy(() => import('../pages/Home'));
-const Dashboard = lazy(() => import('../pages/dashboard/Dashboard'));
+const Login = lazy(() => import("../pages/auth/Login"));
+const Home = lazy(() => import("../pages/Home"));
+const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
 
 // Motor Routes
-const MotorList = lazy(() => import('../pages/motor/MotorList'));
-const MotorCreate = lazy(() => import('../pages/motor/MotorCreate'));
-const MotorEdit = lazy(() => import('../pages/motor/MotorEdit'));
-const MotorDetail = lazy(() => import('../pages/motor/MotorDetail'));
+const MotorList = lazy(() => import("../pages/motor/MotorList"));
+const MotorCreate = lazy(() => import("../pages/motor/MotorCreate"));
+const MotorEdit = lazy(() => import("../pages/motor/MotorEdit"));
+const MotorDetail = lazy(() => import("../pages/motor/MotorDetail"));
 
 // Penyewa Routes
-const PenyewaList = lazy(() => import('../pages/penyewa/PenyewaList'));
-const PenyewaCreate = lazy(() => import('../pages/penyewa/PenyewaCreate'));
-const PenyewaEdit = lazy(() => import('../pages/penyewa/PenyewaEdit'));
-const PenyewaDetail = lazy(() => import('../pages/penyewa/PenyewaDetail'));
+const PenyewaList = lazy(() => import("../pages/penyewa/PenyewaList"));
+const PenyewaCreate = lazy(() => import("../pages/penyewa/PenyewaCreate"));
+const PenyewaEdit = lazy(() => import("../pages/penyewa/PenyewaEdit"));
+const PenyewaDetail = lazy(() => import("../pages/penyewa/PenyewaDetail"));
 
 // Sewa Routes
-const SewaList = lazy(() => import('../pages/sewa/SewaList'));
-const SewaCreate = lazy(() => import('../pages/sewa/SewaCreate'));
-const SewaEdit = lazy(() => import('../pages/sewa/SewaEdit'));
-const SewaDetail = lazy(() => import('../pages/sewa/SewaDetail'));
+const SewaList = lazy(() => import("../pages/sewa/SewaList"));
+const SewaCreate = lazy(() => import("../pages/sewa/SewaCreate"));
+const SewaEdit = lazy(() => import("../pages/sewa/SewaEdit"));
+const SewaDetail = lazy(() => import("../pages/sewa/SewaDetail"));
 
 // History & Report Routes
-const HistoryList = lazy(() => import('../pages/history/HistoryList'));
-const ReportView = lazy(() => import('../pages/report/ReportView'));
+const HistoryList = lazy(() => import("../pages/history/HistoryList"));
+const ReportView = lazy(() => import("../pages/report/ReportView"));
 
 // Settings Routes
-const ProfileSettings = lazy(() => import('../pages/settings/ProfileSettings'));
-const SecuritySettings = lazy(() => import('../pages/settings/SecuritySettings'));
-const NotificationSettings = lazy(() => import('../pages/settings/NotificationSettings'));
+const ProfileSettings = lazy(() => import("../pages/settings/ProfileSettings"));
+const SecuritySettings = lazy(
+  () => import("../pages/settings/SecuritySettings"),
+);
+const NotificationSettings = lazy(
+  () => import("../pages/settings/NotificationSettings"),
+);
 
 // Utility Pages
-const NotFound = lazy(() => import('../pages/NotFound'));
-const UnderMaintenance = lazy(() => import('../pages/UnderMaintenance'));
+const NotFound = lazy(() => import("../pages/NotFound"));
+const UnderMaintenance = lazy(() => import("../pages/UnderMaintenance"));
 
 export interface RouteConfig {
   path: string;
@@ -45,7 +49,7 @@ export interface RouteConfig {
   title?: string;
   description?: string;
   roles?: string[];
-  layout?: 'app' | 'guest' | 'none';
+  layout?: "app" | "guest" | "none";
 }
 
 export const routes: RouteConfig[] = [
@@ -55,8 +59,8 @@ export const routes: RouteConfig[] = [
     component: Login,
     exact: true,
     protected: false,
-    title: 'Login - Rental Motor',
-    layout: 'guest',
+    title: "Login - Rental Motor",
+    layout: "guest",
   },
 
   // Protected Routes
@@ -65,8 +69,8 @@ export const routes: RouteConfig[] = [
     component: Home,
     exact: true,
     protected: true,
-    title: 'Beranda - Rental Motor',
-    layout: 'app',
+    title: "Beranda - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -74,8 +78,8 @@ export const routes: RouteConfig[] = [
     component: Dashboard,
     exact: true,
     protected: true,
-    title: 'Dashboard - Rental Motor',
-    layout: 'app',
+    title: "Dashboard - Rental Motor",
+    layout: "app",
   },
 
   // Motor Routes
@@ -84,8 +88,8 @@ export const routes: RouteConfig[] = [
     component: MotorList,
     exact: true,
     protected: true,
-    title: 'Daftar Motor - Rental Motor',
-    layout: 'app',
+    title: "Daftar Motor - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -93,8 +97,8 @@ export const routes: RouteConfig[] = [
     component: MotorCreate,
     exact: true,
     protected: true,
-    title: 'Tambah Motor - Rental Motor',
-    layout: 'app',
+    title: "Tambah Motor - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -102,8 +106,8 @@ export const routes: RouteConfig[] = [
     component: MotorEdit,
     exact: true,
     protected: true,
-    title: 'Edit Motor - Rental Motor',
-    layout: 'app',
+    title: "Edit Motor - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -111,8 +115,8 @@ export const routes: RouteConfig[] = [
     component: MotorDetail,
     exact: true,
     protected: true,
-    title: 'Detail Motor - Rental Motor',
-    layout: 'app',
+    title: "Detail Motor - Rental Motor",
+    layout: "app",
   },
 
   // Penyewa Routes
@@ -121,8 +125,8 @@ export const routes: RouteConfig[] = [
     component: PenyewaList,
     exact: true,
     protected: true,
-    title: 'Daftar Penyewa - Rental Motor',
-    layout: 'app',
+    title: "Daftar Penyewa - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -130,8 +134,8 @@ export const routes: RouteConfig[] = [
     component: PenyewaCreate,
     exact: true,
     protected: true,
-    title: 'Tambah Penyewa - Rental Motor',
-    layout: 'app',
+    title: "Tambah Penyewa - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -139,8 +143,8 @@ export const routes: RouteConfig[] = [
     component: PenyewaEdit,
     exact: true,
     protected: true,
-    title: 'Edit Penyewa - Rental Motor',
-    layout: 'app',
+    title: "Edit Penyewa - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -148,8 +152,8 @@ export const routes: RouteConfig[] = [
     component: PenyewaDetail,
     exact: true,
     protected: true,
-    title: 'Detail Penyewa - Rental Motor',
-    layout: 'app',
+    title: "Detail Penyewa - Rental Motor",
+    layout: "app",
   },
 
   // Sewa Routes
@@ -158,8 +162,8 @@ export const routes: RouteConfig[] = [
     component: SewaList,
     exact: true,
     protected: true,
-    title: 'Daftar Sewa - Rental Motor',
-    layout: 'app',
+    title: "Daftar Sewa - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -167,8 +171,8 @@ export const routes: RouteConfig[] = [
     component: SewaCreate,
     exact: true,
     protected: true,
-    title: 'Tambah Sewa - Rental Motor',
-    layout: 'app',
+    title: "Tambah Sewa - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -176,8 +180,8 @@ export const routes: RouteConfig[] = [
     component: SewaEdit,
     exact: true,
     protected: true,
-    title: 'Edit Sewa - Rental Motor',
-    layout: 'app',
+    title: "Edit Sewa - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -185,8 +189,8 @@ export const routes: RouteConfig[] = [
     component: SewaDetail,
     exact: true,
     protected: true,
-    title: 'Detail Sewa - Rental Motor',
-    layout: 'app',
+    title: "Detail Sewa - Rental Motor",
+    layout: "app",
   },
 
   // History & Reports
@@ -195,8 +199,8 @@ export const routes: RouteConfig[] = [
     component: HistoryList,
     exact: true,
     protected: true,
-    title: 'Riwayat Sewa - Rental Motor',
-    layout: 'app',
+    title: "Riwayat Sewa - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -204,8 +208,8 @@ export const routes: RouteConfig[] = [
     component: ReportView,
     exact: true,
     protected: true,
-    title: 'Laporan - Rental Motor',
-    layout: 'app',
+    title: "Laporan - Rental Motor",
+    layout: "app",
   },
 
   // Settings Routes
@@ -214,8 +218,8 @@ export const routes: RouteConfig[] = [
     component: ProfileSettings,
     exact: true,
     protected: true,
-    title: 'Pengaturan Profil - Rental Motor',
-    layout: 'app',
+    title: "Pengaturan Profil - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -223,8 +227,8 @@ export const routes: RouteConfig[] = [
     component: SecuritySettings,
     exact: true,
     protected: true,
-    title: 'Pengaturan Keamanan - Rental Motor',
-    layout: 'app',
+    title: "Pengaturan Keamanan - Rental Motor",
+    layout: "app",
   },
 
   {
@@ -232,65 +236,69 @@ export const routes: RouteConfig[] = [
     component: NotificationSettings,
     exact: true,
     protected: true,
-    title: 'Pengaturan Notifikasi - Rental Motor',
-    layout: 'app',
+    title: "Pengaturan Notifikasi - Rental Motor",
+    layout: "app",
   },
 
   // Utility Routes
   {
-    path: '/under-maintenance',
+    path: "/under-maintenance",
     component: UnderMaintenance,
     exact: true,
     protected: false,
-    title: 'Maintenance - Rental Motor',
-    layout: 'none',
+    title: "Maintenance - Rental Motor",
+    layout: "none",
   },
 
   // 404 Route - harus di akhir
   {
-    path: '*',
+    path: "*",
     component: NotFound,
     protected: false,
-    title: 'Halaman Tidak Ditemukan - Rental Motor',
-    layout: 'none',
+    title: "Halaman Tidak Ditemukan - Rental Motor",
+    layout: "none",
   },
 ];
 
 // Helper functions untuk routing
 export const getRouteConfig = (path: string): RouteConfig | undefined => {
-  return routes.find(route => route.path === path);
+  return routes.find((route) => route.path === path);
 };
 
 export const isProtectedRoute = (path: string): boolean => {
   const route = getRouteConfig(path);
-  return route ? route.protected ?? true : true;
+  return route ? (route.protected ?? true) : true;
 };
 
 export const getPageTitle = (path: string): string => {
   const route = getRouteConfig(path);
-  return route?.title || 'Rental Motor Management';
+  return route?.title || "Rental Motor Management";
 };
 
 export const getRoutesByLayout = (layout: string): RouteConfig[] => {
-  return routes.filter(route => route.layout === layout);
+  return routes.filter((route) => route.layout === layout);
 };
 
 // Route groups untuk navigation
 export const navigationRoutes = {
   main: [
-    { path: ROUTE_PATHS.DASHBOARD, label: 'Dashboard', icon: '📊' },
-    { path: ROUTE_PATHS.MOTORS, label: 'Motor', icon: '🏍️' },
-    { path: ROUTE_PATHS.PENYEWAS, label: 'Penyewa', icon: '👥' },
-    { path: ROUTE_PATHS.SEWAS, label: 'Sewa', icon: '📝' },
+    { path: ROUTE_PATHS.DASHBOARD, label: "Dashboard", icon: "📊" },
+    { path: ROUTE_PATHS.MOTORS, label: "Motor", icon: "🏍️" },
+    { path: ROUTE_PATHS.PENYEWAS, label: "Penyewa", icon: "👥" },
+    { path: ROUTE_PATHS.SEWAS, label: "Sewa", icon: "📝" },
   ],
   reports: [
-    { path: ROUTE_PATHS.HISTORIES, label: 'Riwayat', icon: '📋' },
-    { path: ROUTE_PATHS.REPORTS, label: 'Laporan', icon: '📈' },
+    { path: ROUTE_PATHS.HISTORIES, label: "Riwayat", icon: "📋" },
+    { path: ROUTE_PATHS.REPORTS, label: "Laporan", icon: "📈" },
   ],
   settings: [
-    { path: ROUTE_PATHS.SETTINGS_PROFILE, label: 'Profil', icon: '👤' },
-    { path: ROUTE_PATHS.SETTINGS_SECURITY, label: 'Keamanan', icon: '🔒' },
-    { path: ROUTE_PATHS.SETTINGS_NOTIFICATIONS, label: 'Notifikasi', icon: '🔔' },
+    { path: ROUTE_PATHS.SETTINGS_PROFILE, label: "Profil", icon: "👤" },
+    { path: ROUTE_PATHS.SETTINGS_SECURITY, label: "Keamanan", icon: "🔒" },
+    {
+      path: ROUTE_PATHS.SETTINGS_NOTIFICATIONS,
+      label: "Notifikasi",
+      icon: "🔔",
+    },
   ],
 };
 

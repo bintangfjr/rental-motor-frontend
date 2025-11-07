@@ -6,7 +6,6 @@ import {
   UpdateSewaData,
   SelesaiSewaData,
 } from "../types/sewa";
-// HAPUS import convertToWIBISOString, convertDateToWIBISO - tidak perlu lagi
 
 // Interface untuk response selesai sewa
 export interface SelesaiSewaResponse {
@@ -33,6 +32,7 @@ interface AxiosErrorResponse {
       message?: string;
       error?: string;
     };
+    status?: number;
   };
 }
 
@@ -75,34 +75,18 @@ const getErrorMessage = (error: unknown, defaultMessage: string): string => {
   return defaultMessage;
 };
 
-// ✅ SOLUSI 1: HAPUS konversi WIB - kirim format simple langsung
+// ✅ SOLUSI: HAPUS konversi WIB - kirim format simple langsung
 const prepareCreateData = (data: CreateSewaData): CreateSewaData => {
-  // ✅ KIRIM FORMAT SIMPLE LANGSUNG: "2024-01-15T10:30"
   const preparedData = { ...data };
-
-  console.log("🕐 [SIMPLE FORMAT] Prepare create data:", {
-    tgl_sewa: preparedData.tgl_sewa,
-    tgl_kembali: preparedData.tgl_kembali,
-    strategy: "Simple format -> MariaDB WIB",
-  });
-
   return preparedData;
 };
 
-// ✅ SOLUSI 1: HAPUS konversi WIB untuk update
 const prepareUpdateData = (data: UpdateSewaData): UpdateSewaData => {
-  // ✅ KIRIM FORMAT SIMPLE LANGSUNG
   const preparedData = { ...data };
-
-  console.log("🕐 [SIMPLE FORMAT] Prepare update data:", {
-    tgl_kembali: preparedData.tgl_kembali,
-    strategy: "Simple format -> MariaDB WIB",
-  });
-
   return preparedData;
 };
 
-// ✅ SOLUSI 1: Untuk selesai sewa, tetap perlu konversi ke ISO format
+// ✅ Untuk selesai sewa, tetap perlu konversi ke ISO format
 const prepareSelesaiData = (data: SelesaiSewaData): SelesaiSewaData => {
   const preparedData = { ...data };
 
@@ -116,31 +100,53 @@ const prepareSelesaiData = (data: SelesaiSewaData): SelesaiSewaData => {
     preparedData.tgl_selesai = preparedData.tgl_selesai + ":00+07:00";
   }
 
-  console.log("🕐 [SIMPLE FORMAT] Prepare selesai data:", {
-    tgl_selesai: preparedData.tgl_selesai,
-    strategy: "Selesai needs ISO format",
-  });
-
   return preparedData;
 };
 
 export const sewaService = {
-  // Get all active sewas
+  // ✅ FIXED: Get only active sewas
   async getAll(): Promise<Sewa[]> {
     try {
-      const response = await api.get("/sewas");
+      const response = await api.get("/sewas?status=aktif");
       return getResponseData<Sewa[]>(response);
     } catch (error: unknown) {
       return handleServiceError(error, "Gagal mengambil data sewa");
     }
   },
 
-  // Get single sewa by ID
+  // ✅ NEW: Get completed sewas dari histories
+  async getCompleted(): Promise<any[]> {
+    try {
+      const response = await api.get("/histories");
+      return getResponseData<any[]>(response);
+    } catch (error: unknown) {
+      return handleServiceError(error, "Gagal mengambil data sewa selesai");
+    }
+  },
+
+  // ✅ NEW: Get all sewas with status filter
+  async getByStatus(status?: string): Promise<Sewa[]> {
+    try {
+      const url = status ? `/sewas?status=${status}` : "/sewas";
+      const response = await api.get(url);
+      return getResponseData<Sewa[]>(response);
+    } catch (error: unknown) {
+      return handleServiceError(error, "Gagal mengambil data sewa");
+    }
+  },
+
+  // ✅ FIXED: Get single sewa by ID dengan handling 404 yang baik
   async getById(id: number): Promise<Sewa> {
     try {
       const response = await api.get(`/sewas/${id}`);
       return getResponseData<Sewa>(response);
     } catch (error: unknown) {
+      // Handle 404 error khusus - data sudah dihapus karena selesai
+      if (this.isNotFoundError(error)) {
+        throw new Error(
+          `Sewa dengan ID ${id} sudah selesai dan tidak ditemukan`
+        );
+      }
       return handleServiceError(
         error,
         `Gagal mengambil data sewa dengan ID ${id}`
@@ -148,20 +154,25 @@ export const sewaService = {
     }
   },
 
+  // ✅ Helper untuk cek error 404
+  isNotFoundError(error: unknown): boolean {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as AxiosErrorResponse;
+      return axiosError.response?.status === 404;
+    }
+    return false;
+  },
+
   // Create new sewa - SIMPLE FORMAT
   async create(data: CreateSewaData): Promise<Sewa> {
     try {
       const preparedData = prepareCreateData(data);
-      console.log(
-        "🆕 Mengirim data create sewa (SIMPLE FORMAT):",
-        preparedData
-      );
+      console.log("🆕 Mengirim data create sewa:", preparedData);
 
       const response = await api.post("/sewas", preparedData);
       return getResponseData<Sewa>(response);
     } catch (error: unknown) {
       console.error("❌ Error creating sewa:", error);
-
       const errorMessage = getErrorMessage(error, "Gagal membuat sewa baru");
       throw new Error(errorMessage);
     }
@@ -171,15 +182,19 @@ export const sewaService = {
   async update(id: number, data: UpdateSewaData): Promise<Sewa> {
     try {
       const preparedData = prepareUpdateData(data);
-      console.log(
-        `🔄 Mengirim data update sewa ID ${id} (SIMPLE FORMAT):`,
-        preparedData
-      );
+      console.log(`🔄 Mengirim data update sewa ID ${id}:`, preparedData);
 
       const response = await api.put(`/sewas/${id}`, preparedData);
       return getResponseData<Sewa>(response);
     } catch (error: unknown) {
       console.error(`❌ Error updating sewa ID ${id}:`, error);
+
+      // Handle 404 error - data sudah dihapus
+      if (this.isNotFoundError(error)) {
+        throw new Error(
+          `Sewa dengan ID ${id} sudah selesai dan tidak dapat diupdate`
+        );
+      }
 
       const errorMessage = getErrorMessage(
         error,
@@ -189,7 +204,7 @@ export const sewaService = {
     }
   },
 
-  // Complete sewa - BUTUH FORMAT ISO
+  // ✅ FIXED: Complete sewa dengan handling redirect setelah sukses
   async selesai(
     id: number,
     data: SelesaiSewaData
@@ -211,12 +226,17 @@ export const sewaService = {
     }
   },
 
-  // Delete sewa
+  // ✅ FIXED: Delete sewa dengan handling 404
   async delete(id: number): Promise<{ message: string }> {
     try {
       const response = await api.delete(`/sewas/${id}`);
       return getResponseData<{ message: string }>(response);
     } catch (error: unknown) {
+      // Handle 404 error - data sudah dihapus
+      if (this.isNotFoundError(error)) {
+        throw new Error(`Sewa dengan ID ${id} sudah dihapus`);
+      }
+
       const errorMessage = getErrorMessage(
         error,
         `Gagal menghapus sewa ID ${id}`
@@ -258,19 +278,18 @@ export const sewaService = {
   // Extend sewa duration - SIMPLE FORMAT
   async extendSewa(id: number, newTglKembali: string): Promise<Sewa> {
     try {
-      // ✅ KIRIM FORMAT SIMPLE LANGSUNG
       const payload: UpdateSewaData = {
-        tgl_kembali: newTglKembali, // "2024-01-16T10:30" - SIMPLE FORMAT
+        tgl_kembali: newTglKembali,
       };
 
-      console.log(`📅 Memperpanjang sewa ID ${id} (SIMPLE FORMAT):`, payload);
+      console.log(`📅 Memperpanjang sewa ID ${id}:`, payload);
       return await this.update(id, payload);
     } catch (error: unknown) {
       return handleServiceError(error, `Gagal memperpanjang sewa ID ${id}`);
     }
   },
 
-  // Update catatan sewa
+  // ✅ FIXED: Update catatan sewa dengan handling 404
   async updateNotes(id: number, catatan_tambahan: string): Promise<Sewa> {
     try {
       const response = await api.put(`/sewas/${id}/notes`, {
@@ -280,11 +299,30 @@ export const sewaService = {
     } catch (error: unknown) {
       console.error(`❌ Error updating notes for sewa ID ${id}:`, error);
 
+      // Handle 404 error - data sudah dihapus
+      if (this.isNotFoundError(error)) {
+        throw new Error(
+          `Sewa dengan ID ${id} sudah selesai dan tidak dapat diupdate`
+        );
+      }
+
       const errorMessage = getErrorMessage(
         error,
         `Gagal memperbarui catatan sewa ID ${id}`
       );
       throw new Error(errorMessage);
+    }
+  },
+
+  // ✅ NEW: Get history by sewa_id
+  async getHistoryBySewaId(sewaId: number): Promise<any> {
+    try {
+      const response = await api.get(`/histories?sewa_id=${sewaId}`);
+      const histories = getResponseData<any[]>(response);
+      return histories.length > 0 ? histories[0] : null;
+    } catch (error: unknown) {
+      console.error(`Error getting history for sewa ID ${sewaId}:`, error);
+      return null;
     }
   },
 };

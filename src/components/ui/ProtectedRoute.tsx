@@ -8,7 +8,10 @@ interface ProtectedRouteProps {
   requireSuperAdmin?: boolean; // Jika hanya super admin yang boleh akses
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireSuperAdmin = false }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requireSuperAdmin = false,
+}) => {
   const { admin, isAuthenticated, isLoading } = useAuth();
 
   // Tampilkan loading sementara cek auth

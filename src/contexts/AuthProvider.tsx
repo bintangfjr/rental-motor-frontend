@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const setAuthData = (
     adminData: Admin,
     authToken: string,
-    rememberMe: boolean = false
+    rememberMe: boolean = false,
   ) => {
     setAdmin(adminData);
     setToken(authToken);

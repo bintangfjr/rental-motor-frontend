@@ -99,7 +99,7 @@ export const whatsappService = {
    * Memperbarui pengaturan WhatsApp
    */
   async updateSettings(
-    settings: UpdateSettingsData
+    settings: UpdateSettingsData,
   ): Promise<WhatsAppResponse> {
     try {
       const response = await api.put("/whatsapp/settings", settings);
@@ -139,7 +139,7 @@ export const whatsappService = {
   async triggerAutomaticNotifications(): Promise<WhatsAppResponse> {
     try {
       const response = await api.post(
-        "/whatsapp/trigger-automatic-notifications"
+        "/whatsapp/trigger-automatic-notifications",
       );
       return response.data;
     } catch (error: unknown) {
@@ -161,7 +161,7 @@ export const whatsappService = {
   async getAutomaticNotificationsStatus(): Promise<WhatsAppResponse> {
     try {
       const response = await api.get(
-        "/whatsapp/automatic-notifications-status"
+        "/whatsapp/automatic-notifications-status",
       );
       return response.data;
     } catch (error: unknown) {
@@ -181,7 +181,7 @@ export const whatsappService = {
    * Mengaktifkan/menonaktifkan notifikasi otomatis
    */
   async toggleAutomaticNotifications(
-    enabled: boolean
+    enabled: boolean,
   ): Promise<WhatsAppResponse> {
     try {
       const settings = { auto_notifications: enabled };

@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "../../utils/cn";
 import { Button } from "../ui/Button";
+import { useTheme } from "@/hooks/useTheme";
 
 interface FilterOption {
   value: string;
@@ -30,6 +31,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onReset,
   className,
 }) => {
+  const { isDark } = useTheme();
+
   const handleFilterChange = (filterId: string, value: string | string[]) => {
     const filter = filters.find((f) => f.id === filterId);
     if (filter) {
@@ -50,13 +53,36 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
   return (
     <div
-      className={cn("bg-white rounded-lg border border-gray-200", className)}
+      className={cn(
+        "rm-card rounded-lg border transition-colors duration-200",
+        isDark ? "border-dark-border" : "border-gray-200",
+        className
+      )}
     >
-      <div className="p-4 border-b border-gray-200">
+      <div
+        className={cn(
+          "p-4 border-b",
+          isDark ? "border-dark-border" : "border-gray-200"
+        )}
+      >
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">Filters</h3>
+          <h3
+            className={cn(
+              "text-lg font-medium",
+              isDark ? "text-dark-primary" : "text-gray-900"
+            )}
+          >
+            Filters
+          </h3>
           {selectedCount > 0 && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span
+              className={cn(
+                "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                isDark
+                  ? "bg-blue-900/20 text-blue-300"
+                  : "bg-blue-100 text-blue-800"
+              )}
+            >
               {selectedCount}
             </span>
           )}
@@ -67,9 +93,19 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         {filters.map((filter) => (
           <div
             key={filter.id}
-            className="border-b border-gray-200 last:border-b-0 pb-4 last:pb-0"
+            className={cn(
+              "border-b pb-4 last:border-b-0 last:pb-0",
+              isDark ? "border-dark-border" : "border-gray-200"
+            )}
           >
-            <h4 className="font-medium text-gray-900 mb-3">{filter.title}</h4>
+            <h4
+              className={cn(
+                "font-medium mb-3",
+                isDark ? "text-dark-primary" : "text-gray-900"
+              )}
+            >
+              {filter.title}
+            </h4>
 
             {filter.type === "checkbox" && (
               <div className="space-y-2">
@@ -87,12 +123,28 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                           : currentValue.filter((v) => v !== option.value);
                         handleFilterChange(filter.id, newValue);
                       }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className={cn(
+                        "rounded focus:ring-2 focus:ring-offset-2 transition-colors",
+                        isDark
+                          ? "border-dark-border bg-dark-secondary text-blue-500 focus:ring-blue-500 focus:ring-offset-dark-primary"
+                          : "border-gray-300 text-blue-600 focus:ring-blue-500"
+                      )}
                     />
-                    <span className="ml-2 text-sm text-gray-700">
+                    <span
+                      className={cn(
+                        "ml-2 text-sm",
+                        isDark ? "text-dark-secondary" : "text-gray-700"
+                      )}
+                    >
                       {option.label}
                       {option.count !== undefined && (
-                        <span className="text-gray-500 ml-1">
+                        <span
+                          className={
+                            isDark
+                              ? "text-dark-muted ml-1"
+                              : "text-gray-500 ml-1"
+                          }
+                        >
                           ({option.count})
                         </span>
                       )}
@@ -114,12 +166,28 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                       onChange={(e) =>
                         handleFilterChange(filter.id, e.target.value)
                       }
-                      className="border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className={cn(
+                        "focus:ring-2 focus:ring-offset-2 transition-colors",
+                        isDark
+                          ? "border-dark-border bg-dark-secondary text-blue-500 focus:ring-blue-500 focus:ring-offset-dark-primary"
+                          : "border-gray-300 text-blue-600 focus:ring-blue-500"
+                      )}
                     />
-                    <span className="ml-2 text-sm text-gray-700">
+                    <span
+                      className={cn(
+                        "ml-2 text-sm",
+                        isDark ? "text-dark-secondary" : "text-gray-700"
+                      )}
+                    >
                       {option.label}
                       {option.count !== undefined && (
-                        <span className="text-gray-500 ml-1">
+                        <span
+                          className={
+                            isDark
+                              ? "text-dark-muted ml-1"
+                              : "text-gray-500 ml-1"
+                          }
+                        >
                           ({option.count})
                         </span>
                       )}
@@ -132,7 +200,14 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         ))}
       </div>
 
-      <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+      <div
+        className={cn(
+          "p-4 border-t rounded-b-lg",
+          isDark
+            ? "bg-dark-secondary border-dark-border"
+            : "bg-gray-50 border-gray-200"
+        )}
+      >
         <div className="flex space-x-2">
           <Button
             variant="outline"

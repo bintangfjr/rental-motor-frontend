@@ -3,6 +3,8 @@ import {
   Penyewa,
   CreatePenyewaData,
   UpdatePenyewaData,
+  HistorySewa,
+  HistoryStats,
 } from "../types/penyewa";
 
 // Helper functions
@@ -93,6 +95,57 @@ export const penyewaService = {
     }
   },
 
+  // ✅ METHOD BARU: Get History Sewa by Penyewa ID
+  async getPenyewaHistory(penyewaId: number): Promise<HistorySewa[]> {
+    try {
+      const response = await api.get(`/penyewas/${penyewaId}/history`);
+      return response.data.data || [];
+    } catch (error) {
+      console.error(
+        `Error fetching history for penyewa ID ${penyewaId}:`,
+        error
+      );
+
+      // Fallback: return empty array instead of throwing error
+      // karena history tidak disimpan secara lokal
+      return [];
+    }
+  },
+
+  // ✅ METHOD BARU: Get Statistik History Sewa
+  async getPenyewaHistoryStats(penyewaId: number): Promise<HistoryStats> {
+    try {
+      const response = await api.get(`/penyewas/${penyewaId}/history/stats`);
+      return (
+        response.data.data || {
+          totalSewa: 0,
+          totalPendapatan: 0,
+          totalDenda: 0,
+          sewaSelesai: 0,
+          sewaDenda: 0,
+          keterlambatanTotal: 0,
+          rataRataDenda: 0,
+        }
+      );
+    } catch (error) {
+      console.error(
+        `Error fetching history stats for penyewa ID ${penyewaId}:`,
+        error
+      );
+
+      // Return default stats jika error
+      return {
+        totalSewa: 0,
+        totalPendapatan: 0,
+        totalDenda: 0,
+        sewaSelesai: 0,
+        sewaDenda: 0,
+        keterlambatanTotal: 0,
+        rataRataDenda: 0,
+      };
+    }
+  },
+
   // Create new penyewa
   async create(data: CreatePenyewaData): Promise<Penyewa> {
     try {
@@ -144,8 +197,9 @@ export const penyewaService = {
         no_whatsapp: data.no_whatsapp,
         foto_ktp: typeof data.foto_ktp === "string" ? data.foto_ktp : undefined,
         is_blacklisted: false,
-        created_at: new Date().toISOString(), // ✅ Convert to string
-        updated_at: new Date().toISOString(), // ✅ Convert to string
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sewas_aktif_count: 0,
         _isTemp: true,
       };
 
@@ -153,10 +207,7 @@ export const penyewaService = {
       const updatedPenyewas = [...existingPenyewas, tempPenyewa];
       saveLocalPenyewas(updatedPenyewas);
 
-      return handleServiceError(
-        error,
-        "Gagal menambahkan penyewa baru (data disimpan secara lokal sementara)"
-      );
+      return tempPenyewa;
     }
   },
 
@@ -224,17 +275,14 @@ export const penyewaService = {
           data.foto_ktp && typeof data.foto_ktp === "string"
             ? data.foto_ktp
             : existingPenyewas[index].foto_ktp,
-        updated_at: new Date().toISOString(), // ✅ Convert to string
+        updated_at: new Date().toISOString(),
         _needsSync: true,
       };
 
       existingPenyewas[index] = updatedPenyewa;
       saveLocalPenyewas(existingPenyewas);
 
-      return handleServiceError(
-        error,
-        "Gagal mengupdate data penyewa (perubahan disimpan secara lokal)"
-      );
+      return updatedPenyewa;
     }
   },
 
@@ -270,17 +318,14 @@ export const penyewaService = {
       const updatedPenyewa: Penyewa = {
         ...existingPenyewas[index],
         is_blacklisted: !existingPenyewas[index].is_blacklisted,
-        updated_at: new Date().toISOString(), // ✅ Convert to string
+        updated_at: new Date().toISOString(),
         _needsSync: true,
       };
 
       existingPenyewas[index] = updatedPenyewa;
       saveLocalPenyewas(existingPenyewas);
 
-      return handleServiceError(
-        error,
-        "Gagal mengubah status blacklist (perubahan disimpan secara lokal)"
-      );
+      return updatedPenyewa;
     }
   },
 
@@ -304,10 +349,7 @@ export const penyewaService = {
 
       saveLocalPenyewas(filteredPenyewas);
 
-      return handleServiceError(
-        error,
-        "Gagal menghapus penyewa (data dihapus secara lokal)"
-      );
+      throw new Error("Gagal menghapus penyewa (data dihapus secara lokal)");
     }
   },
 

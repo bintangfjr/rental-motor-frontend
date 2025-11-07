@@ -1,6 +1,6 @@
 // utils/date.ts - SOLUSI ROBUST untuk semua environment
 export const formatDateTimeForInputNoTZ = (
-  dateString: string | Date
+  dateString: string | Date,
 ): string => {
   if (!dateString) return "";
 
@@ -52,7 +52,7 @@ export const formatDateTimeForInputNoTZ = (
 
 // ✅ ALTERNATIVE METHOD 2: Using toLocaleString with timezone
 export const formatDateTimeForInputNoTZ_v2 = (
-  dateString: string | Date
+  dateString: string | Date,
 ): string => {
   if (!dateString) return "";
 

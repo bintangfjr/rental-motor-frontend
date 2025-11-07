@@ -1,7 +1,7 @@
-// components/sewa/SewaNotes.tsx
 import React, { useState } from "react";
 import { Button } from "../ui/Button";
-import { Textarea } from "../ui/Textarea"; // Import yang diperbarui
+import { Textarea } from "../ui/Textarea";
+import { useTheme } from "../../hooks/useTheme";
 
 interface SewaNotesProps {
   sewaId: number;
@@ -16,6 +16,7 @@ const SewaNotes: React.FC<SewaNotesProps> = ({
   onNoteUpdated,
   isCreateMode = false,
 }) => {
+  const { isDark } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [note, setNote] = useState(currentNote || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -91,13 +92,29 @@ const SewaNotes: React.FC<SewaNotesProps> = ({
     <div className="space-y-2">
       {currentNote ? (
         <div>
-          <p className="text-sm font-medium text-gray-700">Catatan:</p>
-          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded border">
+          <p
+            className={`text-sm font-medium ${
+              isDark ? "text-dark-primary" : "text-gray-700"
+            }`}
+          >
+            Catatan:
+          </p>
+          <p
+            className={`text-sm p-3 rounded border ${
+              isDark
+                ? "text-dark-secondary bg-dark-secondary/30 border-dark-border"
+                : "text-gray-600 bg-gray-50 border-gray-200"
+            }`}
+          >
             {currentNote}
           </p>
         </div>
       ) : (
-        <p className="text-sm text-gray-500">Belum ada catatan</p>
+        <p
+          className={`text-sm ${isDark ? "text-dark-muted" : "text-gray-500"}`}
+        >
+          Belum ada catatan
+        </p>
       )}
 
       <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>

@@ -19,22 +19,22 @@ export interface NotificationHelpers {
   info: (
     title: string,
     message: string,
-    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>
+    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>,
   ) => void;
   success: (
     title: string,
     message: string,
-    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>
+    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>,
   ) => void;
   warning: (
     title: string,
     message: string,
-    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>
+    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>,
   ) => void;
   error: (
     title: string,
     message: string,
-    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>
+    options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>,
   ) => void;
 }
 

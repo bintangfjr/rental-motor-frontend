@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+import { useTheme } from "../../hooks/useTheme";
 
 interface AdditionalCostItem {
   description: string;
@@ -31,10 +32,20 @@ const AdditionalCostsSection: React.FC<AdditionalCostsSectionProps> = ({
   onRemoveCost,
   onUpdateCost,
 }) => {
+  const { isDark } = useTheme();
+
   return (
-    <div className="border rounded-lg p-4">
+    <div
+      className={`rm-card border rounded-lg p-4 ${
+        isDark ? "bg-dark-card border-dark-border" : "bg-white border-gray-200"
+      }`}
+    >
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-gray-800">
+        <h3
+          className={`font-semibold ${
+            isDark ? "text-dark-primary" : "text-gray-800"
+          }`}
+        >
           Biaya Tambahan & Potongan
         </h3>
         <Button type="button" variant="outline" size="sm" onClick={onAddCost}>
@@ -43,7 +54,11 @@ const AdditionalCostsSection: React.FC<AdditionalCostsSectionProps> = ({
       </div>
 
       {additionalCosts.length === 0 ? (
-        <p className="text-gray-500 text-sm text-center py-4">
+        <p
+          className={`text-sm text-center py-4 ${
+            isDark ? "text-dark-muted" : "text-gray-500"
+          }`}
+        >
           Belum ada biaya tambahan atau potongan
         </p>
       ) : (
@@ -81,6 +96,8 @@ const AdditionalCostItemRow: React.FC<AdditionalCostItemRowProps> = ({
   onUpdate,
   onRemove,
 }) => {
+  const { isDark } = useTheme();
+
   // ✅ Handler untuk input change
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate(index, "description", e.target.value);
@@ -90,13 +107,19 @@ const AdditionalCostItemRow: React.FC<AdditionalCostItemRowProps> = ({
     onUpdate(index, "amount", Number(e.target.value));
   };
 
-  // ✅ PERBAIKAN: Handler untuk select change yang compatible dengan HTMLSelectElement
+  // ✅ Handler untuk select change yang compatible dengan HTMLSelectElement
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onUpdate(index, "type", e.target.value as "discount" | "additional");
   };
 
   return (
-    <div className="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 rounded">
+    <div
+      className={`grid grid-cols-12 gap-3 items-end p-3 rounded ${
+        isDark
+          ? "bg-dark-secondary/50 border-dark-border"
+          : "bg-gray-50 border-gray-200"
+      } border`}
+    >
       <div className="col-span-5">
         <Input
           label="Deskripsi"
@@ -128,7 +151,11 @@ const AdditionalCostItemRow: React.FC<AdditionalCostItemRowProps> = ({
           variant="outline"
           size="sm"
           onClick={() => onRemove(index)}
-          className="text-red-600 hover:text-red-700"
+          className={`${
+            isDark
+              ? "text-red-400 hover:text-red-300 hover:bg-red-900/20"
+              : "text-red-600 hover:text-red-700 hover:bg-red-50"
+          }`}
         >
           Hapus
         </Button>

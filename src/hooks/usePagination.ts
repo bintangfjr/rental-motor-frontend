@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from "react";
 
 interface UsePaginationOptions {
   totalItems: number;
@@ -55,10 +55,13 @@ export const usePagination = ({
     return pages;
   }, [currentPage, totalPages, maxPagesToShow]);
 
-  const goToPage = useCallback((page: number) => {
-    const validPage = Math.max(1, Math.min(page, totalPages));
-    setCurrentPage(validPage);
-  }, [totalPages]);
+  const goToPage = useCallback(
+    (page: number) => {
+      const validPage = Math.max(1, Math.min(page, totalPages));
+      setCurrentPage(validPage);
+    },
+    [totalPages],
+  );
 
   const nextPage = useCallback(() => {
     if (currentPage < totalPages) {
@@ -72,11 +75,14 @@ export const usePagination = ({
     }
   }, [currentPage]);
 
-  const getPageItems = useCallback(<T>(items: T[]): T[] => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return items.slice(startIndex, endIndex);
-  }, [currentPage, pageSize]);
+  const getPageItems = useCallback(
+    <T>(items: T[]): T[] => {
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      return items.slice(startIndex, endIndex);
+    },
+    [currentPage, pageSize],
+  );
 
   return {
     currentPage,
@@ -113,25 +119,30 @@ export const useApiPagination = ({
     totalPages: 0,
   });
 
-  const updatePagination = useCallback((data: { total: number; page?: number; pageSize?: number }) => {
-    const totalPages = Math.ceil(data.total / (data.pageSize || pagination.pageSize));
-    setPagination(prev => ({
-      page: data.page || prev.page,
-      pageSize: data.pageSize || prev.pageSize,
-      total: data.total,
-      totalPages,
-    }));
-  }, [pagination.pageSize]);
+  const updatePagination = useCallback(
+    (data: { total: number; page?: number; pageSize?: number }) => {
+      const totalPages = Math.ceil(
+        data.total / (data.pageSize || pagination.pageSize),
+      );
+      setPagination((prev) => ({
+        page: data.page || prev.page,
+        pageSize: data.pageSize || prev.pageSize,
+        total: data.total,
+        totalPages,
+      }));
+    },
+    [pagination.pageSize],
+  );
 
   const goToPage = useCallback((page: number) => {
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       page: Math.max(1, Math.min(page, prev.totalPages)),
     }));
   }, []);
 
   const setPageSize = useCallback((pageSize: number) => {
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       pageSize,
       page: 1, // Reset to first page when changing page size

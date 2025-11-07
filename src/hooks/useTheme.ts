@@ -1,22 +1,13 @@
 import { useContext } from "react";
-import { ThemeContext } from "../contexts/ThemeContext";
-import type { ThemeContextType } from "../contexts/ThemeContext";
+import { ThemeContext } from "../contexts/ThemeContextInstance"; // Import dari file instance
+import { ThemeContextValue } from "../contexts/ThemeContext.types";
 
-// Hook untuk menggunakan ThemeContext
-export const useTheme = (): ThemeContextType => {
+export const useTheme = (): ThemeContextValue => {
   const context = useContext(ThemeContext);
-  if (!context) {
+
+  if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
-  return context;
-};
 
-// Hook helper untuk mendapatkan class/theme
-export const useThemeClass = () => {
-  const { resolvedTheme } = useTheme();
-  return {
-    themeClass: resolvedTheme,
-    isDark: resolvedTheme === "dark",
-    isLight: resolvedTheme === "light",
-  };
+  return context;
 };

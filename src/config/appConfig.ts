@@ -1,4 +1,10 @@
-import { APP_CONFIG, API_CONFIG, FEATURE_FLAGS, STORAGE_KEYS, ROUTE_PATHS } from '../utils/constants';
+import {
+  APP_CONFIG,
+  API_CONFIG,
+  FEATURE_FLAGS,
+  STORAGE_KEYS,
+  ROUTE_PATHS,
+} from "../utils/constants";
 
 // Application Configuration
 export const appConfig = {
@@ -17,23 +23,23 @@ export const appConfig = {
     timeout: API_CONFIG.TIMEOUT,
     uploadMaxSize: API_CONFIG.UPLOAD_MAX_SIZE,
     retryAttempts: API_CONFIG.RETRY_ATTEMPTS,
-    
+
     // Endpoints
     endpoints: {
       auth: {
-        login: '/auth/login',
-        logout: '/auth/logout',
-        profile: '/auth/profile',
-        refresh: '/auth/refresh',
+        login: "/auth/login",
+        logout: "/auth/logout",
+        profile: "/auth/profile",
+        refresh: "/auth/refresh",
       },
-      motors: '/motors',
-      penyewas: '/penyewas',
-      sewas: '/sewas',
-      histories: '/histories',
-      reports: '/reports',
+      motors: "/motors",
+      penyewas: "/penyewas",
+      sewas: "/sewas",
+      histories: "/histories",
+      reports: "/reports",
       settings: {
-        profile: '/settings/profile',
-        password: '/settings/profile/password',
+        profile: "/settings/profile",
+        password: "/settings/profile/password",
       },
     },
   },
@@ -49,12 +55,12 @@ export const appConfig = {
   // UI Configuration
   ui: {
     theme: {
-      default: 'system' as 'light' | 'dark' | 'system',
+      default: "system" as "light" | "dark" | "system",
       storageKey: STORAGE_KEYS.THEME_PREFERENCE,
     },
     language: {
-      default: 'id',
-      supported: ['id', 'en'] as const,
+      default: "id",
+      supported: ["id", "en"] as const,
       storageKey: STORAGE_KEYS.LANGUAGE,
     },
     sidebar: {
@@ -73,8 +79,13 @@ export const appConfig = {
   notifications: {
     defaultDuration: 5000,
     maxVisible: 5,
-    positions: ['top-right', 'top-left', 'bottom-right', 'bottom-left'] as const,
-    defaultPosition: 'top-right' as const,
+    positions: [
+      "top-right",
+      "top-left",
+      "bottom-right",
+      "bottom-left",
+    ] as const,
+    defaultPosition: "top-right" as const,
   },
 
   // Form Configuration
@@ -84,7 +95,7 @@ export const appConfig = {
       form: 500,
     },
     validation: {
-      showErrors: 'touched' as 'always' | 'touched' | 'submit',
+      showErrors: "touched" as "always" | "touched" | "submit",
       scrollToError: true,
       focusFirstError: true,
     },
@@ -92,7 +103,7 @@ export const appConfig = {
 
   // Routing Configuration
   routing: {
-    basename: '/',
+    basename: "/",
     routes: ROUTE_PATHS,
     protectedRoutes: [
       ROUTE_PATHS.DASHBOARD,
@@ -105,9 +116,7 @@ export const appConfig = {
       ROUTE_PATHS.SETTINGS_SECURITY,
       ROUTE_PATHS.SETTINGS_NOTIFICATIONS,
     ],
-    publicRoutes: [
-      ROUTE_PATHS.LOGIN,
-    ],
+    publicRoutes: [ROUTE_PATHS.LOGIN],
   },
 
   // Business Rules Configuration
@@ -115,23 +124,23 @@ export const appConfig = {
     motor: {
       minYear: 1990,
       maxYear: new Date().getFullYear() + 1,
-      statuses: ['tersedia', 'disewa', 'perbaikan'] as const,
-      defaultStatus: 'tersedia' as const,
+      statuses: ["tersedia", "disewa", "perbaikan"] as const,
+      defaultStatus: "tersedia" as const,
     },
     sewa: {
-      statuses: ['Aktif', 'Selesai'] as const,
-      jaminanTypes: ['KTP', 'KK', 'SIM', 'Motor', 'Deposito'] as const,
-      pembayaranTypes: ['Cash', 'Transfer'] as const,
+      statuses: ["Aktif", "Selesai"] as const,
+      jaminanTypes: ["KTP", "KK", "SIM", "Motor", "Deposito"] as const,
+      pembayaranTypes: ["Cash", "Transfer"] as const,
       dendaRate: 0.2, // 20% dari harga per hari
       minDuration: 1, // 1 hari
       maxDuration: 365, // 1 tahun
     },
     penyewa: {
       blacklistReasons: [
-        'Telat bayar',
-        'Merusak motor',
-        'Melanggar peraturan',
-        'Lainnya',
+        "Telat bayar",
+        "Merusak motor",
+        "Melanggar peraturan",
+        "Lainnya",
       ] as const,
     },
     reports: {
@@ -157,22 +166,22 @@ export const appConfig = {
 
   // Localization Configuration
   localization: {
-    dateFormat: 'DD/MM/YYYY',
-    timeFormat: 'HH:mm',
-    datetimeFormat: 'DD/MM/YYYY HH:mm',
-    currency: 'IDR',
-    numberFormat: 'id-ID',
+    dateFormat: "DD/MM/YYYY",
+    timeFormat: "HH:mm",
+    datetimeFormat: "DD/MM/YYYY HH:mm",
+    currency: "IDR",
+    numberFormat: "id-ID",
   },
 } as const;
 
 // Environment-specific configuration
 export const getEnvConfig = () => {
-  const env = import.meta.env.MODE || 'development';
-  
+  const env = import.meta.env.MODE || "development";
+
   const envConfigs = {
     development: {
       api: {
-        baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+        baseUrl: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
         debug: true,
       },
       features: {
@@ -182,7 +191,8 @@ export const getEnvConfig = () => {
     },
     production: {
       api: {
-        baseUrl: import.meta.env.VITE_API_URL || 'https://api.rentalmotor.com/api',
+        baseUrl:
+          import.meta.env.VITE_API_URL || "https://api.rentalmotor.com/api",
         debug: false,
       },
       features: {
@@ -192,7 +202,7 @@ export const getEnvConfig = () => {
     },
     test: {
       api: {
-        baseUrl: 'http://localhost:3001/api',
+        baseUrl: "http://localhost:3001/api",
         debug: true,
       },
       features: {
@@ -205,7 +215,7 @@ export const getEnvConfig = () => {
   return {
     ...appConfig,
     env,
-    ...envConfigs[env as keyof typeof envConfigs] || envConfigs.development,
+    ...(envConfigs[env as keyof typeof envConfigs] || envConfigs.development),
   };
 };
 

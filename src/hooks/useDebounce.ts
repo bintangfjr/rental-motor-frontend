@@ -51,7 +51,7 @@ export const useApi = <T>() => {
         options.onFinally?.();
       }
     },
-    []
+    [],
   );
 
   const reset = useCallback(() => {
@@ -70,7 +70,7 @@ export const useApi = <T>() => {
 // Specialized hooks for common API patterns
 export const useGetApi = <T>(
   apiCall: () => Promise<T>,
-  dependencies: unknown[] = []
+  dependencies: unknown[] = [],
 ) => {
   const [state, setState] = useState<UseApiState<T>>({
     data: null,

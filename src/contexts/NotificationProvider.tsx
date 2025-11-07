@@ -21,12 +21,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       const newNotification = { ...notification, id };
       setNotifications((prev) => [...prev, newNotification]);
     },
-    []
+    [],
   );
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
+      prev.filter((notification) => notification.id !== id),
     );
   }, []);
 
@@ -39,7 +39,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     (
       title: string,
       message: string,
-      options?: Partial<Omit<Notification, "id" | "type" | "title" | "message">>
+      options?: Partial<
+        Omit<Notification, "id" | "type" | "title" | "message">
+      >,
     ) => {
       addNotification({ type, title, message, ...options });
     };

@@ -1,7 +1,7 @@
-// src/components/ui/Toast.tsx
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../../utils/cn";
+import { useTheme } from "@/hooks/useTheme";
 
 export type ToastType = "success" | "error" | "warning" | "info";
 
@@ -14,7 +14,14 @@ export interface ToastProps {
 }
 
 // Komponen ToastItem (internal)
-const ToastItem: React.FC<ToastProps> = ({ message, type, duration = 5000, onClose }) => {
+const ToastItem: React.FC<ToastProps> = ({
+  message,
+  type,
+  duration = 5000,
+  onClose,
+}) => {
+  const { isDark } = useTheme();
+
   useEffect(() => {
     const timer = setTimeout(onClose, duration);
     return () => clearTimeout(timer);
@@ -59,32 +66,71 @@ const ToastItem: React.FC<ToastProps> = ({ message, type, duration = 5000, onClo
     ),
   };
 
+  // Type classes untuk light dan dark mode
   const typeClasses = {
-    success: "bg-green-50 text-green-800 border-green-200",
-    error: "bg-red-50 text-red-800 border-red-200",
-    warning: "bg-yellow-50 text-yellow-800 border-yellow-200",
-    info: "bg-blue-50 text-blue-800 border-blue-200",
+    success: {
+      light: "bg-green-50 text-green-800 border-green-200",
+      dark: "bg-green-900/20 text-green-300 border-green-800",
+    },
+    error: {
+      light: "bg-red-50 text-red-800 border-red-200",
+      dark: "bg-red-900/20 text-red-300 border-red-800",
+    },
+    warning: {
+      light: "bg-yellow-50 text-yellow-800 border-yellow-200",
+      dark: "bg-yellow-900/20 text-yellow-300 border-yellow-800",
+    },
+    info: {
+      light: "bg-blue-50 text-blue-800 border-blue-200",
+      dark: "bg-blue-900/20 text-blue-300 border-blue-800",
+    },
   };
+
+  const currentTypeClass = isDark
+    ? typeClasses[type].dark
+    : typeClasses[type].light;
 
   return createPortal(
     <div
       className={cn(
-        "flex items-center p-4 mb-2 rounded-lg border shadow-lg transform transition-all duration-300 ease-in-out",
-        typeClasses[type]
+        "flex items-center p-4 mb-2 rounded-lg border shadow-lg transform transition-all duration-300 ease-in-out animate-fade-in-up",
+        currentTypeClass,
+        "backdrop-blur-sm" // Tambahkan blur effect untuk modern look
       )}
+      style={{
+        animation: "fade-in-up 0.3s ease-out",
+      }}
     >
-      <div className="mr-3">{typeIcons[type]}</div>
+      <div
+        className={`mr-3 flex-shrink-0 ${
+          isDark ? "text-opacity-90" : "text-opacity-80"
+        }`}
+      >
+        {typeIcons[type]}
+      </div>
       <div className="flex-1">
         <p className="text-sm font-medium">{message}</p>
       </div>
-      <button onClick={onClose} className="ml-4 text-gray-400 hover:text-gray-600">
+      <button
+        onClick={onClose}
+        className={`ml-4 flex-shrink-0 transition-colors ${
+          isDark
+            ? "text-gray-400 hover:text-gray-200"
+            : "text-gray-500 hover:text-gray-700"
+        }`}
+      >
         <svg
           className="w-4 h-4"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>,

@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Sewa } from "../../types/sewa";
 import { Button } from "../../components/ui/Button";
+import { useTheme } from "../../hooks/useTheme";
 
 interface SewaActionsProps {
   sewa: Sewa;
   onSelesai: () => void;
   onHapus: () => void;
-  onWhatsAppAction: (action: string) => void;
+  onWhatsAppAction: (action: "reminder" | "alert") => void; // ✅ Perbaiki type di sini
   isLewatTempo: boolean;
+  isProcessing?: boolean; // ✅ Tambah prop untuk loading state
 }
 
 const SewaActions: React.FC<SewaActionsProps> = ({
@@ -17,12 +19,16 @@ const SewaActions: React.FC<SewaActionsProps> = ({
   onHapus,
   onWhatsAppAction,
   isLewatTempo,
+  isProcessing = false,
 }) => {
+  const { isDark } = useTheme();
   const [whatsappDropdown, setWhatsappDropdown] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [sentAction, setSentAction] = useState<string | null>(null);
+  const [sentAction, setSentAction] = useState<"reminder" | "alert" | null>(
+    null
+  );
 
-  const handleWhatsAppClick = async (action: string) => {
+  const handleWhatsAppClick = async (action: "reminder" | "alert") => {
     setIsSending(true);
     setSentAction(action);
 
@@ -65,7 +71,12 @@ const SewaActions: React.FC<SewaActionsProps> = ({
           <Button
             variant="outline"
             onClick={() => setWhatsappDropdown(!whatsappDropdown)}
-            className="flex items-center gap-2"
+            disabled={isProcessing}
+            className={`flex items-center gap-2 ${
+              isDark
+                ? "border-dark-border text-dark-secondary hover:bg-dark-hover"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+            }`}
           >
             <span>WhatsApp</span>
             <svg
@@ -86,14 +97,23 @@ const SewaActions: React.FC<SewaActionsProps> = ({
           </Button>
 
           {whatsappDropdown && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-10 overflow-hidden">
+            <div
+              className={`absolute right-0 mt-2 w-64 rounded-lg shadow-lg border z-10 overflow-hidden ${
+                isDark
+                  ? "bg-dark-card border-dark-border"
+                  : "bg-white border-gray-200"
+              }`}
+            >
               <div className="p-2 space-y-1">
                 {/* Opsi Kirim Pesan Langsung */}
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={handleSendMessage}
-                  className="w-full justify-start text-sm font-normal h-auto py-2 px-3 hover:bg-gray-50"
+                  disabled={isProcessing}
+                  className={`w-full text-left text-sm font-normal h-auto py-2 px-3 rounded transition-colors ${
+                    isDark
+                      ? "text-dark-secondary hover:bg-dark-hover"
+                      : "text-gray-700 hover:bg-gray-50"
+                  } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <div className="flex items-center gap-2">
                     <svg
@@ -105,20 +125,22 @@ const SewaActions: React.FC<SewaActionsProps> = ({
                     </svg>
                     <span>Kirim Pesan ke {sewa.penyewa?.nama}</span>
                   </div>
-                </Button>
+                </button>
 
                 {/* Opsi Kirim Pengingat */}
                 {canSendReminder && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    animation={
-                      sentAction === "reminder" && isSending ? "send" : "none"
-                    }
-                    sent={sentAction === "reminder" && isSending}
+                  <button
                     onClick={() => handleWhatsAppClick("reminder")}
-                    disabled={isSending}
-                    className="w-full justify-start text-sm font-normal h-auto py-2 px-3 hover:bg-gray-50"
+                    disabled={isSending || isProcessing}
+                    className={`w-full text-left text-sm font-normal h-auto py-2 px-3 rounded transition-colors ${
+                      isDark
+                        ? "text-dark-secondary hover:bg-dark-hover"
+                        : "text-gray-700 hover:bg-gray-50"
+                    } ${
+                      isSending || isProcessing
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     <div className="flex items-center gap-2">
                       <svg
@@ -140,21 +162,23 @@ const SewaActions: React.FC<SewaActionsProps> = ({
                           : "Kirim Pengingat Otomatis"}
                       </span>
                     </div>
-                  </Button>
+                  </button>
                 )}
 
                 {/* Opsi Kirim Alert Admin */}
                 {canSendAlert && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    animation={
-                      sentAction === "alert" && isSending ? "send" : "none"
-                    }
-                    sent={sentAction === "alert" && isSending}
+                  <button
                     onClick={() => handleWhatsAppClick("alert")}
-                    disabled={isSending}
-                    className="w-full justify-start text-sm font-normal h-auto py-2 px-3 hover:bg-gray-50"
+                    disabled={isSending || isProcessing}
+                    className={`w-full text-left text-sm font-normal h-auto py-2 px-3 rounded transition-colors ${
+                      isDark
+                        ? "text-dark-secondary hover:bg-dark-hover"
+                        : "text-gray-700 hover:bg-gray-50"
+                    } ${
+                      isSending || isProcessing
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     <div className="flex items-center gap-2">
                       <svg
@@ -176,7 +200,7 @@ const SewaActions: React.FC<SewaActionsProps> = ({
                           : "Kirim Alert Admin"}
                       </span>
                     </div>
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
@@ -186,19 +210,28 @@ const SewaActions: React.FC<SewaActionsProps> = ({
 
       {/* Aksi Lainnya */}
       {sewa.status === "aktif" && (
-        <Button onClick={onSelesai} variant="success">
+        <Button
+          onClick={onSelesai}
+          variant="success"
+          disabled={isProcessing}
+          isLoading={isProcessing} // ✅ Gunakan isLoading bukan loading
+        >
           Selesai Sewa
         </Button>
       )}
 
       <Link to={`/sewas/${sewa.id}/edit`}>
-        <Button variant="outline">Edit</Button>
+        <Button variant="outline" disabled={isProcessing}>
+          Edit
+        </Button>
       </Link>
 
       <Button
         variant="danger"
         onClick={onHapus}
-        className="hover:scale-105 active:scale-95"
+        disabled={isProcessing}
+        isLoading={isProcessing} // ✅ Gunakan isLoading bukan loading
+        className="hover:scale-105 active:scale-95 transition-transform"
       >
         Hapus
       </Button>

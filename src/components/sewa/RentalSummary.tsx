@@ -1,5 +1,6 @@
 import React from "react";
 import { Sewa } from "../../types/sewa";
+import { useTheme } from "../../hooks/useTheme";
 
 interface AdditionalCostItem {
   description: string;
@@ -24,6 +25,8 @@ const RentalSummary: React.FC<RentalSummaryProps> = ({
   additionalCosts,
   currentSewa,
 }) => {
+  const { isDark } = useTheme();
+
   const calculateDurasi = () => {
     if (!tglSewa || !tglKembali) return 0;
     const start = new Date(tglSewa);
@@ -60,32 +63,65 @@ const RentalSummary: React.FC<RentalSummaryProps> = ({
   const additionalCostsTotal = calculateAdditionalCostsTotal();
   const totalHarga = calculateTotalHarga();
 
-  // ✅ Debug log untuk memeriksa data
-  console.log("Additional Costs:", additionalCosts);
-  console.log("Additional Costs Total:", additionalCostsTotal);
-  console.log("Base Harga:", baseHarga);
-  console.log("Total Harga:", totalHarga);
-
   return (
-    <div className="bg-blue-50 p-4 rounded-lg">
-      <h3 className="font-semibold text-blue-800 mb-2">Rincian Sewa</h3>
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <span>Durasi:</span>
-        <span className="font-medium">{durasi} hari</span>
+    <div
+      className={`rm-card p-4 rounded-lg ${
+        isDark ? "bg-blue-900/20 border-blue-800" : "bg-blue-50 border-blue-200"
+      } border`}
+    >
+      <h3
+        className={`font-semibold mb-2 ${
+          isDark ? "text-blue-300" : "text-blue-800"
+        }`}
+      >
+        Rincian Sewa
+      </h3>
 
-        <span>Harga per Hari:</span>
-        <span className="font-medium">
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <span className={isDark ? "text-dark-secondary" : "text-gray-600"}>
+          Durasi:
+        </span>
+        <span
+          className={`font-medium ${
+            isDark ? "text-dark-primary" : "text-gray-900"
+          }`}
+        >
+          {durasi} hari
+        </span>
+
+        <span className={isDark ? "text-dark-secondary" : "text-gray-600"}>
+          Harga per Hari:
+        </span>
+        <span
+          className={`font-medium ${
+            isDark ? "text-dark-primary" : "text-gray-900"
+          }`}
+        >
           Rp {selectedMotor?.harga?.toLocaleString()}
         </span>
 
-        <span>Biaya Dasar ({durasi} hari):</span>
-        <span className="font-medium">Rp {baseHarga.toLocaleString()}</span>
+        <span className={isDark ? "text-dark-secondary" : "text-gray-600"}>
+          Biaya Dasar ({durasi} hari):
+        </span>
+        <span
+          className={`font-medium ${
+            isDark ? "text-dark-primary" : "text-gray-900"
+          }`}
+        >
+          Rp {baseHarga.toLocaleString()}
+        </span>
 
         {/* ✅ Breakdown Additional Costs */}
         {additionalCosts.map((cost, index) => {
           const isDiscount = cost.type === "discount";
           const sign = isDiscount ? "-" : "+";
-          const textColor = isDiscount ? "text-green-600" : "text-blue-600";
+          const textColor = isDiscount
+            ? isDark
+              ? "text-green-400"
+              : "text-green-600"
+            : isDark
+            ? "text-blue-400"
+            : "text-blue-600";
 
           return (
             <React.Fragment key={index}>
@@ -102,10 +138,22 @@ const RentalSummary: React.FC<RentalSummaryProps> = ({
         {/* ✅ Total Additional Costs */}
         {additionalCosts.length > 0 && (
           <>
-            <span className="font-medium">Total Biaya Tambahan/Potongan:</span>
             <span
               className={`font-medium ${
-                additionalCostsTotal >= 0 ? "text-blue-600" : "text-green-600"
+                isDark ? "text-dark-primary" : "text-gray-900"
+              }`}
+            >
+              Total Biaya Tambahan/Potongan:
+            </span>
+            <span
+              className={`font-medium ${
+                additionalCostsTotal >= 0
+                  ? isDark
+                    ? "text-blue-400"
+                    : "text-blue-600"
+                  : isDark
+                  ? "text-green-400"
+                  : "text-green-600"
               }`}
             >
               {additionalCostsTotal >= 0 ? "+" : ""}Rp{" "}
@@ -114,24 +162,50 @@ const RentalSummary: React.FC<RentalSummaryProps> = ({
           </>
         )}
 
-        <span className="font-semibold border-t pt-1">Total Harga:</span>
-        <span className="font-semibold text-green-600 text-lg border-t pt-1">
+        <span
+          className={`font-semibold border-t pt-1 ${
+            isDark
+              ? "text-dark-primary border-dark-border"
+              : "text-gray-900 border-gray-200"
+          }`}
+        >
+          Total Harga:
+        </span>
+        <span
+          className={`font-semibold text-lg border-t pt-1 ${
+            isDark
+              ? "text-green-400 border-dark-border"
+              : "text-green-600 border-gray-200"
+          }`}
+        >
           Rp {totalHarga.toLocaleString()}
         </span>
 
         {/* ✅ Perbandingan Harga (untuk edit mode) */}
         {currentSewa && totalHarga !== currentSewa.total_harga && (
           <>
-            <span className="text-gray-500">Harga Sebelumnya:</span>
-            <span className="text-gray-500 line-through">
+            <span className={isDark ? "text-dark-muted" : "text-gray-500"}>
+              Harga Sebelumnya:
+            </span>
+            <span
+              className={`line-through ${
+                isDark ? "text-dark-muted" : "text-gray-500"
+              }`}
+            >
               Rp {currentSewa.total_harga.toLocaleString()}
             </span>
 
-            <span className="text-blue-600">Selisih:</span>
+            <span className={isDark ? "text-blue-400" : "text-blue-600"}>
+              Selisih:
+            </span>
             <span
               className={`font-medium ${
                 totalHarga > currentSewa.total_harga
-                  ? "text-green-600"
+                  ? isDark
+                    ? "text-green-400"
+                    : "text-green-600"
+                  : isDark
+                  ? "text-red-400"
                   : "text-red-600"
               }`}
             >
@@ -145,7 +219,13 @@ const RentalSummary: React.FC<RentalSummaryProps> = ({
 
       {/* ✅ Debug Info (bisa dihapus setelah testing) */}
       {import.meta.env.MODE === "development" && (
-        <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+        <div
+          className={`mt-4 p-2 rounded text-xs ${
+            isDark
+              ? "bg-dark-secondary/30 text-dark-muted"
+              : "bg-gray-100 text-gray-600"
+          }`}
+        >
           <p>
             <strong>Debug Info:</strong>
           </p>

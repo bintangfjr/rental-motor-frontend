@@ -1,6 +1,7 @@
 // src/components/ui/Card.tsx
 import React from "react";
 import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme";
 
 interface CardProps {
   children: React.ReactNode;
@@ -21,6 +22,8 @@ export const Card: React.FC<CardProps> = ({
   shadow = "md",
   rounded = "lg",
 }) => {
+  const { theme } = useTheme();
+
   // Map padding sizes
   const paddingClasses = {
     none: "p-0",
@@ -45,16 +48,21 @@ export const Card: React.FC<CardProps> = ({
     lg: "rounded-lg",
   };
 
+  // Dynamic theme-based classes
+  const themeClasses =
+    theme === "dark"
+      ? "bg-[#1E293B] border-[#2D3B50] text-gray-200" // dark mode
+      : "bg-white border-gray-100 text-gray-700"; // light mode
+
   return (
     <div
       className={cn(
-        "bg-white border border-gray-100",
+        themeClasses,
+        "transition-all duration-300 hover:shadow-md",
+        "w-full max-w-full border",
         paddingClasses[padding],
         shadowClasses[shadow],
         roundedClasses[rounded],
-        "transition-all duration-200 hover:shadow-md", // subtle hover effect
-        "w-full", // ensure full width on mobile
-        "max-w-full", // prevent overflow
         className
       )}
     >
@@ -62,30 +70,23 @@ export const Card: React.FC<CardProps> = ({
       {(title || actions) && (
         <div
           className={cn(
-            "border-b border-gray-200 pb-3 mb-4",
-            "flex flex-col sm:flex-row sm:items-center sm:justify-between",
-            "gap-3 sm:gap-0" // gap for mobile, no gap for desktop
+            "border-b pb-3 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between",
+            theme === "dark" ? "border-[#2D3B50]" : "border-gray-200"
           )}
         >
           {title && (
             <h3
               className={cn(
-                "text-lg font-semibold text-gray-900",
-                "text-center sm:text-left", // center on mobile, left align on desktop
-                "break-words" // prevent long words from breaking layout
+                "text-lg font-semibold break-words",
+                theme === "dark" ? "text-gray-100" : "text-gray-900",
+                "text-center sm:text-left"
               )}
             >
               {title}
             </h3>
           )}
           {actions && (
-            <div
-              className={cn(
-                "flex flex-wrap gap-2",
-                "justify-center sm:justify-end", // center on mobile, right align on desktop
-                "w-full sm:w-auto" // full width on mobile, auto on desktop
-              )}
-            >
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-end w-full sm:w-auto">
               {actions}
             </div>
           )}
@@ -95,9 +96,8 @@ export const Card: React.FC<CardProps> = ({
       {/* Content section */}
       <div
         className={cn(
-          "text-gray-700",
-          "leading-relaxed",
-          "overflow-hidden" // prevent content overflow
+          "leading-relaxed overflow-hidden",
+          theme === "dark" ? "text-gray-200" : "text-gray-700"
         )}
       >
         {children}
@@ -106,26 +106,20 @@ export const Card: React.FC<CardProps> = ({
   );
 };
 
-// Optional: Sub-components for better structure
+// Sub-components
 interface CardHeaderProps {
   children: React.ReactNode;
   className?: string;
 }
-
 export const CardHeader: React.FC<CardHeaderProps> = ({
   children,
   className,
-}) => (
-  <div className={cn("border-b border-gray-200 pb-4 mb-4", className)}>
-    {children}
-  </div>
-);
+}) => <div className={cn("border-b pb-4 mb-4", className)}>{children}</div>;
 
 interface CardContentProps {
   children: React.ReactNode;
   className?: string;
 }
-
 export const CardContent: React.FC<CardContentProps> = ({
   children,
   className,
@@ -135,12 +129,7 @@ interface CardFooterProps {
   children: React.ReactNode;
   className?: string;
 }
-
 export const CardFooter: React.FC<CardFooterProps> = ({
   children,
   className,
-}) => (
-  <div className={cn("border-t border-gray-200 pt-4 mt-4", className)}>
-    {children}
-  </div>
-);
+}) => <div className={cn("border-t pt-4 mt-4", className)}>{children}</div>;

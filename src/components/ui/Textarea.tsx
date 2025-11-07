@@ -1,5 +1,6 @@
 import React from "react";
-import { cn } from "../../utils/cn"; // Pastikan path ini sesuai
+import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme"; // Import useTheme hook
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -27,22 +28,39 @@ export const Textarea: React.FC<TextareaProps> = ({
   id,
   ...props
 }) => {
+  const { isDark } = useTheme(); // Get current theme
   const textareaId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
   // ✅ Base classes
   const baseClasses =
-    "block rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 resize-y";
+    "block rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 resize-y border";
 
-  // ✅ Variant classes
+  // ✅ Variant classes untuk light dan dark mode
   const variantClasses = {
-    default:
-      "border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-500",
-    outline:
-      "border-2 border-gray-200 bg-transparent text-gray-900 focus:border-blue-500 focus:ring-blue-500",
-    filled:
-      "border-transparent bg-gray-100 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-blue-500",
-    minimal:
+    default: cn(
+      "bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-500",
+      isDark
+        ? "border-dark-border bg-dark-secondary text-dark-primary focus:border-brand-blue focus:ring-brand-blue"
+        : "border-gray-300"
+    ),
+    outline: cn(
+      "border-2 bg-transparent text-gray-900 focus:border-blue-500 focus:ring-blue-500",
+      isDark
+        ? "border-dark-border text-dark-primary focus:border-brand-blue focus:ring-brand-blue"
+        : "border-gray-200"
+    ),
+    filled: cn(
+      "border-transparent text-gray-900 focus:border-blue-500 focus:ring-blue-500",
+      isDark
+        ? "bg-dark-accent text-dark-primary focus:bg-dark-secondary focus:border-brand-blue"
+        : "bg-gray-100 focus:bg-white focus:border-blue-500"
+    ),
+    minimal: cn(
       "border-0 bg-transparent text-gray-900 focus:ring-2 focus:ring-blue-500 shadow-none",
+      isDark
+        ? "text-dark-primary focus:ring-brand-blue"
+        : "text-gray-900 focus:ring-blue-500"
+    ),
   };
 
   // ✅ Size classes
@@ -52,17 +70,57 @@ export const Textarea: React.FC<TextareaProps> = ({
     lg: "px-4 py-3 text-base min-h-[100px]",
   };
 
-  // ✅ State classes
+  // ✅ State classes untuk light dan dark mode
   const stateClasses = cn(
-    error && "border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50",
+    // Error state
+    error &&
+      cn(
+        "border-red-500 focus:border-red-500 focus:ring-red-500",
+        isDark ? "bg-red-900/20 text-red-300" : "bg-red-50 text-red-900"
+      ),
+    // Success state
     success &&
-      "border-green-500 focus:border-green-500 focus:ring-green-500 bg-green-50",
-    disabled && "opacity-50 cursor-not-allowed bg-gray-100",
+      cn(
+        "border-green-500 focus:border-green-500 focus:ring-green-500",
+        isDark ? "bg-green-900/20 text-green-300" : "bg-green-50 text-green-900"
+      ),
+    // Disabled state
+    disabled &&
+      cn(
+        "opacity-50 cursor-not-allowed",
+        isDark ? "bg-dark-accent text-dark-muted" : "bg-gray-100 text-gray-500"
+      ),
+    // Loading state
     loading && "cursor-wait"
   );
 
   // ✅ Width classes
   const widthClass = fullWidth ? "w-full" : "w-auto";
+
+  // ✅ Label color classes untuk dark mode
+  const labelColorClasses = cn(
+    "block font-medium transition-colors duration-200",
+    error
+      ? isDark
+        ? "text-red-400"
+        : "text-red-700"
+      : isDark
+      ? "text-dark-secondary"
+      : "text-gray-700",
+    disabled && (isDark ? "text-dark-muted" : "text-gray-400")
+  );
+
+  // ✅ Helper text color classes untuk dark mode
+  const helperTextColorClasses = cn(
+    "text-sm transition-colors duration-200",
+    error
+      ? isDark
+        ? "text-red-400"
+        : "text-red-600"
+      : isDark
+      ? "text-dark-muted"
+      : "text-gray-500"
+  );
 
   return (
     <div className={cn("space-y-2", !fullWidth && "inline-block")}>
@@ -71,16 +129,20 @@ export const Textarea: React.FC<TextareaProps> = ({
         <label
           htmlFor={textareaId}
           className={cn(
-            "block font-medium transition-colors duration-200",
+            labelColorClasses,
             size === "sm" && "text-xs",
             size === "md" && "text-sm",
-            size === "lg" && "text-base",
-            error ? "text-red-700" : "text-gray-700",
-            disabled && "text-gray-400"
+            size === "lg" && "text-base"
           )}
         >
           {label}
-          {props.required && <span className="text-red-500 ml-1">*</span>}
+          {props.required && (
+            <span
+              className={isDark ? "text-red-400 ml-1" : "text-red-500 ml-1"}
+            >
+              *
+            </span>
+          )}
         </label>
       )}
 
@@ -95,6 +157,8 @@ export const Textarea: React.FC<TextareaProps> = ({
             sizeClasses[size],
             stateClasses,
             widthClass,
+            // Placeholder color untuk dark mode
+            isDark ? "placeholder-dark-muted" : "placeholder-gray-400",
             className
           )}
           {...props}
@@ -106,7 +170,13 @@ export const Textarea: React.FC<TextareaProps> = ({
             <div
               className={cn(
                 "animate-spin rounded-full border-2 border-current border-t-transparent",
-                error ? "text-red-500" : "text-gray-400",
+                error
+                  ? isDark
+                    ? "text-red-400"
+                    : "text-red-500"
+                  : isDark
+                  ? "text-dark-muted"
+                  : "text-gray-400",
                 size === "sm" ? "h-3 w-3" : "h-4 w-4"
               )}
             />
@@ -116,19 +186,17 @@ export const Textarea: React.FC<TextareaProps> = ({
 
       {/* ✅ Helper Text & Error Message */}
       {(error || helperText) && (
-        <p
-          className={cn(
-            "text-sm transition-colors duration-200",
-            error ? "text-red-600" : "text-gray-500"
-          )}
-        >
-          {error || helperText}
-        </p>
+        <p className={helperTextColorClasses}>{error || helperText}</p>
       )}
 
       {/* ✅ Success Message */}
       {success && !error && (
-        <p className="text-sm text-green-600 flex items-center gap-1">
+        <p
+          className={cn(
+            "text-sm flex items-center gap-1",
+            isDark ? "text-green-400" : "text-green-600"
+          )}
+        >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"

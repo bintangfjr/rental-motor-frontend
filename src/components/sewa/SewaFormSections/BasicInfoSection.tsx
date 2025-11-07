@@ -7,6 +7,7 @@ import {
 } from "react-hook-form";
 import { CheckboxGroup } from "../../ui/CheckboxGroup";
 import DateTimeInput from "./DateTimeInput";
+import { useTheme } from "../../../hooks/useTheme";
 
 // ✅ Define proper types
 interface Motor {
@@ -93,6 +94,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   disabled = false,
   placeholder = "Ketik untuk mencari...",
 }) => {
+  const { isDark } = useTheme();
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -139,7 +141,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label
+        className={`block text-sm font-medium mb-1 ${
+          isDark ? "text-dark-secondary" : "text-gray-700"
+        }`}
+      >
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
@@ -153,19 +159,41 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           onBlur={handleInputBlur}
           disabled={disabled}
           placeholder={placeholder}
-          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-            error ? "border-red-500" : "border-gray-300"
-          } ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+            error
+              ? "border-red-500"
+              : isDark
+              ? "border-dark-border bg-dark-secondary text-dark-primary"
+              : "border-gray-300 bg-white text-gray-900"
+          } ${
+            disabled
+              ? isDark
+                ? "bg-dark-secondary/50 cursor-not-allowed"
+                : "bg-gray-100 cursor-not-allowed"
+              : ""
+          }`}
         />
 
         {isOpen && !disabled && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+          <div
+            className={`absolute z-10 w-full mt-1 border rounded-md shadow-lg max-h-60 overflow-auto ${
+              isDark
+                ? "bg-dark-card border-dark-border"
+                : "bg-white border-gray-300"
+            }`}
+          >
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className={`px-3 py-2 cursor-pointer hover:bg-blue-50 ${
-                    option.value === value ? "bg-blue-100" : ""
+                  className={`px-3 py-2 cursor-pointer transition-colors ${
+                    option.value === value
+                      ? isDark
+                        ? "bg-blue-900/30 text-blue-300"
+                        : "bg-blue-100 text-blue-900"
+                      : isDark
+                      ? "hover:bg-dark-hover text-dark-primary"
+                      : "hover:bg-blue-50 text-gray-900"
                   }`}
                   onMouseDown={() =>
                     handleOptionClick(option.value, option.label)
@@ -175,7 +203,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 </div>
               ))
             ) : (
-              <div className="px-3 py-2 text-gray-500">
+              <div
+                className={`px-3 py-2 ${
+                  isDark ? "text-dark-muted" : "text-gray-500"
+                }`}
+              >
                 Tidak ada hasil ditemukan
               </div>
             )}
@@ -198,6 +230,8 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
   getMinDateTime,
   getMinReturnDateTime,
 }) => {
+  const { isDark } = useTheme();
+
   const motorOptions = motors
     .filter(
       (motor) => motor.status === "tersedia" || motor.id === sewa?.motor_id
@@ -275,15 +309,23 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
         disabledNote={sewa ? " - Dapat diubah untuk menyesuaikan durasi" : ""}
       />
 
-      {/* Tetap menggunakan Select biasa untuk Pembayaran karena opsi sedikit */}
+      {/* Metode Pembayaran */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          className={`block text-sm font-medium mb-1 ${
+            isDark ? "text-dark-secondary" : "text-gray-700"
+          }`}
+        >
           Metode Pembayaran
         </label>
         <select
           {...register("pembayaran")}
-          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-            errors.pembayaran ? "border-red-500" : "border-gray-300"
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+            errors.pembayaran
+              ? "border-red-500"
+              : isDark
+              ? "border-dark-border bg-dark-secondary text-dark-primary"
+              : "border-gray-300 bg-white text-gray-900"
           }`}
         >
           <option value="">Pilih metode pembayaran</option>
@@ -300,6 +342,10 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
         )}
       </div>
 
+      {/* Placeholder untuk alignment */}
+      <div></div>
+
+      {/* Jaminan */}
       <div className="md:col-span-2">
         <Controller
           name="jaminan"

@@ -1,4 +1,3 @@
-// components/sewa/SewaForm.tsx
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,8 +11,9 @@ import FormActions from "./SewaFormSections/FormActions";
 import EditModeInfo from "./SewaFormSections/EditModeInfo";
 import {
   formatDateTimeForInputNoTZ,
-  formatWIBToUTCForBackend, // ✅ Import fungsi baru
+  formatWIBToUTCForBackend,
 } from "../../utils/date";
+import { useTheme } from "../../hooks/useTheme";
 
 // ✅ Schema tetap sama
 const sewaSchema = z.object({
@@ -68,6 +68,7 @@ const SewaForm: React.FC<SewaFormProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const { isDark } = useTheme();
   const {
     register,
     handleSubmit,
@@ -81,7 +82,6 @@ const SewaForm: React.FC<SewaFormProps> = ({
       ? {
           motor_id: sewa.motor_id,
           penyewa_id: sewa.penyewa_id,
-          // ✅ UTC dari database dikonversi ke WIB untuk ditampilkan
           tgl_sewa: formatDateTimeForInputNoTZ(sewa.tgl_sewa as string),
           tgl_kembali: formatDateTimeForInputNoTZ(sewa.tgl_kembali as string),
           jaminan: Array.isArray(sewa.jaminan)
@@ -115,7 +115,7 @@ const SewaForm: React.FC<SewaFormProps> = ({
     if (sewa) {
       // ✅ UPDATE MODE - KONVERSI WIB ke UTC sebelum kirim ke backend
       const updateData: UpdateSewaData = {
-        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali), // WIB -> UTC
+        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali),
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
@@ -129,8 +129,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
       const createData: CreateSewaData = {
         motor_id: data.motor_id,
         penyewa_id: data.penyewa_id,
-        tgl_sewa: formatWIBToUTCForBackend(data.tgl_sewa), // WIB -> UTC
-        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali), // WIB -> UTC
+        tgl_sewa: formatWIBToUTCForBackend(data.tgl_sewa),
+        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali),
         jaminan: data.jaminan,
         pembayaran: data.pembayaran,
         additional_costs: data.additional_costs,
@@ -144,7 +144,6 @@ const SewaForm: React.FC<SewaFormProps> = ({
   };
 
   const getMinDateTime = () => {
-    // Untuk create mode, gunakan waktu WIB saat ini
     const now = new Date();
     const nowWIB = new Date(now.getTime() + 7 * 60 * 60 * 1000);
     return nowWIB.toISOString().slice(0, 16);
@@ -153,7 +152,6 @@ const SewaForm: React.FC<SewaFormProps> = ({
   const getMinReturnDateTime = () => {
     if (!watchTglSewa) return getMinDateTime();
 
-    // Tambah 1 jam dari tanggal sewa (dalam WIB)
     const minDate = new Date(watchTglSewa);
     minDate.setHours(minDate.getHours() + 1);
     return minDate.toISOString().slice(0, 16);
@@ -161,11 +159,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
 
   const selectedMotor = motors.find((m) => m.id === watchIdMotor);
 
-  // ✅ Sinkronisasi backend -> input ketika edit
   useEffect(() => {
     if (sewa) {
-      // Data dari backend (UTC) sudah dikonversi ke WIB di defaultValues
-      // Tidak perlu setValue lagi di sini
       console.log("🕐 Tanggal sewa dari backend:", sewa.tgl_sewa);
       console.log(
         "🕐 Tanggal sewa setelah konversi WIB:",
@@ -187,8 +182,18 @@ const SewaForm: React.FC<SewaFormProps> = ({
         getMinReturnDateTime={getMinReturnDateTime}
       />
 
-      <div className="border rounded-lg p-4">
-        <h3 className="font-semibold text-gray-800 mb-3">Catatan Tambahan</h3>
+      <div
+        className={`rm-card p-4 ${
+          isDark ? "border-dark-border" : "border-gray-200"
+        }`}
+      >
+        <h3
+          className={`font-semibold mb-3 ${
+            isDark ? "text-dark-primary" : "text-gray-800"
+          }`}
+        >
+          Catatan Tambahan
+        </h3>
         <SewaNotes
           sewaId={sewa?.id || 0}
           currentNote={watchCatatanTambahan}

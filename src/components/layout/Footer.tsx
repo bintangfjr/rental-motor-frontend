@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme";
 
 interface FooterProps {
   simplified?: boolean;
@@ -13,6 +14,7 @@ export const Footer: React.FC<FooterProps> = ({
   screenSize = "desktop",
 }) => {
   const currentYear = new Date().getFullYear();
+  const { isDark } = useTheme();
 
   // Responsive padding berdasarkan screen size
   const getFooterPadding = () => {
@@ -26,15 +28,42 @@ export const Footer: React.FC<FooterProps> = ({
     }
   };
 
+  // Base styles untuk dark theme
+  const footerBaseStyles = isDark
+    ? "bg-dark-secondary border-dark-border"
+    : "bg-white border-gray-200";
+
+  const textPrimaryStyles = isDark ? "text-dark-primary" : "text-gray-900";
+
+  const textSecondaryStyles = isDark ? "text-dark-secondary" : "text-gray-600";
+
+  const textMutedStyles = isDark ? "text-dark-muted" : "text-gray-500";
+
+  const textExtraMutedStyles = isDark ? "text-dark-muted/80" : "text-gray-400";
+
+  const borderStyles = isDark ? "border-dark-border" : "border-gray-200";
+
+  const hoverStyles = isDark ? "hover:text-brand-blue" : "hover:text-blue-600";
+
   if (simplified) {
     return (
-      <footer className={cn("bg-white border-t border-gray-200", className)}>
+      <footer className={cn(`border-t ${footerBaseStyles}`, className)}>
         <div className={cn("mx-auto max-w-7xl", getFooterPadding())}>
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
-            <p className="text-sm text-gray-500 text-center sm:text-left">
+            <p
+              className={cn(
+                "text-sm text-center sm:text-left",
+                textMutedStyles
+              )}
+            >
               © {currentYear} Rental Motor. All rights reserved.
             </p>
-            <div className="flex items-center space-x-4 text-xs text-gray-400">
+            <div
+              className={cn(
+                "flex items-center space-x-4 text-xs",
+                textExtraMutedStyles
+              )}
+            >
               <span>v1.0.0</span>
               <span>•</span>
               <span>Powered by React & NestJS</span>
@@ -46,7 +75,7 @@ export const Footer: React.FC<FooterProps> = ({
   }
 
   return (
-    <footer className={cn("bg-white border-t border-gray-200", className)}>
+    <footer className={cn(`border-t ${footerBaseStyles}`, className)}>
       <div className={cn("mx-auto max-w-7xl", getFooterPadding())}>
         <div
           className={cn(
@@ -65,7 +94,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="flex items-center space-x-3 mb-4">
               <div
                 className={cn(
-                  "bg-blue-600 rounded-lg flex items-center justify-center",
+                  "bg-brand-blue rounded-lg flex items-center justify-center",
                   screenSize === "2xl" ? "w-10 h-10" : "w-8 h-8"
                 )}
               >
@@ -80,7 +109,8 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
               <h3
                 className={cn(
-                  "font-semibold text-gray-900",
+                  "font-semibold",
+                  textPrimaryStyles,
                   screenSize === "2xl" ? "text-xl" : "text-lg"
                 )}
               >
@@ -89,15 +119,24 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
             <p
               className={cn(
-                "text-gray-600 mb-4 max-w-md",
+                "mb-4 max-w-md",
+                textSecondaryStyles,
                 screenSize === "2xl" ? "text-base" : "text-sm"
               )}
             >
               Penyedia layanan rental motor terpercaya dengan armada terbaru dan
               pelayanan profesional untuk kenyamanan perjalanan Anda.
             </p>
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
-              <span>🟢 System Online</span>
+            <div
+              className={cn(
+                "flex items-center space-x-2 text-xs",
+                textMutedStyles
+              )}
+            >
+              <span className="flex items-center space-x-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span>System Online</span>
+              </span>
               <span>•</span>
               <span>v1.0.0</span>
             </div>
@@ -107,7 +146,8 @@ export const Footer: React.FC<FooterProps> = ({
           <div>
             <h4
               className={cn(
-                "font-semibold text-gray-900 mb-4",
+                "font-semibold mb-4",
+                textPrimaryStyles,
                 screenSize === "2xl" ? "text-lg" : "text-sm"
               )}
             >
@@ -115,13 +155,14 @@ export const Footer: React.FC<FooterProps> = ({
             </h4>
             <ul
               className={cn(
-                "space-y-2 text-gray-600",
+                "space-y-2",
+                textSecondaryStyles,
                 screenSize === "2xl" ? "text-base" : "text-sm"
               )}
             >
               <li className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4 text-gray-400"
+                  className={cn("w-4 h-4", textExtraMutedStyles)}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -137,7 +178,7 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4 text-gray-400"
+                  className={cn("w-4 h-4", textExtraMutedStyles)}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -153,7 +194,7 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4 text-gray-400"
+                  className={cn("w-4 h-4", textExtraMutedStyles)}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -180,7 +221,8 @@ export const Footer: React.FC<FooterProps> = ({
           <div>
             <h4
               className={cn(
-                "font-semibold text-gray-900 mb-4",
+                "font-semibold mb-4",
+                textPrimaryStyles,
                 screenSize === "2xl" ? "text-lg" : "text-sm"
               )}
             >
@@ -188,14 +230,15 @@ export const Footer: React.FC<FooterProps> = ({
             </h4>
             <ul
               className={cn(
-                "space-y-2 text-gray-600",
+                "space-y-2",
+                textSecondaryStyles,
                 screenSize === "2xl" ? "text-base" : "text-sm"
               )}
             >
               <li>
                 <a
                   href="/dashboard"
-                  className="hover:text-blue-600 transition-colors"
+                  className={cn("transition-colors", hoverStyles)}
                 >
                   Dashboard
                 </a>
@@ -203,7 +246,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <a
                   href="/motors"
-                  className="hover:text-blue-600 transition-colors"
+                  className={cn("transition-colors", hoverStyles)}
                 >
                   Daftar Motor
                 </a>
@@ -211,7 +254,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <a
                   href="/sewas"
-                  className="hover:text-blue-600 transition-colors"
+                  className={cn("transition-colors", hoverStyles)}
                 >
                   Penyewaan
                 </a>
@@ -219,7 +262,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <a
                   href="/reports"
-                  className="hover:text-blue-600 transition-colors"
+                  className={cn("transition-colors", hoverStyles)}
                 >
                   Laporan
                 </a>
@@ -231,14 +274,16 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Section */}
         <div
           className={cn(
-            "mt-8 pt-8 border-t border-gray-200",
+            "mt-8 pt-8 border-t",
+            borderStyles,
             screenSize === "2xl" && "mt-10 pt-10"
           )}
         >
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p
               className={cn(
-                "text-gray-500 text-center md:text-left",
+                "text-center md:text-left",
+                textMutedStyles,
                 screenSize === "2xl" ? "text-base" : "text-sm"
               )}
             >
@@ -247,20 +292,22 @@ export const Footer: React.FC<FooterProps> = ({
               reserved.
             </p>
 
-            <div className="flex items-center space-x-6 text-xs text-gray-500">
+            <div
+              className={cn(
+                "flex items-center space-x-6 text-xs",
+                textMutedStyles
+              )}
+            >
               <a
                 href="/privacy"
-                className="hover:text-gray-700 transition-colors"
+                className={cn("transition-colors", hoverStyles)}
               >
                 Kebijakan Privasi
               </a>
-              <a
-                href="/terms"
-                className="hover:text-gray-700 transition-colors"
-              >
+              <a href="/terms" className={cn("transition-colors", hoverStyles)}>
                 Syarat & Ketentuan
               </a>
-              <span className="text-gray-300">•</span>
+              <span className={textExtraMutedStyles}>•</span>
               <span>Powered by React & NestJS</span>
             </div>
           </div>

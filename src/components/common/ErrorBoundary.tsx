@@ -89,14 +89,14 @@ export const useAsyncError = () => {
         throw error;
       });
     },
-    [setError]
+    [setError],
   );
 };
 
 // High Order Component untuk error boundary
 export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Partial<Props>
+  errorBoundaryProps?: Partial<Props>,
 ) => {
   const WrappedComponent: React.FC<P> = (props) => (
     <ErrorBoundary {...errorBoundaryProps}>

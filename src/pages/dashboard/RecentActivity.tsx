@@ -1,13 +1,11 @@
-// src/pages/dashboard/RecentActivity.tsx
 import React from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { StatusBadge } from "@/components/common/StatusBadge";
+import { Badge } from "@/components/ui/Badge";
 import { Link } from "react-router-dom";
-import { formatCurrency, formatDate } from "@/utils/formatters";
+import { useTheme } from "@/hooks/useTheme";
 
-export interface SewaItem {
+interface SewaTerbaru {
   id: number;
   status: string;
   tgl_sewa: string;
@@ -26,111 +24,366 @@ export interface SewaItem {
   };
 }
 
-export interface RecentActivityProps {
-  sewaTerbaru: SewaItem[];
-  loading?: boolean;
+interface MotorPerluService {
+  id: number;
+  plat_nomor: string;
+  merk: string;
+  model: string;
+  status: string;
 }
 
-export const RecentActivity: React.FC<RecentActivityProps> = ({
-  sewaTerbaru = [],
-  loading = false,
+interface RecentActivityProps {
+  sewaTerbaru: SewaTerbaru[];
+  motorPerluService: MotorPerluService[];
+}
+
+type BadgeVariant =
+  | "success"
+  | "danger"
+  | "secondary"
+  | "primary"
+  | "warning"
+  | "info";
+
+const RecentActivity: React.FC<RecentActivityProps> = ({
+  sewaTerbaru,
+  motorPerluService,
 }) => {
-  if (loading) {
-    return (
-      <Card className="p-6 bg-white border-gray-200">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-3"
-            >
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-              </div>
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    );
-  }
+  const { isDark } = useTheme();
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+  const getStatusBadgeVariant = (status: string): BadgeVariant => {
+    switch (status) {
+      case "Aktif":
+        return "success";
+      case "Lewat Tempo":
+        return "danger";
+      case "Selesai":
+        return "secondary";
+      case "Perlu Service":
+        return "warning";
+      default:
+        return "primary";
+    }
+  };
 
   return (
-    <Card className="p-6 bg-white border-gray-200">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Sewa Terbaru</h2>
-        <Link to="/sewas">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <span>Lihat Semua</span>
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* === SEWA TERBARU === */}
+      <Card
+        className={`rm-card p-6 ${
+          isDark
+            ? "bg-dark-card border-dark-border"
+            : "bg-white border-gray-200"
+        }`}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2
+              className={`text-xl font-semibold ${
+                isDark ? "text-dark-primary" : "text-gray-900"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </Button>
-        </Link>
-      </div>
+              Sewa Terbaru
+            </h2>
+            <p
+              className={`text-sm mt-1 ${
+                isDark ? "text-dark-muted" : "text-gray-500"
+              }`}
+            >
+              5 transaksi sewa terbaru
+            </p>
+          </div>
+          <Link to="/sewas">
+            <Button
+              variant="outline"
+              size="sm"
+              className={`flex items-center space-x-2 text-sm ${
+                isDark
+                  ? "border-dark-border text-dark-secondary hover:bg-dark-hover"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <span>Lihat Semua</span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </Button>
+          </Link>
+        </div>
 
-      <div className="space-y-4">
-        {sewaTerbaru.length > 0 ? (
-          sewaTerbaru.map((sewa) => (
-            <div
-              key={`sewa-${sewa.id}`}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-white hover:shadow-sm transition-all duration-200"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm">
-                      {sewa.penyewa.nama.charAt(0)}
-                    </span>
+        <div className="space-y-4">
+          {sewaTerbaru?.length ? (
+            sewaTerbaru.slice(0, 5).map((sewa) => (
+              <div
+                key={`sewa-${sewa.id}`}
+                className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                  isDark
+                    ? "bg-dark-secondary border-dark-border hover:bg-dark-hover"
+                    : "bg-gray-50 border-gray-100 hover:bg-gray-100"
+                }`}
+              >
+                <div className="flex items-center space-x-4 flex-1 min-w-0">
+                  <div
+                    className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${
+                      isDark ? "bg-blue-900/40" : "bg-blue-100"
+                    }`}
+                  >
+                    <svg
+                      className={`w-6 h-6 ${
+                        isDark ? "text-blue-400" : "text-blue-600"
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
+                      />
+                    </svg>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-semibold text-gray-900 truncate">
-                      {sewa.penyewa.nama}
-                    </h4>
-                    <p className="text-sm text-gray-600 truncate">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
+                      <span
+                        className={`font-semibold truncate text-base ${
+                          isDark ? "text-dark-primary" : "text-gray-900"
+                        }`}
+                      >
+                        {sewa.penyewa.nama}
+                      </span>
+                      <Badge
+                        variant={getStatusBadgeVariant(sewa.status)}
+                        className="mt-1 sm:mt-0 self-start sm:self-auto"
+                      >
+                        {sewa.status}
+                      </Badge>
+                    </div>
+                    <p
+                      className={`text-sm truncate ${
+                        isDark ? "text-dark-secondary" : "text-gray-600"
+                      }`}
+                    >
                       {sewa.motor.merk} {sewa.motor.model} •{" "}
                       {sewa.motor.plat_nomor}
                     </p>
+                    <p
+                      className={`text-xs mt-1 ${
+                        isDark ? "text-dark-muted" : "text-gray-500"
+                      }`}
+                    >
+                      Kembali: {formatDate(sewa.tgl_kembali)}
+                    </p>
                   </div>
                 </div>
-                <StatusBadge status={sewa.status} className="text-xs" />
+                <div className="text-right ml-4">
+                  <p
+                    className={`text-sm font-semibold whitespace-nowrap ${
+                      isDark ? "text-dark-primary" : "text-gray-900"
+                    }`}
+                  >
+                    {formatCurrency(sewa.total_harga)}
+                  </p>
+                </div>
               </div>
-
-              <div className="text-right ml-4 flex-shrink-0">
-                <p className="text-lg font-bold text-gray-900">
-                  {formatCurrency(sewa.total_harga)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
-                  Kembali: {formatDate(sewa.tgl_kembali)}
-                </p>
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <svg
+                className={`w-16 h-16 mx-auto mb-4 ${
+                  isDark ? "text-dark-border" : "text-gray-300"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className={isDark ? "text-dark-muted" : "text-gray-500"}>
+                Tidak ada sewa aktif
+              </p>
             </div>
-          ))
-        ) : (
-          <EmptyState
-            title="Tidak ada sewa aktif"
-            description="Belum ada transaksi sewa yang aktif saat ini"
-            size="sm"
-          />
-        )}
-      </div>
-    </Card>
+          )}
+        </div>
+      </Card>
+
+      {/* === MOTOR PERLU SERVICE === */}
+      <Card
+        className={`rm-card p-6 ${
+          isDark
+            ? "bg-dark-card border-dark-border"
+            : "bg-white border-gray-200"
+        }`}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2
+              className={`text-xl font-semibold ${
+                isDark ? "text-dark-primary" : "text-gray-900"
+              }`}
+            >
+              Motor Perlu Service
+            </h2>
+            <p
+              className={`text-sm mt-1 ${
+                isDark ? "text-dark-muted" : "text-gray-500"
+              }`}
+            >
+              Motor yang memerlukan perawatan
+            </p>
+          </div>
+          <Link to="/motors">
+            <Button
+              variant="outline"
+              size="sm"
+              className={`flex items-center space-x-2 text-sm ${
+                isDark
+                  ? "border-dark-border text-dark-secondary hover:bg-dark-hover"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <span>Lihat Semua</span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </Button>
+          </Link>
+        </div>
+
+        <div className="space-y-3">
+          {motorPerluService?.length ? (
+            motorPerluService.map((motor) => (
+              <div
+                key={`motor-${motor.id}`}
+                className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                  isDark
+                    ? "bg-orange-900/20 border-orange-700 hover:bg-orange-800/30"
+                    : "bg-orange-50 border-orange-100 hover:bg-orange-100"
+                }`}
+              >
+                <div className="flex items-center space-x-4 flex-1 min-w-0">
+                  <div
+                    className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${
+                      isDark ? "bg-orange-900/40" : "bg-orange-100"
+                    }`}
+                  >
+                    <svg
+                      className={`w-6 h-6 ${
+                        isDark ? "text-orange-400" : "text-orange-600"
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4
+                      className={`font-semibold truncate text-base ${
+                        isDark ? "text-dark-primary" : "text-gray-900"
+                      }`}
+                    >
+                      {motor.merk} {motor.model}
+                    </h4>
+                    <p
+                      className={`text-sm mt-1 ${
+                        isDark ? "text-dark-secondary" : "text-gray-600"
+                      }`}
+                    >
+                      {motor.plat_nomor}
+                    </p>
+                  </div>
+                </div>
+                <Badge
+                  variant="warning"
+                  className={`whitespace-nowrap text-sm ${
+                    isDark
+                      ? "bg-orange-900/40 text-orange-300 border-orange-700"
+                      : "bg-orange-100 text-orange-700 border-orange-200"
+                  }`}
+                >
+                  Perlu Service
+                </Badge>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <svg
+                className={`w-16 h-16 mx-auto mb-4 ${
+                  isDark ? "text-green-700" : "text-green-300"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className={isDark ? "text-dark-muted" : "text-gray-500"}>
+                Semua motor dalam kondisi baik
+              </p>
+              <p
+                className={`text-xs mt-1 ${
+                  isDark ? "text-dark-muted" : "text-gray-400"
+                }`}
+              >
+                Tidak ada motor yang perlu service
+              </p>
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 };
 

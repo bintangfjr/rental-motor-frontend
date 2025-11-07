@@ -13,12 +13,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
-    "types": ["node"]   // ✅ hanya untuk file config
+    "types": ["node"] // ✅ hanya untuk file config
   },
-  "include": [
-    "vite.config.ts",
-    "tailwind.config.js",
-    "postcss.config.js"
-  ],
+  "include": ["vite.config.ts", "tailwind.config.js", "postcss.config.js"],
   "exclude": ["node_modules", "dist", "src"]
 }

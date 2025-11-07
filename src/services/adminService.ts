@@ -35,10 +35,12 @@ const handleError = (error: unknown, defaultMessage: string): never => {
     const axiosError = error as AxiosError<{ message?: string }>;
     console.error(
       defaultMessage,
-      axiosError.response?.data || axiosError.message
+      axiosError.response?.data || axiosError.message,
     );
     throw new Error(
-      axiosError.response?.data?.message || axiosError.message || defaultMessage
+      axiosError.response?.data?.message ||
+        axiosError.message ||
+        defaultMessage,
     );
   } else if (error instanceof Error) {
     console.error(defaultMessage, error.message);
@@ -55,7 +57,7 @@ export const adminService = {
     try {
       const res = await api.post<{ data: LoginAdminResponse }>(
         "/admins/login",
-        data
+        data,
       );
       return getData(res);
     } catch (error: unknown) {
@@ -87,7 +89,7 @@ export const adminService = {
     } catch (error: unknown) {
       return handleError(
         error,
-        "Gagal mengambil semua admin (termasuk terhapus)"
+        "Gagal mengambil semua admin (termasuk terhapus)",
       );
     }
   },

@@ -2,19 +2,22 @@ import React, { useState, useMemo } from "react";
 import { cn } from "../../utils/cn";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import { useTheme } from "../../hooks/useTheme";
 
-export interface Column<T> {
-  key: keyof T | string; // 🔑 fleksibel
+// Generic type yang lebih fleksibel
+export interface Column<T = any> {
+  key: string;
   header: string;
   render?: (value: any, row: T) => React.ReactNode;
   sortable?: boolean;
+  width?: string;
 }
 
 export interface PaginationProps {
-  currentPage: number;                // halaman aktif
-  pageSize: number;                   // jumlah item per halaman
-  totalItems: number;                 // total semua data
-  onPageChange: (page: number, pageSize: number) => void;
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number, pageSize?: number) => void;
 }
 
 export interface SearchProps {
@@ -22,25 +25,20 @@ export interface SearchProps {
   onSearch?: (query: string) => void;
 }
 
-export interface DataTableProps<T extends Record<string, any>> {
+export interface DataTableProps<T = any> {
   columns: Column<T>[];
   data: T[];
   isLoading?: boolean;
   onRowClick?: (row: T) => void;
   pagination?: PaginationProps;
-
-  // 🔎 mode 1: search internal
   searchable?: boolean;
   searchPlaceholder?: string;
-
-  // 🔎 mode 2: search eksternal
   search?: SearchProps;
-
-  // opsional untuk pesan kosong
   emptyMessage?: string;
+  className?: string;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T = any>({
   columns,
   data,
   isLoading = false,
@@ -50,7 +48,9 @@ export function DataTable<T extends Record<string, any>>({
   searchPlaceholder = "Cari...",
   search,
   emptyMessage = "Tidak ada data",
+  className,
 }: DataTableProps<T>) {
+  const { isDark } = useTheme();
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
@@ -58,7 +58,6 @@ export function DataTable<T extends Record<string, any>>({
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  // ✅ Sorting handler
   const handleSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig?.key === key && sortConfig.direction === "asc") {
@@ -67,37 +66,39 @@ export function DataTable<T extends Record<string, any>>({
     setSortConfig({ key, direction });
   };
 
-  // ✅ Search handler
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (search?.onSearch) {
-      search.onSearch(query); // kirim ke parent kalau pakai search eksternal
-    }
+    if (search?.onSearch) search.onSearch(query);
   };
 
-  // ✅ Filtered data (hanya berlaku untuk search internal)
   const filteredData = useMemo(() => {
     if ((!searchable && !search) || !searchQuery) return data;
-
     const lowerQuery = searchQuery.toLowerCase();
     return data.filter((row) =>
       columns.some((col) => {
-        const value = row[col.key as keyof T];
-        return String(value ?? "").toLowerCase().includes(lowerQuery);
+        const value = (row as any)[col.key];
+        return String(value ?? "")
+          .toLowerCase()
+          .includes(lowerQuery);
       })
     );
   }, [data, searchQuery, columns, searchable, search]);
 
-  // ✅ Sorted data
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
 
     return [...filteredData].sort((a, b) => {
-      const aValue = a[sortConfig.key as keyof T];
-      const bValue = b[sortConfig.key as keyof T];
+      const aValue = (a as any)[sortConfig.key];
+      const bValue = (b as any)[sortConfig.key];
 
       if (aValue == null) return 1;
       if (bValue == null) return -1;
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortConfig.direction === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
 
       if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
@@ -105,27 +106,67 @@ export function DataTable<T extends Record<string, any>>({
     });
   }, [filteredData, sortConfig]);
 
-  // ✅ Apply pagination
   const paginatedData = useMemo(() => {
     if (!pagination) return sortedData;
     const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
     return sortedData.slice(startIndex, startIndex + pagination.pageSize);
   }, [sortedData, pagination]);
 
-  // ✅ Loading state
+  const totalPages = pagination
+    ? Math.ceil(pagination.totalItems / pagination.pageSize)
+    : 0;
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div
+        className={`flex justify-center items-center h-64 ${
+          isDark ? "bg-dark-card" : "bg-white"
+        } rounded-lg`}
+      >
+        <div
+          className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
+            isDark ? "border-blue-400" : "border-blue-600"
+          }`}
+        ></div>
       </div>
     );
   }
 
+  const tableContainerClasses = cn(
+    "rm-card rounded-lg overflow-hidden transition-colors duration-200",
+    isDark ? "bg-dark-card border-dark-border" : "bg-white border-gray-200",
+    className
+  );
+
+  const tableHeaderClasses = cn(
+    "text-left text-xs font-medium uppercase tracking-wider transition-colors duration-200",
+    isDark
+      ? "bg-dark-secondary text-dark-secondary border-dark-border"
+      : "bg-gray-50 text-gray-500 border-gray-200"
+  );
+
+  const tableRowClasses = (onClick?: boolean) =>
+    cn(
+      "transition-colors duration-150",
+      isDark
+        ? "border-dark-border hover:bg-dark-hover"
+        : "border-gray-200 hover:bg-gray-50",
+      onClick && "cursor-pointer"
+    );
+
+  const tableCellClasses = cn(
+    "px-6 py-4 whitespace-nowrap text-sm transition-colors duration-200",
+    isDark ? "text-dark-primary" : "text-gray-900"
+  );
+
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      {/* Search */}
+    <div className={tableContainerClasses}>
       {(searchable || search) && (
-        <div className="p-4 border-b">
+        <div
+          className={`p-4 border-b ${
+            isDark ? "border-dark-border" : "border-gray-200"
+          }`}
+        >
           <Input
             placeholder={search?.placeholder || searchPlaceholder}
             value={searchQuery}
@@ -135,60 +176,93 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y">
+          <thead>
             <tr>
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
                   className={cn(
-                    "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
-                    column.sortable && "cursor-pointer"
+                    tableHeaderClasses,
+                    "px-6 py-3 border-b",
+                    column.sortable && "cursor-pointer select-none",
+                    column.width
                   )}
                   onClick={() =>
                     column.sortable && handleSort(String(column.key))
                   }
+                  style={{ width: column.width }}
                 >
-                  <div className="flex items-center">
-                    {column.header}
-                    {column.sortable && sortConfig?.key === column.key && (
-                      <span className="ml-1">
-                        {sortConfig.direction === "asc" ? "↑" : "↓"}
-                      </span>
+                  <div className="flex items-center space-x-1">
+                    <span>{column.header}</span>
+                    {column.sortable && (
+                      <svg
+                        className="w-4 h-4 opacity-50"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                        />
+                      </svg>
                     )}
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y">
             {paginatedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-6 py-4 text-center text-sm text-gray-500"
+                  className={cn(
+                    "px-6 py-12 text-center text-sm",
+                    isDark ? "text-dark-muted" : "text-gray-500"
+                  )}
                 >
-                  {emptyMessage}
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <svg
+                      className={`w-16 h-16 ${
+                        isDark ? "text-dark-muted" : "text-gray-400"
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="font-medium text-lg mb-1">Tidak ada data</p>
+                      <p className="text-sm opacity-80">{emptyMessage}</p>
+                    </div>
+                  </div>
                 </td>
               </tr>
             ) : (
               paginatedData.map((row, index) => (
                 <tr
                   key={index}
-                  className={cn(
-                    "hover:bg-gray-50 transition-colors",
-                    onRowClick && "cursor-pointer"
-                  )}
+                  className={tableRowClasses(!!onRowClick)}
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((column) => {
-                    const rawValue = row[column.key as keyof T];
+                    const rawValue = (row as any)[column.key];
                     return (
                       <td
                         key={String(column.key)}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        className={tableCellClasses}
+                        style={{ width: column.width }}
                       >
                         {column.render
                           ? column.render(rawValue, row)
@@ -203,42 +277,59 @@ export function DataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Pagination */}
-      {pagination && (
-        <div className="px-6 py-4 border-t flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Page {pagination.currentPage} of{" "}
-            {Math.ceil(pagination.totalItems / pagination.pageSize)}
+      {pagination && totalPages > 0 && (
+        <div
+          className={`px-6 py-4 border-t flex items-center justify-between ${
+            isDark ? "border-dark-border" : "border-gray-200"
+          }`}
+        >
+          <div
+            className={`text-sm ${
+              isDark ? "text-dark-secondary" : "text-gray-700"
+            }`}
+          >
+            Menampilkan{" "}
+            {Math.min(
+              (pagination.currentPage - 1) * pagination.pageSize + 1,
+              pagination.totalItems
+            )}{" "}
+            -{" "}
+            {Math.min(
+              pagination.currentPage * pagination.pageSize,
+              pagination.totalItems
+            )}{" "}
+            dari {pagination.totalItems} data
           </div>
-          <div className="flex space-x-2">
+
+          <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               size="sm"
               disabled={pagination.currentPage === 1}
               onClick={() =>
-                pagination.onPageChange(
-                  pagination.currentPage - 1,
-                  pagination.pageSize
-                )
+                pagination.onPageChange(pagination.currentPage - 1)
               }
             >
-              Previous
+              Sebelumnya
             </Button>
+
+            <span
+              className={`text-sm mx-2 ${
+                isDark ? "text-dark-secondary" : "text-gray-700"
+              }`}
+            >
+              {pagination.currentPage} / {totalPages}
+            </span>
+
             <Button
               variant="outline"
               size="sm"
-              disabled={
-                pagination.currentPage ===
-                Math.ceil(pagination.totalItems / pagination.pageSize)
-              }
+              disabled={pagination.currentPage === totalPages}
               onClick={() =>
-                pagination.onPageChange(
-                  pagination.currentPage + 1,
-                  pagination.pageSize
-                )
+                pagination.onPageChange(pagination.currentPage + 1)
               }
             >
-              Next
+              Selanjutnya
             </Button>
           </div>
         </div>

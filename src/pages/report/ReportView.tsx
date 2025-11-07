@@ -9,11 +9,15 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
+import { Card } from "../../components/ui/Card";
+import { Badge } from "../../components/ui/Badge";
 import { formatCurrency, formatDate } from "../../utils/formatters";
+import { useTheme } from "../../hooks/useTheme";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
 
 const ReportView: React.FC = () => {
+  const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "monthly" | "motor" | "financial"
   >("dashboard");
@@ -147,6 +151,7 @@ const ReportView: React.FC = () => {
         scale: 2,
         useCORS: true,
         logging: false,
+        backgroundColor: isDark ? "#0f172a" : "#ffffff",
       });
 
       const link = document.createElement("a");
@@ -375,67 +380,143 @@ const ReportView: React.FC = () => {
     }
   };
 
+  // Stats Card Component
+  const StatsCard: React.FC<{
+    title: string;
+    value: string | number;
+    color: "blue" | "green" | "purple" | "orange" | "red";
+    icon?: React.ReactNode;
+  }> = ({ title, value, color, icon }) => {
+    const colorClasses = {
+      blue: {
+        light: "bg-blue-50 text-blue-800 border-blue-200",
+        dark: "bg-blue-900/20 text-blue-300 border-blue-800",
+      },
+      green: {
+        light: "bg-green-50 text-green-800 border-green-200",
+        dark: "bg-green-900/20 text-green-300 border-green-800",
+      },
+      purple: {
+        light: "bg-purple-50 text-purple-800 border-purple-200",
+        dark: "bg-purple-900/20 text-purple-300 border-purple-800",
+      },
+      orange: {
+        light: "bg-orange-50 text-orange-800 border-orange-200",
+        dark: "bg-orange-900/20 text-orange-300 border-orange-800",
+      },
+      red: {
+        light: "bg-red-50 text-red-800 border-red-200",
+        dark: "bg-red-900/20 text-red-300 border-red-800",
+      },
+    };
+
+    const currentColor = isDark
+      ? colorClasses[color].dark
+      : colorClasses[color].light;
+
+    return (
+      <Card className={`border-2 ${currentColor} p-6`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium opacity-80 mb-1">{title}</p>
+            <p className="text-2xl font-bold">{value}</p>
+          </div>
+          {icon && <div className="text-2xl opacity-70">{icon}</div>}
+        </div>
+      </Card>
+    );
+  };
+
   const renderDashboardTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-blue-800">
-            {dashboardStats?.jumlahSewaAktif || 0}
-          </h3>
-          <p className="text-blue-600 font-medium">Sewa Aktif</p>
-        </div>
-
-        <div className="bg-green-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-green-800">
-            {dashboardStats?.jumlahMotorTersedia || 0}
-          </h3>
-          <p className="text-green-600 font-medium">Motor Tersedia</p>
-        </div>
-
-        <div className="bg-purple-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-purple-800">
-            {formatCurrency(dashboardStats?.totalPendapatan || 0)}
-          </h3>
-          <p className="text-purple-600 font-medium">Total Pendapatan</p>
-        </div>
-
-        <div className="bg-orange-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-orange-800">
-            {dashboardStats?.totalPenyewaAktif || 0}
-          </h3>
-          <p className="text-orange-600 font-medium">Penyewa Aktif</p>
-        </div>
+        <StatsCard
+          title="Sewa Aktif"
+          value={dashboardStats?.jumlahSewaAktif || 0}
+          color="blue"
+          icon="🏍️"
+        />
+        <StatsCard
+          title="Motor Tersedia"
+          value={dashboardStats?.jumlahMotorTersedia || 0}
+          color="green"
+          icon="✅"
+        />
+        <StatsCard
+          title="Total Pendapatan"
+          value={formatCurrency(dashboardStats?.totalPendapatan || 0)}
+          color="purple"
+          icon="💰"
+        />
+        <StatsCard
+          title="Penyewa Aktif"
+          value={dashboardStats?.totalPenyewaAktif || 0}
+          color="orange"
+          icon="👥"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Status Motor</h3>
-          {dashboardStats?.motorPerStatus &&
-            Object.entries(dashboardStats.motorPerStatus).map(
-              ([status, count]) => (
-                <div
-                  key={status}
-                  className="flex justify-between py-2 border-b"
-                >
-                  <span className="capitalize">{status}</span>
-                  <span className="font-semibold">{count}</span>
-                </div>
-              )
-            )}
-        </div>
+        <Card>
+          <h3
+            className={`text-lg font-semibold mb-4 ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
+            Status Motor
+          </h3>
+          <div className="space-y-3">
+            {dashboardStats?.motorPerStatus &&
+              Object.entries(dashboardStats.motorPerStatus).map(
+                ([status, count]) => (
+                  <div
+                    key={status}
+                    className="flex justify-between items-center py-2"
+                  >
+                    <span
+                      className={`capitalize ${
+                        isDark ? "text-dark-secondary" : "text-gray-600"
+                      }`}
+                    >
+                      {status}
+                    </span>
+                    <Badge variant="secondary">{count}</Badge>
+                  </div>
+                )
+              )}
+          </div>
+        </Card>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Sewa 6 Bulan Terakhir</h3>
-          {dashboardStats?.sewaPerBulan.map((item) => (
-            <div
-              key={item.bulan}
-              className="flex justify-between py-2 border-b"
-            >
-              <span>{item.bulan}</span>
-              <span className="font-semibold">{item.total}</span>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <h3
+            className={`text-lg font-semibold mb-4 ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
+            Sewa 6 Bulan Terakhir
+          </h3>
+          <div className="space-y-3">
+            {dashboardStats?.sewaPerBulan.map((item) => (
+              <div
+                key={item.bulan}
+                className="flex justify-between items-center py-2"
+              >
+                <span
+                  className={isDark ? "text-dark-secondary" : "text-gray-600"}
+                >
+                  {item.bulan}
+                </span>
+                <span
+                  className={`font-semibold ${
+                    isDark ? "text-dark-primary" : "text-gray-900"
+                  }`}
+                >
+                  {item.total}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -443,50 +524,76 @@ const ReportView: React.FC = () => {
   const renderMonthlyTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-blue-800">
-            {monthlyReport?.totalSewa || 0}
-          </h3>
-          <p className="text-blue-600 font-medium">Total Sewa</p>
-        </div>
-
-        <div className="bg-green-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-green-800">
-            {formatCurrency(monthlyReport?.totalPendapatan || 0)}
-          </h3>
-          <p className="text-green-600 font-medium">Total Pendapatan</p>
-        </div>
-
-        <div className="bg-purple-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-purple-800">
-            {monthlyReport?.periode || "-"}
-          </h3>
-          <p className="text-purple-600 font-medium">Periode</p>
-        </div>
+        <StatsCard
+          title="Total Sewa"
+          value={monthlyReport?.totalSewa || 0}
+          color="blue"
+          icon="📊"
+        />
+        <StatsCard
+          title="Total Pendapatan"
+          value={formatCurrency(monthlyReport?.totalPendapatan || 0)}
+          color="green"
+          icon="💰"
+        />
+        <StatsCard
+          title="Periode"
+          value={monthlyReport?.periode || "-"}
+          color="purple"
+          icon="📅"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Motor Terpopuler</h3>
-          {monthlyReport?.motorTerpopuler.map((item, index) => (
-            <div key={index} className="flex justify-between py-2 border-b">
-              <span>
-                {item.motor.merk} {item.motor.model}
-              </span>
-              <span className="font-semibold">{item._count.id} sewa</span>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <h3
+            className={`text-lg font-semibold mb-4 ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
+            Motor Terpopuler
+          </h3>
+          <div className="space-y-3">
+            {monthlyReport?.motorTerpopuler.map((item, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center py-2"
+              >
+                <span
+                  className={isDark ? "text-dark-secondary" : "text-gray-600"}
+                >
+                  {item.motor.merk} {item.motor.model}
+                </span>
+                <Badge variant="success">{item._count.id} sewa</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Penyewa Teraktif</h3>
-          {monthlyReport?.penyewaTeraktif.map((item, index) => (
-            <div key={index} className="flex justify-between py-2 border-b">
-              <span>{item.penyewa.nama}</span>
-              <span className="font-semibold">{item._count.id} sewa</span>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <h3
+            className={`text-lg font-semibold mb-4 ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
+            Penyewa Teraktif
+          </h3>
+          <div className="space-y-3">
+            {monthlyReport?.penyewaTeraktif.map((item, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center py-2"
+              >
+                <span
+                  className={isDark ? "text-dark-secondary" : "text-gray-600"}
+                >
+                  {item.penyewa.nama}
+                </span>
+                <Badge variant="success">{item._count.id} sewa</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -495,38 +602,70 @@ const ReportView: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4">
         {motorUsage.map((motor) => (
-          <div key={motor.id} className="bg-white p-6 rounded-lg shadow-sm">
+          <Card key={motor.id} className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-semibold">
+                <h3
+                  className={`text-lg font-semibold ${
+                    isDark ? "text-dark-primary" : "text-gray-900"
+                  }`}
+                >
                   {motor.merk} {motor.model} ({motor.plat_nomor})
                 </h3>
-                <p className="text-gray-600">Status: {motor.status}</p>
+                <p className={isDark ? "text-dark-secondary" : "text-gray-600"}>
+                  Status: <Badge variant="secondary">{motor.status}</Badge>
+                </p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-green-600">
+                <p
+                  className={`text-2xl font-bold ${
+                    isDark ? "text-green-400" : "text-green-600"
+                  }`}
+                >
                   {formatCurrency(motor.total_pendapatan)}
                 </p>
-                <p className="text-gray-600">{motor.total_sewa} sewa</p>
+                <p className={isDark ? "text-dark-secondary" : "text-gray-600"}>
+                  {motor.total_sewa} sewa
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">Total Durasi:</span>
-                <p className="font-semibold">{motor.total_durasi} hari</p>
+                <span className={isDark ? "text-dark-muted" : "text-gray-600"}>
+                  Total Durasi:
+                </span>
+                <p
+                  className={`font-semibold ${
+                    isDark ? "text-dark-primary" : "text-gray-900"
+                  }`}
+                >
+                  {motor.total_durasi} hari
+                </p>
               </div>
               <div>
-                <span className="text-gray-600">Rata-rata per Sewa:</span>
-                <p className="font-semibold">
+                <span className={isDark ? "text-dark-muted" : "text-gray-600"}>
+                  Rata-rata per Sewa:
+                </span>
+                <p
+                  className={`font-semibold ${
+                    isDark ? "text-dark-primary" : "text-gray-900"
+                  }`}
+                >
                   {motor.total_sewa > 0
                     ? formatCurrency(motor.total_pendapatan / motor.total_sewa)
                     : "-"}
                 </p>
               </div>
               <div>
-                <span className="text-gray-600">Pendapatan per Hari:</span>
-                <p className="font-semibold">
+                <span className={isDark ? "text-dark-muted" : "text-gray-600"}>
+                  Pendapatan per Hari:
+                </span>
+                <p
+                  className={`font-semibold ${
+                    isDark ? "text-dark-primary" : "text-gray-900"
+                  }`}
+                >
                   {motor.total_durasi > 0
                     ? formatCurrency(
                         motor.total_pendapatan / motor.total_durasi
@@ -534,8 +673,24 @@ const ReportView: React.FC = () => {
                     : "-"}
                 </p>
               </div>
+              <div>
+                <span className={isDark ? "text-dark-muted" : "text-gray-600"}>
+                  Efisiensi:
+                </span>
+                <p
+                  className={`font-semibold ${
+                    isDark ? "text-dark-primary" : "text-gray-900"
+                  }`}
+                >
+                  {motor.total_durasi > 0
+                    ? ((motor.total_sewa / motor.total_durasi) * 100).toFixed(
+                        1
+                      ) + "%"
+                    : "-"}
+                </p>
+              </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
@@ -544,60 +699,91 @@ const ReportView: React.FC = () => {
   const renderFinancialTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-blue-800">
-            {formatCurrency(financialReport?.totalPendapatan || 0)}
-          </h3>
-          <p className="text-blue-600 font-medium">Total Pendapatan</p>
-        </div>
-
-        <div className="bg-red-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-red-800">
-            {formatCurrency(financialReport?.totalDenda || 0)}
-          </h3>
-          <p className="text-red-600 font-medium">Total Denda</p>
-        </div>
-
-        <div className="bg-green-50 p-6 rounded-lg">
-          <h3 className="text-2xl font-bold text-green-800">
-            {formatCurrency(
-              (financialReport?.totalPendapatan || 0) +
-                (financialReport?.totalDenda || 0)
-            )}
-          </h3>
-          <p className="text-green-600 font-medium">Total Keseluruhan</p>
-        </div>
+        <StatsCard
+          title="Total Pendapatan"
+          value={formatCurrency(financialReport?.totalPendapatan || 0)}
+          color="blue"
+          icon="💰"
+        />
+        <StatsCard
+          title="Total Denda"
+          value={formatCurrency(financialReport?.totalDenda || 0)}
+          color="red"
+          icon="⚡"
+        />
+        <StatsCard
+          title="Total Keseluruhan"
+          value={formatCurrency(
+            (financialReport?.totalPendapatan || 0) +
+              (financialReport?.totalDenda || 0)
+          )}
+          color="green"
+          icon="📈"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Pendapatan per Bulan</h3>
-          {financialReport?.pendapatanPerBulan.map((item) => (
-            <div
-              key={item.bulan}
-              className="flex justify-between py-2 border-b"
-            >
-              <span>{item.bulan}</span>
-              <span className="font-semibold text-green-600">
-                {formatCurrency(item.pendapatan)}
-              </span>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <h3
+            className={`text-lg font-semibold mb-4 ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
+            Pendapatan per Bulan
+          </h3>
+          <div className="space-y-3">
+            {financialReport?.pendapatanPerBulan.map((item) => (
+              <div
+                key={item.bulan}
+                className="flex justify-between items-center py-2"
+              >
+                <span
+                  className={isDark ? "text-dark-secondary" : "text-gray-600"}
+                >
+                  {item.bulan}
+                </span>
+                <span
+                  className={`font-semibold ${
+                    isDark ? "text-green-400" : "text-green-600"
+                  }`}
+                >
+                  {formatCurrency(item.pendapatan)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Pendapatan per Motor</h3>
-          {financialReport?.pendapatanPerMotor.map((item, index) => (
-            <div key={index} className="flex justify-between py-2 border-b">
-              <span>
-                {item.motor.merk} {item.motor.model}
-              </span>
-              <span className="font-semibold text-green-600">
-                {formatCurrency(item._sum.total_harga)}
-              </span>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <h3
+            className={`text-lg font-semibold mb-4 ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
+            Pendapatan per Motor
+          </h3>
+          <div className="space-y-3">
+            {financialReport?.pendapatanPerMotor.map((item, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center py-2"
+              >
+                <span
+                  className={isDark ? "text-dark-secondary" : "text-gray-600"}
+                >
+                  {item.motor.merk} {item.motor.model}
+                </span>
+                <span
+                  className={`font-semibold ${
+                    isDark ? "text-green-400" : "text-green-600"
+                  }`}
+                >
+                  {formatCurrency(item._sum.total_harga)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -606,7 +792,7 @@ const ReportView: React.FC = () => {
     switch (activeTab) {
       case "monthly":
         return (
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Input
               type="number"
               label="Tahun"
@@ -614,6 +800,7 @@ const ReportView: React.FC = () => {
               onChange={(e) =>
                 handleFilterChange("year", parseInt(e.target.value))
               }
+              className="min-w-[120px]"
             />
             <Select
               label="Bulan"
@@ -635,13 +822,14 @@ const ReportView: React.FC = () => {
                 { value: 11, label: "November" },
                 { value: 12, label: "Desember" },
               ]}
+              className="min-w-[140px]"
             />
           </div>
         );
       case "motor":
       case "financial":
         return (
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Input
               type="date"
               label="Dari Tanggal"
@@ -663,38 +851,48 @@ const ReportView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Laporan dan Statistik</h1>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1
+          className={`text-2xl font-bold ${
+            isDark ? "text-dark-primary" : "text-gray-900"
+          }`}
+        >
+          Laporan dan Statistik
+        </h1>
 
         {/* Download Buttons */}
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={downloadAsPNG}
             disabled={isLoading}
+            size="sm"
           >
-            📷 Download PNG
+            📷 PNG
           </Button>
           <Button
             variant="outline"
             onClick={downloadAsExcel}
             disabled={isLoading}
+            size="sm"
           >
-            📊 Download Excel
+            📊 Excel
           </Button>
           <Button
             variant="outline"
             onClick={downloadAsCSV}
             disabled={isLoading}
+            size="sm"
           >
-            📄 Download CSV
+            📄 CSV
           </Button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b">
-        <nav className="flex space-x-8">
+      <Card className="p-0">
+        <nav className="flex space-x-8 px-6">
           {[
             { id: "dashboard", label: "Dashboard" },
             { id: "monthly", label: "Bulanan" },
@@ -704,33 +902,43 @@ const ReportView: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id as any)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-brand-blue text-brand-blue"
+                  : `border-transparent ${
+                      isDark
+                        ? "text-dark-secondary hover:text-dark-primary hover:border-dark-border"
+                        : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`
               }`}
             >
               {tab.label}
             </button>
           ))}
         </nav>
-      </div>
+      </Card>
 
       {/* Filters */}
       {renderFilters() && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="flex items-end space-x-4">
+        <Card>
+          <div className="flex flex-col sm:flex-row items-end gap-4">
             {renderFilters()}
-            <Button onClick={handleFilterSubmit}>Terapkan Filter</Button>
+            <Button onClick={handleFilterSubmit} disabled={isLoading}>
+              Terapkan Filter
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Content */}
-      <div ref={reportRef} className="bg-white p-6 rounded-lg shadow-sm">
+      <div ref={reportRef} className="rm-card p-6">
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div
+              className={`animate-spin rounded-full h-8 w-8 border-b-2 ${
+                isDark ? "border-blue-400" : "border-blue-600"
+              }`}
+            ></div>
           </div>
         ) : (
           <>

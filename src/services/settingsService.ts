@@ -1,4 +1,4 @@
-import api from './api';
+import api from "./api";
 
 export interface AdminProfile {
   id: number;
@@ -29,28 +29,28 @@ export interface DeleteAccountData {
 export const settingsService = {
   // Get admin profile
   async getProfile(): Promise<AdminProfile> {
-    const response = await api.get('/settings/profile');
+    const response = await api.get("/settings/profile");
     return response.data.data;
   },
 
   // Update profile
   async updateProfile(data: UpdateProfileData): Promise<AdminProfile> {
-    const response = await api.put('/settings/profile', data);
+    const response = await api.put("/settings/profile", data);
     return response.data.data;
   },
 
   // Change password
   async changePassword(data: ChangePasswordData): Promise<void> {
-    await api.put('/settings/profile/password', data);
+    await api.put("/settings/profile/password", data);
   },
 
   // Delete account
   async deleteAccount(data: DeleteAccountData): Promise<void> {
-    await api.delete('/settings/profile', { data });
+    await api.delete("/settings/profile", { data });
   },
 
   // Logout
   async logout(): Promise<void> {
-    await api.post('/settings/profile/logout');
+    await api.post("/settings/profile/logout");
   },
 };

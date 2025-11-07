@@ -35,7 +35,7 @@ export const authService = {
    */
   adminLogin: async (
     username: string,
-    password: string
+    password: string,
   ): Promise<LoginResponse> => {
     try {
       const response = await api.post<LoginResponse>("/admins/login", {
@@ -53,7 +53,7 @@ export const authService = {
    */
   userLogin: async (
     email: string,
-    password: string
+    password: string,
   ): Promise<LoginResponse> => {
     try {
       const response = await api.post<LoginResponse>("/auth/login", {
@@ -112,7 +112,7 @@ export const authService = {
   changePassword: async (
     currentPassword: string,
     newPassword: string,
-    confirmPassword: string
+    confirmPassword: string,
   ): Promise<void> => {
     try {
       await api.post("/admins/change-password", {
@@ -147,7 +147,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 api.interceptors.response.use(
@@ -158,7 +158,7 @@ api.interceptors.response.use(
       window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default authService;

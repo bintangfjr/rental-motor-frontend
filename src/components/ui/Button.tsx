@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme";
 
 export interface ButtonProps
   extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "animation"> {
@@ -31,6 +32,7 @@ export const Button: React.FC<ButtonProps> = ({
   onClick,
   ...props
 }) => {
+  const { isDark } = useTheme();
   const [isRippling, setIsRippling] = React.useState(false);
   const [coords, setCoords] = React.useState({ x: -1, y: -1 });
   const [isSent, setIsSent] = React.useState(sent);
@@ -65,22 +67,50 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles =
     "inline-flex items-center justify-center font-medium transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden";
 
-  // ✅ Modern variants without background
+  // ✅ Modern variants dengan dark theme support
   const variantStyles: Record<string, string> = {
-    primary:
-      "text-blue-600 hover:text-blue-700 hover:scale-105 active:scale-95 border-2 border-blue-600 hover:border-blue-700 focus:ring-blue-500 shadow-sm hover:shadow-md",
-    secondary:
-      "text-gray-600 hover:text-gray-700 hover:scale-105 active:scale-95 border-2 border-gray-600 hover:border-gray-700 focus:ring-gray-500 shadow-sm hover:shadow-md",
-    success:
-      "text-green-600 hover:text-green-700 hover:scale-105 active:scale-95 border-2 border-green-600 hover:border-green-700 focus:ring-green-500 shadow-sm hover:shadow-md",
-    danger:
-      "text-red-600 hover:text-red-700 hover:scale-105 active:scale-95 border-2 border-red-600 hover:border-red-700 focus:ring-red-500 shadow-sm hover:shadow-md",
-    outline:
-      "text-gray-700 hover:text-gray-900 hover:scale-105 active:scale-95 border border-gray-300 hover:border-gray-400 focus:ring-gray-500 shadow-sm hover:shadow-md",
-    ghost:
-      "text-gray-600 hover:text-gray-800 hover:scale-105 active:scale-95 hover:bg-gray-50 focus:ring-gray-500",
-    modern:
-      "text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 active:scale-95 border-0 focus:ring-purple-500 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5",
+    primary: cn(
+      "border-2 shadow-sm hover:shadow-md transition-all duration-200",
+      isDark
+        ? "text-blue-300 border-blue-600 hover:text-blue-200 hover:border-blue-500 focus:ring-blue-500 bg-blue-900/20"
+        : "text-blue-600 border-blue-600 hover:text-blue-700 hover:border-blue-700 focus:ring-blue-500 bg-transparent"
+    ),
+    secondary: cn(
+      "border-2 shadow-sm hover:shadow-md transition-all duration-200",
+      isDark
+        ? "text-gray-300 border-gray-600 hover:text-gray-200 hover:border-gray-500 focus:ring-gray-500 bg-gray-800/20"
+        : "text-gray-600 border-gray-600 hover:text-gray-700 hover:border-gray-700 focus:ring-gray-500 bg-transparent"
+    ),
+    success: cn(
+      "border-2 shadow-sm hover:shadow-md transition-all duration-200",
+      isDark
+        ? "text-green-300 border-green-600 hover:text-green-200 hover:border-green-500 focus:ring-green-500 bg-green-900/20"
+        : "text-green-600 border-green-600 hover:text-green-700 hover:border-green-700 focus:ring-green-500 bg-transparent"
+    ),
+    danger: cn(
+      "border-2 shadow-sm hover:shadow-md transition-all duration-200",
+      isDark
+        ? "text-red-300 border-red-600 hover:text-red-200 hover:border-red-500 focus:ring-red-500 bg-red-900/20"
+        : "text-red-600 border-red-600 hover:text-red-700 hover:border-red-700 focus:ring-red-500 bg-transparent"
+    ),
+    outline: cn(
+      "border shadow-sm hover:shadow-md transition-all duration-200",
+      isDark
+        ? "text-gray-300 border-gray-600 hover:text-gray-200 hover:border-gray-500 focus:ring-gray-500 bg-transparent"
+        : "text-gray-700 border-gray-300 hover:text-gray-900 hover:border-gray-400 focus:ring-gray-500 bg-transparent"
+    ),
+    ghost: cn(
+      "transition-all duration-200",
+      isDark
+        ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 focus:ring-gray-500"
+        : "text-gray-600 hover:text-gray-800 hover:bg-gray-50 focus:ring-gray-500"
+    ),
+    modern: cn(
+      "border-0 shadow-lg hover:shadow-xl transform transition-all duration-200",
+      isDark
+        ? "text-white bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 focus:ring-purple-500"
+        : "text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:ring-purple-500"
+    ),
   };
 
   const sizeStyles: Record<string, string> = {
@@ -90,15 +120,29 @@ export const Button: React.FC<ButtonProps> = ({
     xl: "px-9 py-4 text-lg rounded-2xl",
   };
 
-  // ✅ Animation styles
+  // ✅ Animation styles dengan dark theme support
   const animationStyles: Record<string, string> = {
     none: "",
     pulse: "animate-pulse hover:animate-none",
     bounce: "hover:animate-bounce",
     slide: "hover:translate-x-1",
-    glow: "shadow-lg hover:shadow-blue-500/25 hover:shadow-xl",
+    glow: cn(
+      "shadow-lg hover:shadow-xl transition-all duration-300",
+      isDark ? "hover:shadow-blue-500/25" : "hover:shadow-blue-500/25"
+    ),
     send: "relative bg-transparent border-none shadow-none",
   };
+
+  // Hover effects yang konsisten
+  const hoverEffects = cn(
+    "hover:scale-105 active:scale-95",
+    variant === "modern" && "hover:-translate-y-0.5"
+  );
+
+  // Focus ring colors untuk dark mode
+  const focusRing = isDark
+    ? "focus:ring-offset-gray-900"
+    : "focus:ring-offset-white";
 
   // Send icon SVG
   const SendIcon = () => (
@@ -178,14 +222,19 @@ export const Button: React.FC<ButtonProps> = ({
   );
 
   if (animation === "send") {
+    const sendButtonColor = isDark ? "text-blue-400" : "text-blue-600";
+    const sendOutlineColor = isDark ? "border-blue-500" : "border-blue-500";
+
     return (
       <button
         ref={buttonRef}
         className={cn(
           "button relative bg-transparent border-none cursor-pointer px-6 py-3 rounded-xl transition-all duration-500 group",
           "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+          focusRing,
           "disabled:opacity-50 disabled:cursor-not-allowed",
           isSent && "sent",
+          sendButtonColor,
           className
         )}
         disabled={disabled || isLoading}
@@ -201,8 +250,12 @@ export const Button: React.FC<ButtonProps> = ({
         {/* Outline effect */}
         <div
           className={cn(
-            "outline absolute inset-0 rounded-xl border-2 border-blue-500 transition-all duration-300",
-            "group-hover:border-blue-600 group-hover:scale-105",
+            "outline absolute inset-0 rounded-xl border-2 transition-all duration-300",
+            sendOutlineColor,
+            "group-hover:scale-105",
+            isDark
+              ? "group-hover:border-blue-400"
+              : "group-hover:border-blue-600",
             isSent && "scale-110 border-green-500 opacity-0"
           )}
         />
@@ -230,7 +283,7 @@ export const Button: React.FC<ButtonProps> = ({
             isSent ? "opacity-100" : "opacity-0 translate-y-full"
           )}
         >
-          <div className="icon">
+          <div className="icon text-green-500">
             <SuccessIcon />
           </div>
           <AnimatedText text="Sent" state={isSent ? "default" : "sent"} />
@@ -269,6 +322,8 @@ export const Button: React.FC<ButtonProps> = ({
         variantStyles[variant],
         sizeStyles[size],
         animationStyles[animation],
+        hoverEffects,
+        focusRing,
         "group",
         className
       )}
@@ -308,7 +363,7 @@ export const Button: React.FC<ButtonProps> = ({
         {children}
 
         {/* ✅ Optional Arrow Icon on Hover */}
-        {variant !== "modern" && (
+        {variant !== "modern" && !isLoading && (
           <svg
             className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 opacity-0 group-hover:opacity-100"
             fill="none"
@@ -328,7 +383,12 @@ export const Button: React.FC<ButtonProps> = ({
       {/* ✅ Modern Button Shine Effect */}
       {variant === "modern" && (
         <div className="absolute inset-0 overflow-hidden rounded-2xl">
-          <div className="absolute -inset-full top-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 group-hover:animate-shine" />
+          <div
+            className={cn(
+              "absolute -inset-full top-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 group-hover:animate-shine",
+              isDark && "opacity-10"
+            )}
+          />
         </div>
       )}
     </button>

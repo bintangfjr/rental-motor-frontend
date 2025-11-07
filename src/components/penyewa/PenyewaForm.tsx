@@ -24,7 +24,7 @@ const penyewaSchema = z.object({
     .max(15, "Nomor WhatsApp terlalu panjang")
     .regex(
       /^(\+62|62|0)8[1-9][0-9]{6,10}$/,
-      "Format nomor WhatsApp tidak valid. Gunakan 08xx atau 628xx (10-13 digit)"
+      "Format nomor WhatsApp tidak valid. Gunakan 08xx atau 628xx (10-13 digit)",
     ),
 });
 
@@ -40,7 +40,7 @@ interface PenyewaFormProps {
 const compressImage = (
   file: File,
   maxWidth = 800,
-  quality = 0.7
+  quality = 0.7,
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -134,7 +134,7 @@ export const PenyewaForm: React.FC<PenyewaFormProps> = ({
   }, [previewUrl]);
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     setImageError(null);
@@ -165,7 +165,7 @@ export const PenyewaForm: React.FC<PenyewaFormProps> = ({
       console.log(
         "Original file size:",
         (file.size / 1024 / 1024).toFixed(2),
-        "MB"
+        "MB",
       );
 
       const compressedBase64 = await compressImage(file, 800, 0.7);
@@ -173,13 +173,13 @@ export const PenyewaForm: React.FC<PenyewaFormProps> = ({
       console.log(
         "Compressed base64 size:",
         ((compressedBase64.length * 0.75) / 1024).toFixed(2),
-        "KB"
+        "KB",
       );
 
       // Validasi ukuran setelah kompresi
       if (!isBase64SizeValid(compressedBase64, 500)) {
         setImageError(
-          "Gambar masih terlalu besar setelah kompresi. Silakan pilih gambar lain."
+          "Gambar masih terlalu besar setelah kompresi. Silakan pilih gambar lain.",
         );
         removeFile();
         return;
@@ -209,7 +209,7 @@ export const PenyewaForm: React.FC<PenyewaFormProps> = ({
 
     // Reset file input
     const fileInput = document.querySelector(
-      'input[type="file"]'
+      'input[type="file"]',
     ) as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
@@ -220,7 +220,7 @@ export const PenyewaForm: React.FC<PenyewaFormProps> = ({
     // Validasi ukuran base64 sebelum submit
     if (base64Image && !isBase64SizeValid(base64Image, 500)) {
       setImageError(
-        "Gambar terlalu besar. Silakan pilih gambar lain atau kompres ulang."
+        "Gambar terlalu besar. Silakan pilih gambar lain atau kompres ulang.",
       );
       return;
     }

@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "../../utils/cn";
 import { Button } from "../ui/Button";
+import { useTheme } from "@/hooks/useTheme";
 
 interface PaginationControlsProps {
   currentPage: number;
@@ -23,6 +24,8 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   className,
   showItemsPerPage = true,
 }) => {
+  const { isDark } = useTheme();
+
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -49,27 +52,70 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200",
+        "flex items-center justify-between px-4 py-3 border-t transition-colors duration-200",
+        isDark ? "bg-dark-card border-dark-border" : "bg-white border-gray-200",
         className
       )}
     >
       <div className="flex-1 flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{startItem}</span> to{" "}
-            <span className="font-medium">{endItem}</span> of{" "}
-            <span className="font-medium">{totalItems}</span> results
+          <p
+            className={cn(
+              "text-sm",
+              isDark ? "text-dark-secondary" : "text-gray-700"
+            )}
+          >
+            Showing{" "}
+            <span
+              className={cn(
+                "font-medium",
+                isDark ? "text-dark-primary" : "text-gray-900"
+              )}
+            >
+              {startItem}
+            </span>{" "}
+            to{" "}
+            <span
+              className={cn(
+                "font-medium",
+                isDark ? "text-dark-primary" : "text-gray-900"
+              )}
+            >
+              {endItem}
+            </span>{" "}
+            of{" "}
+            <span
+              className={cn(
+                "font-medium",
+                isDark ? "text-dark-primary" : "text-gray-900"
+              )}
+            >
+              {totalItems}
+            </span>{" "}
+            results
           </p>
         </div>
 
         <div className="flex items-center space-x-4">
           {showItemsPerPage && onItemsPerPageChange && (
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">Items per page:</span>
+              <span
+                className={cn(
+                  "text-sm",
+                  isDark ? "text-dark-secondary" : "text-gray-700"
+                )}
+              >
+                Items per page:
+              </span>
               <select
                 value={itemsPerPage}
                 onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-                className="rounded-md border-gray-300 py-1 pl-2 pr-8 text-sm focus:border-blue-500 focus:ring-blue-500"
+                className={cn(
+                  "rounded-md py-1 pl-2 pr-8 text-sm focus:ring-2 focus:ring-offset-2 transition-colors",
+                  isDark
+                    ? "bg-dark-secondary border-dark-border text-dark-primary focus:border-blue-500 focus:ring-blue-500 focus:ring-offset-dark-primary"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                )}
               >
                 {[10, 25, 50, 100].map((size) => (
                   <option key={size} value={size}>

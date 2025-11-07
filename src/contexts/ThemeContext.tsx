@@ -1,90 +1,76 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useCallback,
-  ReactNode,
-} from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import React, { useState, useEffect, ReactNode } from "react";
+import { Theme, ThemeContextValue } from "./ThemeContext.types";
+import { ThemeContext } from "./ThemeContextInstance";
 
-export type Theme = "light" | "dark" | "system";
-
-export interface ThemeContextType {
-  theme: Theme;
-  resolvedTheme: "light" | "dark";
-  setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
-}
-
-// Export context
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined
-);
-
+// Provider only - tidak ada createContext di sini
 interface ThemeProviderProps {
   children: ReactNode;
   defaultTheme?: Theme;
 }
 
-// Export ThemeProvider dengan benar
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
-  defaultTheme = "system",
+  defaultTheme = "light",
 }) => {
-  const [theme, setTheme] = useLocalStorage<Theme>("theme", defaultTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
-
-  const getSystemTheme = useCallback((): "light" | "dark" => {
-    if (typeof window === "undefined") return "light";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  }, []);
-
-  const resolveTheme = useCallback(
-    (): "light" | "dark" => (theme === "system" ? getSystemTheme() : theme),
-    [theme, getSystemTheme]
-  );
-
-  const applyTheme = useCallback((newTheme: "light" | "dark") => {
-    if (typeof window === "undefined") return;
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(newTheme);
-    root.setAttribute("data-theme", newTheme);
-    setResolvedTheme(newTheme);
-  }, []);
+  const [isDark, setIsDark] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
 
   useEffect(() => {
-    applyTheme(resolveTheme());
-  }, [theme, applyTheme, resolveTheme]);
+    const savedTheme = localStorage.getItem("theme") as Theme | null;
+    const systemPrefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
 
-  useEffect(() => {
-    if (theme !== "system" || typeof window === "undefined") return;
+    const initialTheme =
+      savedTheme || (systemPrefersDark ? "dark" : defaultTheme);
+    const shouldBeDark = initialTheme === "dark";
 
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => applyTheme(getSystemTheme());
+    setIsDark(shouldBeDark);
+    setThemeState(initialTheme);
 
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme, applyTheme, getSystemTheme]);
+    if (shouldBeDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [defaultTheme]);
 
   const toggleTheme = () => {
-    setTheme((current) =>
-      current === "light" ? "dark" : current === "dark" ? "system" : "light"
-    );
+    const newIsDark = !isDark;
+    const newTheme: Theme = newIsDark ? "dark" : "light";
+
+    setIsDark(newIsDark);
+    setThemeState(newTheme);
+
+    if (newIsDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", newTheme);
+  };
+
+  const setTheme = (newTheme: Theme) => {
+    const newIsDark = newTheme === "dark";
+    setIsDark(newIsDark);
+    setThemeState(newTheme);
+
+    if (newIsDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", newTheme);
+  };
+
+  const value: ThemeContextValue = {
+    isDark,
+    theme,
+    toggleTheme,
+    setTheme,
   };
 
   return (
-    <ThemeContext.Provider
-      value={{
-        theme: theme || defaultTheme,
-        resolvedTheme,
-        setTheme,
-        toggleTheme,
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 };

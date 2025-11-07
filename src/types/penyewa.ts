@@ -9,6 +9,7 @@ export interface Penyewa {
   created_at: string;
   updated_at: string;
   // Optional fields untuk relasi
+  historySewa?: HistorySewa;
   sewas_aktif_count?: number;
   sewas?: any[];
   _count?: {
@@ -17,6 +18,42 @@ export interface Penyewa {
   // Fields untuk sync offline
   _isTemp?: boolean;
   _needsSync?: boolean;
+}
+
+export interface CreditScore {
+  score: number; // 0-100
+  level: "Excellent" | "Good" | "Fair" | "Poor" | "Very Poor";
+  color: string;
+  description: string;
+  factors: {
+    positive: string[];
+    negative: string[];
+  };
+}
+
+export interface HistorySewa {
+  id: number;
+  penyewa_id: number;
+  motor_plat: string;
+  penyewa_nama: string;
+  tgl_mulai: string;
+  tgl_selesai: string;
+  harga: number;
+  denda: number;
+  status_selesai: string;
+  catatan?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HistoryStats {
+  totalSewa: number;
+  totalPendapatan: number;
+  totalDenda: number;
+  sewaDenda: number;
+  sewaSelesai: number;
+  keterlambatanTotal: number;
+  rataRataDenda: number;
 }
 
 export interface CreatePenyewaData {

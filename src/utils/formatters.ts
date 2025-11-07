@@ -2,7 +2,27 @@ import { DATE_FORMATS } from "./constants";
 
 /**
  * Formatting utilities untuk berbagai tipe data
+ * Termasuk formatters baru untuk fitur IOPGPS dan GPS tracking
  */
+
+/**
+ * Format waktu relatif (time ago)
+ */
+export const formatTimeAgo = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "Baru saja";
+  if (diffInSeconds < 3600)
+    return `${Math.floor(diffInSeconds / 60)} menit lalu`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} jam lalu`;
+  if (diffInSeconds < 2592000)
+    return `${Math.floor(diffInSeconds / 86400)} hari lalu`;
+
+  return formatDate(dateString);
+};
 
 // Currency formatting
 export const formatCurrency = (
@@ -247,9 +267,42 @@ export const formatRelativeTime = (date: Date | string): string => {
   return `${diffInYears} tahun yang lalu`;
 };
 
-export const formatDuration = (minutes: number): string => {
-  if (minutes <= 0) return "0 menit";
+// NEW: GPS & IOPGPS Specific Formatters
 
+/**
+ * Format jarak dalam kilometer atau meter
+ */
+export const formatDistance = (km: number): string => {
+  if (km === null || km === undefined) return "-";
+
+  if (km < 0.1) {
+    return `${Math.round(km * 1000)} m`;
+  }
+  if (km < 1) {
+    return `${(km * 1000).toFixed(0)} m`;
+  }
+  return `${km.toFixed(1)} km`;
+};
+
+/**
+ * Format kecepatan dalam km/h
+ */
+export const formatSpeed = (kmh: number): string => {
+  if (kmh === null || kmh === undefined) return "-";
+  return `${kmh.toFixed(0)} km/h`;
+};
+
+/**
+ * Format durasi dalam format yang mudah dibaca
+ */
+export const formatDuration = (seconds: number): string => {
+  if (seconds === null || seconds === undefined) return "-";
+
+  if (seconds < 60) {
+    return `${seconds} detik`;
+  }
+
+  const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
     return `${minutes} menit`;
   }
@@ -273,7 +326,209 @@ export const formatDuration = (minutes: number): string => {
   return `${days} hari ${remainingHours} jam`;
 };
 
-// NEW: Calculate duration from date inputs with validation
+/**
+ * Format koordinat latitude dan longitude
+ */
+export const formatCoordinate = (coord: number): string => {
+  if (coord === null || coord === undefined) return "-";
+  return coord.toFixed(6);
+};
+
+/**
+ * Format koordinat lengkap (lat, lng)
+ */
+export const formatCoordinates = (
+  lat: number | null,
+  lng: number | null
+): string => {
+  if (!lat || !lng) return "Tidak tersedia";
+  return `${formatCoordinate(lat)}, ${formatCoordinate(lng)}`;
+};
+
+/**
+ * Get GPS status color untuk badge/indicator
+ */
+export const getGpsStatusColor = (status: string): string => {
+  const colors = {
+    Online: "green",
+    Offline: "orange",
+    NoImei: "gray",
+    Error: "red",
+  };
+  return colors[status as keyof typeof colors] || "gray";
+};
+
+/**
+ * Get GPS status text untuk display
+ */
+export const getGpsStatusText = (status: string): string => {
+  const texts = {
+    Online: "Online",
+    Offline: "Offline",
+    NoImei: "Tidak Ada IMEI",
+    Error: "Error",
+  };
+  return texts[status as keyof typeof texts] || status;
+};
+
+/**
+ * Format IMEI number dengan pemisah
+ */
+export const formatImei = (imei: string): string => {
+  if (!imei) return "-";
+
+  // Remove any existing spaces
+  const cleaned = imei.replace(/\s/g, "");
+
+  // Format as: XXXXXX XXXXXX XXXXX
+  if (cleaned.length === 15) {
+    return `${cleaned.substring(0, 6)} ${cleaned.substring(
+      6,
+      12
+    )} ${cleaned.substring(12, 15)}`;
+  }
+
+  return cleaned;
+};
+
+/**
+ * Calculate distance between two coordinates menggunakan Haversine formula
+ */
+export const calculateDistance = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number => {
+  const R = 6371; // Radius bumi dalam km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+
+  return distance;
+};
+
+/**
+ * Format alamat dengan pemotongan jika terlalu panjang
+ */
+export const formatAddress = (
+  address: string,
+  maxLength: number = 50
+): string => {
+  if (!address) return "Alamat tidak tersedia";
+
+  if (address.length <= maxLength) return address;
+
+  return address.substring(0, maxLength) + "...";
+};
+
+/**
+ * Format data mileage untuk chart display
+ */
+export const formatMileageForChart = (
+  mileageData: Array<{ period_date: string; distance_km: number }>
+) => {
+  return mileageData.map((item) => ({
+    date: formatDate(item.period_date, "DD/MM"),
+    distance: item.distance_km,
+    fullDate: formatDate(item.period_date),
+  }));
+};
+
+/**
+ * Format vehicle status untuk display
+ */
+export const formatVehicleStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    "0": "Parkir",
+    "1": "Berjalan",
+    "2": "Idle",
+    "3": "Offline",
+    "4": "Alarm",
+    park: "Parkir",
+    move: "Berjalan",
+    idle: "Idle",
+    offline: "Offline",
+    alarm: "Alarm",
+  };
+
+  return statusMap[status] || status;
+};
+
+/**
+ * Format arah (direction) dalam derajat menjadi arah mata angin
+ */
+export const formatDirection = (degrees: number): string => {
+  if (degrees === null || degrees === undefined) return "-";
+
+  const directions = [
+    "Utara",
+    "Timur Laut",
+    "Timur",
+    "Tenggara",
+    "Selatan",
+    "Barat Daya",
+    "Barat",
+    "Barat Laut",
+  ];
+  const index = Math.round(degrees / 45) % 8;
+  return `${directions[index]} (${degrees}°)`;
+};
+
+/**
+ * Format timestamp dari IOPGPS (seconds to Date)
+ */
+export const formatIopgpsTimestamp = (timestamp: number): string => {
+  if (!timestamp) return "-";
+  return formatDateTime(new Date(timestamp * 1000));
+};
+
+/**
+ * Calculate average speed dari mileage data
+ */
+export const calculateAverageSpeed = (
+  distance: number,
+  duration: number
+): number => {
+  if (!duration || !distance) return 0;
+  return distance / (duration / 3600); // km/h
+};
+
+/**
+ * Format battery level untuk display
+ */
+export const formatBatteryLevel = (level: number): string => {
+  if (level === null || level === undefined) return "-";
+
+  if (level >= 80) return "🟢 Tinggi";
+  if (level >= 40) return "🟡 Sedang";
+  if (level >= 20) return "🟠 Rendah";
+  return "🔴 Kritis";
+};
+
+/**
+ * Format signal strength untuk display
+ */
+export const formatSignalStrength = (strength: number): string => {
+  if (strength === null || strength === undefined) return "-";
+
+  if (strength >= 4) return "📶 Sangat Kuat";
+  if (strength >= 3) return "📶 Kuat";
+  if (strength >= 2) return "📶 Sedang";
+  if (strength >= 1) return "📶 Lemah";
+  return "📶 Tidak Ada Sinyal";
+};
+
+// Date calculations (existing but enhanced)
 export const calculateDurationFromInput = (
   startDate: Date | string | null | undefined,
   endDate: Date | string | null | undefined,
@@ -303,7 +558,6 @@ export const calculateDurationFromInput = (
   }
 };
 
-// NEW: Calculate duration in days (minimal 1 hari)
 export const calculateDurationInDays = (
   startDate: Date | string | null | undefined,
   endDate: Date | string | null | undefined
@@ -324,7 +578,6 @@ export const calculateDurationInDays = (
   return Math.max(1, diffInDays); // Minimal 1 hari
 };
 
-// NEW: Calculate duration in hours
 export const calculateDurationInHours = (
   startDate: Date | string | null | undefined,
   endDate: Date | string | null | undefined
@@ -345,7 +598,6 @@ export const calculateDurationInHours = (
   return Math.max(1, diffInHours); // Minimal 1 jam
 };
 
-// NEW: Validate date range dengan pesan error yang lebih spesifik
 export const validateDateRange = (
   startDate: Date | string | null | undefined,
   endDate: Date | string | null | undefined
@@ -379,7 +631,6 @@ export const validateDateRange = (
   };
 };
 
-// NEW: Add days to a date
 export const addDaysToDate = (date: Date | string, days: number): Date => {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   const result = new Date(dateObj);
@@ -387,7 +638,6 @@ export const addDaysToDate = (date: Date | string, days: number): Date => {
   return result;
 };
 
-// NEW: Add hours to a date
 export const addHoursToDate = (date: Date | string, hours: number): Date => {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   const result = new Date(dateObj);
@@ -395,7 +645,6 @@ export const addHoursToDate = (date: Date | string, hours: number): Date => {
   return result;
 };
 
-// NEW: Add minutes to a date
 export const addMinutesToDate = (
   date: Date | string,
   minutes: number
@@ -406,7 +655,6 @@ export const addMinutesToDate = (
   return result;
 };
 
-// NEW: Get current date/time in various formats
 export const getCurrentDateTime = {
   forInput: (): string => formatDateTimeForInput(new Date()),
   forBackend: (): string => formatDateTimeForBackend(new Date()),
@@ -414,7 +662,6 @@ export const getCurrentDateTime = {
   iso: (): string => new Date().toISOString(),
 };
 
-// NEW: Get minimum return date (1 jam setelah sewa)
 export const getMinReturnDate = (startDate: Date | string): string => {
   const dateObj =
     typeof startDate === "string" ? new Date(startDate) : startDate;
@@ -422,7 +669,7 @@ export const getMinReturnDate = (startDate: Date | string): string => {
   return formatDateTimeForInput(minReturn);
 };
 
-// String formatting
+// String formatting (existing)
 export const capitalize = (text: string): string => {
   if (!text) return "";
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
@@ -490,7 +737,7 @@ export const formatPlatNomor = (plat: string): string => {
     .trim();
 };
 
-// Status formatting
+// Status formatting (enhanced with GPS status)
 export const formatStatus = (status: string): string => {
   if (!status) return "";
 
@@ -500,6 +747,12 @@ export const formatStatus = (status: string): string => {
     disewa: "Disewa",
     perbaikan: "Perbaikan",
     tidak_tersedia: "Tidak Tersedia",
+
+    // GPS Status
+    Online: "Online",
+    Offline: "Offline",
+    NoImei: "Tidak Ada IMEI",
+    Error: "Error",
 
     // Sewa status
     aktif: "Aktif",
@@ -525,6 +778,18 @@ export const formatStatus = (status: string): string => {
     terkirim: "Terkirim",
     gagal: "Gagal",
     menunggu: "Menunggu",
+
+    // Vehicle status dari IOPGPS
+    "0": "Parkir",
+    "1": "Berjalan",
+    "2": "Idle",
+    "3": "Offline",
+    "4": "Alarm",
+    park: "Parkir",
+    move: "Berjalan",
+    idle: "Idle",
+    offline: "Offline",
+    alarm: "Alarm",
   };
 
   return statusMap[status] || capitalizeWords(status);
@@ -539,6 +804,9 @@ export const getStatusColor = (status: string): string => {
     Aman: "success",
     lunas: "success",
     terkirim: "success",
+    Online: "success",
+    "1": "success",
+    move: "success",
 
     // Blue colors
     aktif: "primary",
@@ -547,6 +815,13 @@ export const getStatusColor = (status: string): string => {
     // Orange colors
     perbaikan: "warning",
     menunggu: "warning",
+    Offline: "warning",
+    "2": "warning",
+    idle: "warning",
+
+    // Yellow colors
+    "0": "secondary",
+    park: "secondary",
 
     // Red colors
     disewa: "error",
@@ -556,6 +831,12 @@ export const getStatusColor = (status: string): string => {
     gagal: "error",
     dibatalkan: "error",
     belum_lunas: "error",
+    Error: "error",
+    NoImei: "error",
+    "3": "error",
+    "4": "error",
+    offline: "error",
+    alarm: "error",
   };
 
   return colorMap[status] || "default";
@@ -587,15 +868,6 @@ export const formatFileSize = (bytes: number): string => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-
-// Coordinate formatting
-export const formatCoordinates = (
-  lat: number | null,
-  lng: number | null
-): string => {
-  if (!lat || !lng) return "Tidak tersedia";
-  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 };
 
 // API response formatting
@@ -638,7 +910,34 @@ export const formatSewaInfo = (sewa: {
   } (${formatDate(sewa.tgl_sewa)})`;
 };
 
-// NEW: Calculate rental cost based on duration and rate
+// NEW: Enhanced dengan GPS data
+export const formatMotorInfoWithGps = (motor: {
+  merk: string;
+  model: string;
+  plat_nomor: string;
+  gps_status?: string;
+  imei?: string;
+}): string => {
+  if (!motor) return "-";
+
+  const baseInfo = `${motor.merk} ${motor.model} (${motor.plat_nomor})`;
+
+  if (motor.gps_status) {
+    const gpsIcon =
+      motor.gps_status === "Online"
+        ? "🟢"
+        : motor.gps_status === "Offline"
+        ? "🟡"
+        : motor.gps_status === "Error"
+        ? "🔴"
+        : "⚫";
+    return `${baseInfo} ${gpsIcon}`;
+  }
+
+  return baseInfo;
+};
+
+// Calculate rental cost based on duration and rate
 export const calculateRentalCost = (
   durationMinutes: number,
   ratePerHour: number,
@@ -656,7 +955,7 @@ export const calculateRentalCost = (
   }
 };
 
-// NEW: Format duration for display in rental context
+// Format duration for display in rental context
 export const formatRentalDuration = (
   minutes: number,
   satuanDurasi: "jam" | "hari" = "hari"
@@ -672,7 +971,7 @@ export const formatRentalDuration = (
   }
 };
 
-// NEW: Calculate penalty/denda
+// Calculate penalty/denda
 export const calculatePenalty = (
   lateMinutes: number,
   hourlyRate: number
@@ -683,7 +982,7 @@ export const calculatePenalty = (
   return Math.ceil(lateHours * hourlyRate * 0.5); // 50% dari tarif per jam
 };
 
-// NEW: Format untuk display harga motor
+// Format untuk display harga motor
 export const formatMotorPrice = (
   harga: number,
   satuan: "hari" | "jam" = "hari"
@@ -694,13 +993,13 @@ export const formatMotorPrice = (
   return `${formattedPrice}/${satuan}`;
 };
 
-// NEW: Validasi nomor telepon Indonesia
+// Validasi nomor telepon Indonesia
 export const isValidIndonesianPhone = (phone: string): boolean => {
   const cleaned = phone.replace(/\D/g, "");
   return /^(62|0)8[1-9][0-9]{6,9}$/.test(cleaned);
 };
 
-// NEW: Generate display text untuk satuan durasi
+// Generate display text untuk satuan durasi
 export const getDurasiDisplayText = (
   durasi: number,
   satuan: "jam" | "hari"
@@ -708,12 +1007,52 @@ export const getDurasiDisplayText = (
   return `${durasi} ${satuan}`;
 };
 
-// NEW: Parse datetime string to Date object dengan validation
+// Parse datetime string to Date object dengan validation
 export const parseDateTime = (dateString: string): Date | null => {
   if (!dateString) return null;
 
   const date = new Date(dateString);
   return isNaN(date.getTime()) ? null : date;
+};
+
+// NEW: Validasi IMEI format
+export const isValidImei = (imei: string): boolean => {
+  if (!imei) return false;
+
+  const cleaned = imei.replace(/\s/g, "");
+
+  // Basic IMEI validation (15 digits)
+  if (!/^\d{15}$/.test(cleaned)) return false;
+
+  return true;
+};
+
+// NEW: Format untuk GPS dashboard summary
+export const formatGpsSummary = (summary: {
+  total: number;
+  online: number;
+  offline: number;
+  no_imei: number;
+  moving: number;
+  parked: number;
+}) => {
+  return {
+    total: formatNumber(summary.total),
+    online: `${summary.online} (${(
+      (summary.online / summary.total) *
+      100
+    ).toFixed(1)}%)`,
+    offline: `${summary.offline} (${(
+      (summary.offline / summary.total) *
+      100
+    ).toFixed(1)}%)`,
+    no_imei: `${summary.no_imei} (${(
+      (summary.no_imei / summary.total) *
+      100
+    ).toFixed(1)}%)`,
+    moving: formatNumber(summary.moving),
+    parked: formatNumber(summary.parked),
+  };
 };
 
 // Export semua formatters
@@ -735,6 +1074,26 @@ export default {
   formatDateTimeForInput,
   formatRelativeTime,
   formatDuration,
+
+  // GPS & IOPGPS Specific
+  formatDistance,
+  formatSpeed,
+  formatCoordinate,
+  formatCoordinates,
+  getGpsStatusColor,
+  getGpsStatusText,
+  formatImei,
+  calculateDistance,
+  formatAddress,
+  formatMileageForChart,
+  formatVehicleStatus,
+  formatDirection,
+  formatIopgpsTimestamp,
+  calculateAverageSpeed,
+  formatBatteryLevel,
+  formatSignalStrength,
+  isValidImei,
+  formatGpsSummary,
 
   // Date calculations
   calculateDurationFromInput,
@@ -764,9 +1123,6 @@ export default {
   // File
   formatFileSize,
 
-  // Coordinates
-  formatCoordinates,
-
   // API
   formatApiError,
 
@@ -774,6 +1130,7 @@ export default {
   formatMotorInfo,
   formatPenyewaInfo,
   formatSewaInfo,
+  formatMotorInfoWithGps,
   calculateRentalCost,
   formatRentalDuration,
   calculatePenalty,

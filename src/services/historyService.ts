@@ -1,13 +1,17 @@
-import api from './api';
-import { History, HistoryStats } from '../types/history';
+import api from "./api";
+import { History, HistoryStats } from "../types/history";
 
 export const historyService = {
   // Get all histories with pagination
-  async getAll(page: number = 1, limit: number = 10, search?: string): Promise<any> {
+  async getAll(
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+  ): Promise<any> {
     const params = new URLSearchParams();
-    params.append('page', page.toString());
-    params.append('limit', limit.toString());
-    if (search) params.append('search', search);
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    if (search) params.append("search", search);
 
     const response = await api.get(`/histories?${params}`);
     return response.data.data;
@@ -21,7 +25,7 @@ export const historyService = {
 
   // Get history statistics
   async getStatsSummary(): Promise<HistoryStats> {
-    const response = await api.get('/histories/stats/summary');
+    const response = await api.get("/histories/stats/summary");
     return response.data.data;
   },
 

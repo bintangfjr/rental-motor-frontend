@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { Footer } from "./Footer";
+import { useTheme } from "../../hooks/useTheme"; // ✅ Perbaiki import path
 
 interface LayoutProps {
   title?: string;
@@ -13,40 +14,50 @@ const Layout: React.FC<LayoutProps> = ({ title, children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [screenSize, setScreenSize] = useState<
-    "mobile" | "tablet" | "desktop" | "xl" | "2xl"
-  >("desktop");
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDark } = useTheme(); // Sekarang seharusnya bekerja
 
-  // Detect screen size dengan breakpoint yang lebih detail
+  // State untuk animation
+  const [displayLocation, setDisplayLocation] = useState(location);
+  const [transitionStage, setTransitionStage] = useState("fadeIn");
+
   useEffect(() => {
+    if (location !== displayLocation) {
+      setTransitionStage("fadeOut");
+    }
+  }, [location, displayLocation]);
+
+  const handleAnimationEnd = () => {
+    if (transitionStage === "fadeOut") {
+      setTransitionStage("fadeIn");
+      setDisplayLocation(location);
+    }
+  };
+
+  // Detect screen size
+  useEffect(() => {
+    let timeoutId: number;
+
     const checkScreenSize = () => {
       const width = window.innerWidth;
-
-      if (width < 768) {
-        setIsMobile(true);
-        setScreenSize("mobile");
+      setIsMobile(width < 1024);
+      if (width >= 1024) {
         setMobileSidebarOpen(false);
-      } else if (width < 1024) {
-        setIsMobile(false);
-        setScreenSize("tablet");
-        setMobileSidebarOpen(false);
-      } else if (width < 1440) {
-        setIsMobile(false);
-        setScreenSize("desktop");
-      } else if (width < 1920) {
-        setIsMobile(false);
-        setScreenSize("xl");
-      } else {
-        setIsMobile(false);
-        setScreenSize("2xl");
       }
     };
 
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(checkScreenSize, 100);
+    };
+
     checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // Close mobile sidebar when route changes
@@ -68,98 +79,117 @@ const Layout: React.FC<LayoutProps> = ({ title, children }) => {
     setMobileSidebarOpen(false);
   };
 
-  // Handle mobile navigation
   const handleMobileNavigation = (path: string) => {
     navigate(path);
     setMobileSidebarOpen(false);
   };
 
-  // Main content margin calculations - OPTIMIZED FOR LARGE SCREENS
-  const getMainContentMargin = () => {
-    if (isMobile) {
-      return "ml-0";
-    }
-
-    // Lebar sidebar yang responsive berdasarkan screen size
-    if (screenSize === "2xl") {
-      return sidebarCollapsed ? "xl:ml-24 2xl:ml-28" : "xl:ml-80 2xl:ml-96";
-    } else if (screenSize === "xl") {
-      return sidebarCollapsed ? "lg:ml-20 xl:ml-24" : "lg:ml-64 xl:ml-72";
-    } else {
-      return sidebarCollapsed ? "lg:ml-20" : "lg:ml-64";
-    }
-  };
-
-  // Max width yang responsive untuk large screens
-  const getMaxWidth = () => {
-    switch (screenSize) {
-      case "2xl":
-        return "max-w-8xl"; // 88rem (1408px)
-      case "xl":
-        return "max-w-7xl"; // 80rem (1280px)
-      case "desktop":
-        return "max-w-7xl";
-      case "tablet":
-        return "max-w-6xl"; // 72rem (1152px)
-      default:
-        return "max-w-7xl";
-    }
-  };
-
-  // Padding yang responsive
-  const getContentPadding = () => {
-    switch (screenSize) {
-      case "2xl":
-        return "px-8 2xl:px-12";
-      case "xl":
-        return "px-6 xl:px-8";
-      default:
-        return "px-4 sm:px-6 lg:px-8";
-    }
-  };
-
   return (
-    <div className="flex min-h-screen bg-gray-50 relative">
-      {/* Sidebar */}
-      <Sidebar
-        collapsed={isMobile ? false : sidebarCollapsed}
-        mobileOpen={mobileSidebarOpen}
-        onToggle={toggleSidebar}
-        onItemClick={closeMobileSidebar}
-        onMobileNavigation={handleMobileNavigation}
-        screenSize={screenSize}
-      />
+    <div
+      className={`flex min-h-screen transition-colors duration-300 ${
+        isDark
+          ? "bg-dark-primary text-dark-primary"
+          : "bg-gray-50 text-gray-900"
+      } relative`}
+    >
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <div
+          className={`
+            flex-shrink-0 transition-all duration-300 ease-in-out
+            ${sidebarCollapsed ? "w-20" : "w-64"}
+            h-screen sticky top-0 z-30
+            ${
+              isDark
+                ? "bg-dark-secondary border-dark-border"
+                : "bg-white/80 backdrop-blur-lg border-gray-200/30"
+            }
+            border-r
+          `}
+        >
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            mobileOpen={false}
+            onToggle={toggleSidebar}
+            onItemClick={closeMobileSidebar}
+            onMobileNavigation={handleMobileNavigation}
+            isMobile={false}
+          />
+        </div>
+      )}
+
+      {/* Mobile Sidebar */}
+      {isMobile && (
+        <>
+          {mobileSidebarOpen && (
+            <div
+              className={`fixed inset-0 z-40 lg:hidden ${
+                isDark ? "bg-black bg-opacity-70" : "bg-black bg-opacity-50"
+              }`}
+              onClick={closeMobileSidebar}
+            />
+          )}
+
+          <div
+            className={`
+              fixed inset-y-0 left-0 z-50 transform transition-transform duration-300
+              ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+              w-64 border-r
+              ${
+                isDark
+                  ? "bg-dark-secondary border-dark-border"
+                  : "bg-white border-gray-200"
+              }
+            `}
+          >
+            <Sidebar
+              collapsed={false}
+              mobileOpen={mobileSidebarOpen}
+              onToggle={toggleSidebar}
+              onItemClick={closeMobileSidebar}
+              onMobileNavigation={handleMobileNavigation}
+              isMobile={true}
+            />
+          </div>
+        </>
+      )}
 
       {/* Main content area */}
       <div
         className={`
-          flex-1 flex flex-col min-h-screen
-          transition-all duration-300 ease-in-out
-          ${getMainContentMargin()}
-          w-full min-w-0
+          flex-1 flex flex-col min-h-screen min-w-0
+          transition-all duration-300
+          ${isMobile ? "w-full" : ""}
+          ${mobileSidebarOpen ? "overflow-hidden" : ""}
         `}
       >
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
+        <div
+          className={`sticky top-0 z-30 shadow-sm border-b ${
+            isDark
+              ? "bg-dark-secondary border-dark-border"
+              : "bg-white border-gray-200"
+          }`}
+        >
           <Header
             title={title}
             onMenuClick={toggleSidebar}
             showMobileMenu={isMobile}
-            screenSize={screenSize}
+            sidebarCollapsed={sidebarCollapsed}
           />
         </div>
 
-        {/* Page content dengan max width yang responsive */}
-        <main className="flex-1 py-6 lg:py-8 xl:py-10">
-          <div
-            className={`mx-auto ${getMaxWidth()} ${getContentPadding()} w-full`}
-          >
-            <div className={isMobile ? "pb-20" : ""}>
-              <div
-                key={location.pathname}
-                className="animate-in slide-in-from-right-12 fade-in duration-300"
-              >
-                {children ?? <Outlet />}
+        {/* Page content dengan animation */}
+        <main className="flex-1">
+          <div className="py-6 lg:py-8">
+            <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
+              <div className={isMobile ? "pb-20" : ""}>
+                <div
+                  className={`animate-${transitionStage}`}
+                  onAnimationEnd={handleAnimationEnd}
+                >
+                  {children ?? <Outlet />}
+                </div>
               </div>
             </div>
           </div>
@@ -167,20 +197,34 @@ const Layout: React.FC<LayoutProps> = ({ title, children }) => {
 
         {/* Footer */}
         <div className={isMobile ? "pb-16" : ""}>
-          <Footer simplified={isMobile} screenSize={screenSize} />
+          <Footer simplified={isMobile} />
         </div>
       </div>
 
       {/* Mobile bottom navigation */}
       {isMobile && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 py-2 px-4 safe-area-bottom">
+        <div
+          className={`
+            lg:hidden fixed bottom-0 left-0 right-0 z-40 
+            py-2 px-4 safe-area-bottom border-t
+            ${
+              isDark
+                ? "bg-dark-secondary border-dark-border"
+                : "bg-white border-gray-200"
+            }
+            ${mobileSidebarOpen ? "opacity-0 pointer-events-none" : ""}
+            transition-all duration-300
+          `}
+        >
           <div className="flex justify-around items-center">
             <button
               onClick={toggleSidebar}
               className={`flex flex-col items-center justify-center p-2 transition-colors ${
                 mobileSidebarOpen
-                  ? "text-blue-600"
-                  : "text-gray-600 hover:text-blue-600"
+                  ? "text-brand-blue"
+                  : isDark
+                  ? "text-dark-secondary hover:text-brand-blue"
+                  : "text-gray-600 hover:text-brand-blue"
               }`}
             >
               <svg
@@ -201,7 +245,11 @@ const Layout: React.FC<LayoutProps> = ({ title, children }) => {
 
             <button
               onClick={() => handleMobileNavigation("/dashboard")}
-              className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-blue-600 transition-colors"
+              className={`flex flex-col items-center justify-center p-2 transition-colors ${
+                isDark
+                  ? "text-dark-secondary hover:text-brand-blue"
+                  : "text-gray-600 hover:text-brand-blue"
+              }`}
             >
               <svg
                 className="w-6 h-6"
@@ -221,7 +269,11 @@ const Layout: React.FC<LayoutProps> = ({ title, children }) => {
 
             <button
               onClick={() => handleMobileNavigation("/sewas")}
-              className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-blue-600 transition-colors"
+              className={`flex flex-col items-center justify-center p-2 transition-colors ${
+                isDark
+                  ? "text-dark-secondary hover:text-brand-blue"
+                  : "text-gray-600 hover:text-brand-blue"
+              }`}
             >
               <svg
                 className="w-6 h-6"
@@ -241,7 +293,11 @@ const Layout: React.FC<LayoutProps> = ({ title, children }) => {
 
             <button
               onClick={() => handleMobileNavigation("/profile")}
-              className="flex flex-col items-center justify-center p-2 text-gray-600 hover:text-blue-600 transition-colors"
+              className={`flex flex-col items-center justify-center p-2 transition-colors ${
+                isDark
+                  ? "text-dark-secondary hover:text-brand-blue"
+                  : "text-gray-600 hover:text-brand-blue"
+              }`}
             >
               <svg
                 className="w-6 h-6"
@@ -262,50 +318,24 @@ const Layout: React.FC<LayoutProps> = ({ title, children }) => {
         </div>
       )}
 
-      {/* Background decorations - Optimized for large screens */}
+      {/* Simple background dengan dark theme support */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        {/* Background elements yang scale dengan screen size */}
         <div
-          className={`absolute -top-40 -right-32 ${
-            screenSize === "2xl"
-              ? "w-96 h-96 opacity-30"
-              : screenSize === "xl"
-              ? "w-80 h-80 opacity-25"
-              : isMobile
-              ? "w-40 h-40 opacity-10"
-              : "w-60 h-60 opacity-20"
-          } bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full mix-blend-multiply filter blur-xl animate-float-slow`}
+          className={`absolute inset-0 transition-all duration-300 ${
+            isDark
+              ? "bg-dark-primary"
+              : "bg-gradient-to-br from-blue-50/30 to-purple-50/30"
+          }`}
         ></div>
 
-        <div
-          className={`absolute -bottom-40 -left-32 ${
-            screenSize === "2xl"
-              ? "w-96 h-96 opacity-30"
-              : screenSize === "xl"
-              ? "w-80 h-80 opacity-25"
-              : isMobile
-              ? "w-40 h-40 opacity-10"
-              : "w-60 h-60 opacity-20"
-          } bg-gradient-to-r from-purple-100 to-pink-100 rounded-full mix-blend-multiply filter blur-xl animate-float-medium`}
-        ></div>
-
-        {/* Grid pattern yang responsive */}
-        <div
-          className={`
-            absolute inset-0 
-            bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] 
-            ${
-              screenSize === "2xl"
-                ? "bg-[size:96px_96px]"
-                : screenSize === "xl"
-                ? "bg-[size:80px_80px]"
-                : isMobile
-                ? "bg-[size:32px_32px]"
-                : "bg-[size:64px_64px]"
-            }
-            [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]
-          `}
-        ></div>
+        {/* Background pattern untuk dark mode */}
+        {isDark && (
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20"></div>
+            <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl"></div>
+          </div>
+        )}
       </div>
     </div>
   );

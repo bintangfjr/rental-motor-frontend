@@ -1,12 +1,15 @@
 import React from "react";
 import { cn } from "../../utils/cn";
 import { Button } from "./Button";
+import { useTheme } from "../../hooks/useTheme";
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   className?: string;
+  showInfo?: boolean;
+  compact?: boolean;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -14,27 +17,44 @@ export const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
   className,
+  showInfo = true,
+  compact = false,
 }) => {
+  const { isDark } = useTheme();
+
   const getPageNumbers = () => {
-    const pages: number[] = [];
-    const maxVisiblePages = 5;
+    if (totalPages <= 1) return [];
 
-    const startPage = Math.max(
-      1,
-      currentPage - Math.floor(maxVisiblePages / 2)
-    );
-    let adjustedStartPage = startPage;
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = compact ? 3 : 5;
 
-    // Hitung endPage
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1); // Diubah ke const
 
-    // Jika jumlah halaman kurang dari maxVisiblePages, geser startPage
+    // Adjust start page if we're at the end
     if (endPage - startPage + 1 < maxVisiblePages) {
-      adjustedStartPage = Math.max(1, endPage - maxVisiblePages + 1);
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
-    for (let i = adjustedStartPage; i <= endPage; i++) {
+    // Add first page and ellipsis if needed
+    if (startPage > 1) {
+      pages.push(1);
+      if (startPage > 2) {
+        pages.push("...");
+      }
+    }
+
+    // Add page numbers
+    for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
+    }
+
+    // Add last page and ellipsis if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push("...");
+      }
+      pages.push(totalPages);
     }
 
     return pages;
@@ -42,50 +62,147 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   if (totalPages <= 1) return null;
 
+  const pageNumbers = getPageNumbers();
+
   return (
     <div
       className={cn(
-        "flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200",
+        "flex items-center justify-between px-4 py-3 border-t transition-colors duration-200",
+        isDark
+          ? "bg-dark-card border-dark-border text-dark-primary"
+          : "bg-white border-gray-200 text-gray-700",
+        compact && "px-3 py-2",
         className
       )}
     >
       <div className="flex items-center space-x-2">
+        {/* Previous Button */}
         <Button
           variant="outline"
-          size="sm"
+          size={compact ? "sm" : "md"}
           disabled={currentPage === 1}
           onClick={() => onPageChange(currentPage - 1)}
+          className={cn(
+            "transition-colors",
+            isDark && "border-dark-border hover:bg-dark-hover"
+          )}
         >
-          Previous
+          <span className="flex items-center">
+            <svg
+              className="w-4 h-4 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            {!compact && "Previous"}
+          </span>
         </Button>
 
-        <div className="hidden sm:flex items-center space-x-1">
-          {getPageNumbers().map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "primary" : "outline"}
-              size="sm"
-              onClick={() => onPageChange(page)}
-            >
-              {page}
-            </Button>
-          ))}
+        {/* Page Numbers - Hidden on mobile if compact */}
+        <div
+          className={cn(
+            "items-center space-x-1",
+            compact ? "hidden sm:flex" : "flex"
+          )}
+        >
+          {pageNumbers.map((page, index) =>
+            page === "..." ? (
+              <span
+                key={`ellipsis-${index}`}
+                className={cn(
+                  "px-3 py-1 text-sm",
+                  isDark ? "text-dark-muted" : "text-gray-500"
+                )}
+              >
+                ...
+              </span>
+            ) : (
+              <Button
+                key={page}
+                variant={currentPage === page ? "primary" : "outline"}
+                size={compact ? "sm" : "md"}
+                onClick={() => onPageChange(page as number)}
+                className={cn(
+                  currentPage === page
+                    ? "font-semibold"
+                    : isDark
+                    ? "border-dark-border hover:bg-dark-hover"
+                    : "border-gray-300 hover:bg-gray-50",
+                  "min-w-[2.5rem]"
+                )}
+              >
+                {page}
+              </Button>
+            )
+          )}
         </div>
 
+        {/* Next Button */}
         <Button
           variant="outline"
-          size="sm"
+          size={compact ? "sm" : "md"}
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(currentPage + 1)}
+          className={cn(
+            "transition-colors",
+            isDark && "border-dark-border hover:bg-dark-hover"
+          )}
         >
-          Next
+          <span className="flex items-center">
+            {!compact && "Next"}
+            <svg
+              className="w-4 h-4 ml-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </span>
         </Button>
       </div>
 
-      <div className="text-sm text-gray-700">
-        Page <span className="font-medium">{currentPage}</span> of{" "}
-        <span className="font-medium">{totalPages}</span>
-      </div>
+      {/* Page Info */}
+      {showInfo && (
+        <div
+          className={cn(
+            "text-sm transition-colors",
+            isDark ? "text-dark-secondary" : "text-gray-600",
+            compact && "hidden sm:block"
+          )}
+        >
+          Page{" "}
+          <span
+            className={cn(
+              "font-medium",
+              isDark ? "text-dark-primary" : "text-gray-900"
+            )}
+          >
+            {currentPage}
+          </span>{" "}
+          of{" "}
+          <span
+            className={cn(
+              "font-medium",
+              isDark ? "text-dark-primary" : "text-gray-900"
+            )}
+          >
+            {totalPages}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

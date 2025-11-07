@@ -1,10 +1,13 @@
 import React from "react";
 import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface HeaderProps {
   title?: string;
   onMenuClick: () => void;
   showMobileMenu?: boolean;
+  sidebarCollapsed?: boolean;
   screenSize?: "mobile" | "tablet" | "desktop" | "xl" | "2xl";
 }
 
@@ -12,8 +15,11 @@ export const Header: React.FC<HeaderProps> = ({
   title,
   onMenuClick,
   showMobileMenu = false,
+  sidebarCollapsed = false,
   screenSize = "desktop",
 }) => {
+  const { isDark } = useTheme();
+
   // Responsive padding berdasarkan screen size
   const getHeaderPadding = () => {
     switch (screenSize) {
@@ -28,19 +34,12 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  // Responsive height berdasarkan screen size
+  // Consistent height untuk semua screen size
   const getHeaderHeight = () => {
-    switch (screenSize) {
-      case "2xl":
-        return "h-20";
-      case "xl":
-        return "h-18";
-      default:
-        return "h-16";
-    }
+    return "h-16";
   };
 
-  // Responsive title size berdasarkan screen size
+  // Responsive title size
   const getTitleSize = () => {
     switch (screenSize) {
       case "2xl":
@@ -48,11 +47,11 @@ export const Header: React.FC<HeaderProps> = ({
       case "xl":
         return "text-xl";
       default:
-        return "text-xl";
+        return "text-lg sm:text-xl";
     }
   };
 
-  // Responsive icon size berdasarkan screen size
+  // Responsive icon size
   const getIconSize = () => {
     switch (screenSize) {
       case "2xl":
@@ -60,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
       case "xl":
         return "w-6 h-6";
       default:
-        return "w-6 h-6";
+        return "w-5 h-5 sm:w-6 sm:h-6";
     }
   };
 
@@ -76,12 +75,26 @@ export const Header: React.FC<HeaderProps> = ({
       case "tablet":
         return "max-w-md";
       default:
-        return "max-w-xs lg:max-w-md";
+        return "max-w-[180px] sm:max-w-xs lg:max-w-md";
     }
   };
 
+  // Menu button margin berdasarkan state sidebar
+  const getMenuButtonMargin = () => {
+    if (showMobileMenu) return "mr-2";
+    return sidebarCollapsed ? "mr-2" : "mr-3 lg:mr-4";
+  };
+
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header
+      className={cn(
+        "shadow-sm border-b sticky top-0 z-30 transition-colors duration-300",
+        isDark
+          ? "bg-dark-secondary border-dark-border"
+          : "bg-white border-gray-200"
+      )}
+      style={{ contain: "layout style" }}
+    >
       <div
         className={cn(
           "flex items-center justify-between w-full",
@@ -89,92 +102,21 @@ export const Header: React.FC<HeaderProps> = ({
           getHeaderPadding()
         )}
       >
+        {/* Left section - Title and menu button */}
         <div className="flex items-center flex-1 min-w-0">
-          {/* Menu button - Responsive untuk semua screen size */}
+          {/* Menu button */}
           <button
             onClick={onMenuClick}
             className={cn(
-              "p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors",
-              screenSize === "2xl" ? "p-2.5" : "p-2"
+              "flex-shrink-0 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+              screenSize === "2xl" ? "p-2.5" : "p-2",
+              getMenuButtonMargin(),
+              isDark
+                ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-accent focus:ring-offset-dark-secondary"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             )}
-            aria-label="Toggle menu"
-          >
-            {showMobileMenu ? (
-              // Hamburger icon for mobile
-              <svg
-                className={getIconSize()}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            ) : (
-              // Menu icon for desktop
-              <svg
-                className={getIconSize()}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            )}
-          </button>
-
-          {/* Title dengan responsive design */}
-          <div
-            className={cn(
-              "ml-3 lg:ml-4 flex-1 min-w-0",
-              screenSize === "2xl" && "ml-4"
-            )}
-          >
-            <h1
-              className={cn(
-                "font-semibold text-gray-900 truncate",
-                getTitleSize(),
-                getTitleMaxWidth()
-              )}
-            >
-              {title || "Dashboard"}
-            </h1>
-            {/* Subtitle untuk layar besar */}
-            {(screenSize === "xl" || screenSize === "2xl") && (
-              <p className="text-sm text-gray-500 mt-1 truncate">
-                Sistem Manajemen Rental Motor
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Desktop navigation items - Enhanced untuk layar besar */}
-        <div className="hidden lg:flex items-center space-x-6">
-          {/* Status indicator untuk layar besar */}
-          {(screenSize === "xl" || screenSize === "2xl") && (
-            <div className="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-green-700">
-                System Online
-              </span>
-            </div>
-          )}
-
-          {/* Notifications */}
-          <button
-            className={cn(
-              "p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors relative",
-              screenSize === "2xl" && "p-2.5"
-            )}
+            aria-label={showMobileMenu ? "Close menu" : "Open menu"}
+            style={{ willChange: "transform" }}
           >
             <svg
               className={getIconSize()}
@@ -186,34 +128,138 @@ export const Header: React.FC<HeaderProps> = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
-            {/* Notification badge */}
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
           </button>
 
-          {/* User profile dengan info lebih detail di layar besar */}
+          {/* Title dengan reserved space */}
+          <div className={cn("flex-1 min-w-0", getMenuButtonMargin())}>
+            <h1
+              className={cn(
+                "font-semibold truncate transition-colors duration-300",
+                getTitleSize(),
+                getTitleMaxWidth(),
+                isDark ? "text-dark-primary" : "text-gray-900"
+              )}
+              style={{ contain: "layout" }}
+            >
+              {title || "Dashboard"}
+            </h1>
+
+            {/* Subtitle untuk layar besar */}
+            {(screenSize === "xl" || screenSize === "2xl") && (
+              <p
+                className={cn(
+                  "text-sm mt-0.5 truncate transition-colors duration-300",
+                  isDark ? "text-dark-muted" : "text-gray-500"
+                )}
+                style={{ contain: "layout" }}
+              >
+                Sistem Manajemen Rental Motor
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop navigation items */}
+        <div className="hidden lg:flex items-center space-x-4 2xl:space-x-6">
+          {/* Status indicator untuk layar besar */}
+          {(screenSize === "xl" || screenSize === "2xl") && (
+            <div
+              className={cn(
+                "flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-colors duration-300",
+                isDark
+                  ? "bg-green-900 bg-opacity-20 border-green-800"
+                  : "bg-green-50 border-green-200"
+              )}
+              style={{ contain: "layout" }}
+            >
+              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+              <span
+                className={cn(
+                  "text-sm font-medium whitespace-nowrap transition-colors duration-300",
+                  isDark ? "text-green-300" : "text-green-700"
+                )}
+              >
+                System Online
+              </span>
+            </div>
+          )}
+
+          {/* Notifications */}
+          <div className="relative">
+            <button
+              className={cn(
+                "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                screenSize === "2xl" && "p-2.5",
+                isDark
+                  ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-accent focus:ring-offset-dark-secondary"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              )}
+              aria-label="Notifications"
+            >
+              <svg
+                className={getIconSize()}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+            </button>
+            {/* Notification badge */}
+            <span
+              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 font-medium transition-colors duration-300"
+              style={{
+                contain: "layout",
+                borderColor: isDark ? "#1e293b" : "#ffffff", // dark-secondary atau white
+              }}
+            >
+              3
+            </span>
+          </div>
+
+          {/* User profile */}
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-3">
               <div
                 className={cn(
-                  "bg-blue-500 rounded-full flex items-center justify-center text-white font-medium",
+                  "bg-blue-500 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0 transition-colors duration-300",
                   screenSize === "2xl"
                     ? "w-10 h-10 text-base"
                     : "w-8 h-8 text-sm"
                 )}
+                style={{ contain: "layout" }}
               >
                 A
               </div>
               {(screenSize === "xl" || screenSize === "2xl") && (
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-medium text-gray-900">
+                <div
+                  className="flex flex-col items-start min-w-0"
+                  style={{ contain: "layout" }}
+                >
+                  <span
+                    className={cn(
+                      "text-sm font-medium truncate max-w-[120px] transition-colors duration-300",
+                      isDark ? "text-dark-primary" : "text-gray-900"
+                    )}
+                  >
                     Admin User
                   </span>
-                  <span className="text-xs text-gray-500">Super Admin</span>
+                  <span
+                    className={cn(
+                      "text-xs truncate max-w-[120px] transition-colors duration-300",
+                      isDark ? "text-dark-muted" : "text-gray-500"
+                    )}
+                  >
+                    Super Admin
+                  </span>
                 </div>
               )}
             </div>
@@ -221,7 +267,10 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Dropdown arrow untuk layar besar */}
             {(screenSize === "xl" || screenSize === "2xl") && (
               <svg
-                className="w-4 h-4 text-gray-400"
+                className={cn(
+                  "w-4 h-4 flex-shrink-0 transition-colors duration-300",
+                  isDark ? "text-dark-muted" : "text-gray-400"
+                )}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -238,8 +287,22 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Quick actions untuk layar sangat besar */}
           {screenSize === "2xl" && (
-            <div className="flex items-center space-x-2 border-l border-gray-200 pl-4 ml-2">
-              <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
+            <div
+              className={cn(
+                "flex items-center space-x-2 border-l pl-4 ml-2 transition-colors duration-300",
+                isDark ? "border-dark-border" : "border-gray-200"
+              )}
+              style={{ contain: "layout" }}
+            >
+              <button
+                className={cn(
+                  "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                  isDark
+                    ? "text-dark-secondary hover:text-blue-400 hover:bg-blue-900 hover:bg-opacity-20 focus:ring-offset-dark-secondary"
+                    : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                )}
+                aria-label="Add new"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -254,7 +317,15 @@ export const Header: React.FC<HeaderProps> = ({
                   />
                 </svg>
               </button>
-              <button className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors">
+              <button
+                className={cn(
+                  "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
+                  isDark
+                    ? "text-dark-secondary hover:text-green-400 hover:bg-green-900 hover:bg-opacity-20 focus:ring-offset-dark-secondary"
+                    : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                )}
+                aria-label="Export"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -273,31 +344,52 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
+        <ThemeToggle size="md" showLabel={false} />
+
         {/* Mobile header actions */}
-        <div className="flex lg:hidden items-center space-x-3">
+        <div className="flex lg:hidden items-center space-x-2 sm:space-x-3">
           {/* Notification button for mobile */}
-          <button className="p-2 text-gray-600 hover:text-gray-900 relative">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="relative">
+            <button
+              className={cn(
+                "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                isDark
+                  ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-accent focus:ring-offset-dark-secondary"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              )}
+              aria-label="Notifications"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
+              <svg
+                className="w-5 h-5 sm:w-6 sm:h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+            </button>
             {/* Notification badge */}
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            <span
+              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 font-medium transition-colors duration-300"
+              style={{
+                contain: "layout",
+                borderColor: isDark ? "#1e293b" : "#ffffff",
+              }}
+            >
               3
             </span>
-          </button>
+          </div>
 
           {/* User avatar for mobile */}
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+          <div
+            className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 transition-colors duration-300"
+            style={{ contain: "layout" }}
+          >
             A
           </div>
         </div>

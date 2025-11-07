@@ -59,7 +59,7 @@ export const useForm = <T extends Record<string, unknown>>({
         return zodError.errors?.[0]?.message || "Invalid value";
       }
     },
-    [validationSchema]
+    [validationSchema],
   );
 
   const validateForm = useCallback(async (): Promise<boolean> => {
@@ -98,7 +98,7 @@ export const useForm = <T extends Record<string, unknown>>({
         }));
       }
     },
-    [touched, validateField]
+    [touched, validateField],
   );
 
   const handleBlur = useCallback((name: keyof T) => {
@@ -119,7 +119,7 @@ export const useForm = <T extends Record<string, unknown>>({
       setErrors({});
       setTouched({});
     },
-    [initialValues]
+    [initialValues],
   );
 
   const handleSubmit = useCallback(
@@ -128,10 +128,13 @@ export const useForm = <T extends Record<string, unknown>>({
       setIsSubmitting(true);
 
       try {
-        const allTouched = Object.keys(values).reduce((acc, key) => {
-          acc[key] = true;
-          return acc;
-        }, {} as Record<string, boolean>);
+        const allTouched = Object.keys(values).reduce(
+          (acc, key) => {
+            acc[key] = true;
+            return acc;
+          },
+          {} as Record<string, boolean>,
+        );
         setTouched(allTouched);
 
         const isValid = await validateForm();
@@ -142,7 +145,7 @@ export const useForm = <T extends Record<string, unknown>>({
         setIsSubmitting(false);
       }
     },
-    [values, onSubmit, validateForm]
+    [values, onSubmit, validateForm],
   );
 
   const isValid = Object.keys(errors).length === 0;
@@ -167,7 +170,7 @@ export const useForm = <T extends Record<string, unknown>>({
 export const useFormWithValidation = <T extends Record<string, unknown>>(
   schema: ZodTypeAny,
   initialValues: T,
-  onSubmit?: (values: T) => void | Promise<void>
+  onSubmit?: (values: T) => void | Promise<void>,
 ) => {
   return useForm({
     initialValues,
@@ -177,7 +180,7 @@ export const useFormWithValidation = <T extends Record<string, unknown>>(
 };
 
 export const useQuickForm = <T extends Record<string, unknown>>(
-  initialValues: T
+  initialValues: T,
 ) => {
   return useForm({
     initialValues,

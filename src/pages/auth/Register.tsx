@@ -48,7 +48,7 @@ const Register: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setSuccess(
-        "Registration request sent successfully. Please wait for administrator approval."
+        "Registration request sent successfully. Please wait for administrator approval.",
       );
 
       // Reset form

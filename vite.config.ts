@@ -1,10 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -14,24 +13,18 @@ export default defineConfig({
     port: 3001,
     proxy: {
       "/api": {
-        target: "http://localhost:3000/api",
+        target: "http://localhost:3000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "/api"),
-      },
-    },
-  },
-  preview: {
-    port: 3001, // Gunakan port yang sama dengan dev
-    proxy: {
-      "/api": {
-        target: "http://localhost:3000/api",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "/api"),
+        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
   },
   build: {
     outDir: "dist",
     sourcemap: true,
+  },
+  // ✅ TAMBAHKAN INI untuk CSS processing
+  css: {
+    postcss: "./postcss.config.js",
   },
 });

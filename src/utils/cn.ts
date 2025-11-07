@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 /**
  * Utility function untuk menggabungkan class names dengan Tailwind CSS
@@ -15,7 +15,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function cnCondition(
   base: string,
-  conditions: Record<string, boolean | undefined>
+  conditions: Record<string, boolean | undefined>,
 ): string {
   const conditionalClasses = Object.entries(conditions)
     .filter(([_, condition]) => condition)
@@ -30,7 +30,7 @@ export function cnCondition(
 export function cnVariant<T extends string>(
   base: string,
   variants: Record<T, string>,
-  variant?: T
+  variant?: T,
 ): string {
   return variant ? cn(base, variants[variant]) : base;
 }
@@ -41,7 +41,7 @@ export function cnVariant<T extends string>(
 export function cnSize(
   base: string,
   sizes: Record<string, string>,
-  size?: string
+  size?: string,
 ): string {
   return size ? cn(base, sizes[size]) : base;
 }

@@ -21,7 +21,7 @@ const ForgotPassword: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setMessage(
-        "If an account with that email exists, we have sent a password reset link."
+        "If an account with that email exists, we have sent a password reset link.",
       );
 
       // Reset form

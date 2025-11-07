@@ -3,213 +3,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import { penyewaService } from "../../services/penyewaService";
 import { Penyewa } from "../../types/penyewa";
 import { Button } from "../../components/ui/Button";
+import { Modal, ModalBody, ModalFooter } from "../../components/ui/Modal";
 import Toast from "../../components/ui/Toast";
-
-// Utility function untuk menentukan apakah string adalah base64 data URL
-const isBase64DataURL = (str: string | null): boolean => {
-  if (!str) return false;
-  return str.startsWith("data:image/");
-};
-
-// Utility function untuk menentukan apakah string adalah path file
-const isFilePath = (str: string | null): boolean => {
-  if (!str) return false;
-
-  // Jika sudah data URL, bukan file path
-  if (str.startsWith("data:")) return false;
-
-  // Cek pattern file path
-  return (
-    (str.startsWith("fotos_penyewa/") ||
-      str.startsWith("/fotos_penyewa/") ||
-      str.includes(".png") ||
-      str.includes(".jpg") ||
-      str.includes(".jpeg")) &&
-    !str.includes("base64")
-  ); // Pastikan bukan base64
-};
-
-// Komponen untuk menampilkan gambar KTP dengan fallback
-const KTPImageWithFallback: React.FC<{
-  src: string | null;
-  alt: string;
-  className?: string;
-}> = ({ src, alt, className }) => {
-  const [imgError, setImgError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [safeSrc, setSafeSrc] = useState<string | null>(null);
-
-  // Format dan validasi source image
-  useEffect(() => {
-    console.log("KTP Image Processing Started:", {
-      hasSrc: !!src,
-      srcType: src
-        ? isBase64DataURL(src)
-          ? "BASE64_DATA_URL"
-          : isFilePath(src)
-          ? "FILE_PATH"
-          : "UNKNOWN"
-        : "NO_SRC",
-      srcLength: src?.length,
-    });
-
-    if (!src) {
-      console.log("No KTP image provided");
-      setImgError(true);
-      setIsLoading(false);
-      setSafeSrc(null);
-      return;
-    }
-
-    let formattedSrc = src;
-
-    // Jika ini sudah base64 data URL, gunakan langsung
-    if (isBase64DataURL(src)) {
-      console.log("Using base64 data URL directly");
-      formattedSrc = src;
-    }
-    // Jika ini path file, kita perlu membangun URL yang benar
-    else if (isFilePath(src)) {
-      console.log("Processing as file path");
-      // Tambahkan slash untuk relative path dari public folder
-      formattedSrc = src.startsWith("/") ? src : `/${src}`;
-    }
-    // Jika tidak dikenal, anggap sebagai base64 tanpa prefix (legacy)
-    else if (src.length > 1000) {
-      console.log("Treating as legacy base64 without prefix");
-      formattedSrc = `data:image/jpeg;base64,${src}`;
-    }
-    // Jika tidak ada kondisi yang cocok, error
-    else {
-      console.error("Unknown image format:", src.substring(0, 100));
-      setImgError(true);
-      setIsLoading(false);
-      setSafeSrc(null);
-      return;
-    }
-
-    console.log("Setting safe source, length:", formattedSrc.length);
-    setSafeSrc(formattedSrc);
-    setIsLoading(true);
-    setImgError(false);
-
-    // Preload image untuk deteksi error
-    const img = new Image();
-    img.onload = () => {
-      console.log("Image preloaded successfully");
-      setIsLoading(false);
-      setImgError(false);
-    };
-    img.onerror = () => {
-      console.error("Image failed to preload");
-      setImgError(true);
-      setIsLoading(false);
-    };
-    img.src = formattedSrc;
-  }, [src]);
-
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error("Error loading KTP image in img tag:", {
-      safeSrcLength: safeSrc?.length,
-      error: e,
-    });
-    setImgError(true);
-    setIsLoading(false);
-  };
-
-  const handleLoad = () => {
-    console.log("KTP image loaded successfully in img tag");
-    setIsLoading(false);
-    setImgError(false);
-  };
-
-  // Jika tidak ada source atau error, tampilkan fallback
-  if (!src || imgError) {
-    return (
-      <div className="flex items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-        <div className="text-center">
-          <svg
-            className="w-12 h-12 mx-auto text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <p className="mt-2 text-sm text-gray-500">
-            {!src ? "Tidak ada foto KTP" : "Gagal memuat foto KTP"}
-          </p>
-          {/* Ganti dengan import.meta.env.MODE untuk Vite */}
-          {import.meta.env.MODE === "development" && src && (
-            <p className="mt-1 text-xs text-gray-400">
-              Size: {((src.length * 0.75) / 1024 / 1024).toFixed(2)} MB
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Jika masih loading
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center w-full h-64 border border-gray-300 rounded-lg bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-        <p className="text-sm text-gray-500">Memuat gambar...</p>
-        {/* Ganti dengan import.meta.env.MODE untuk Vite */}
-        {import.meta.env.MODE === "development" && (
-          <p className="text-xs text-gray-400 mt-1">
-            {((src.length * 0.75) / 1024 / 1024).toFixed(2)} MB
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  // Render gambar jika ada safeSrc dan tidak error
-  return (
-    <div className="relative">
-      {safeSrc && (
-        <img
-          src={safeSrc}
-          alt={alt}
-          className={className}
-          onError={handleError}
-          onLoad={handleLoad}
-        />
-      )}
-
-      {/* Debug info - hanya di development */}
-      {import.meta.env.MODE === "development" && safeSrc && (
-        <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
-          <p>
-            <strong>Status:</strong> {isLoading ? "Loading" : "Loaded"}
-          </p>
-          <p>
-            <strong>Type:</strong>{" "}
-            {isBase64DataURL(src) ? "Base64 Data URL" : "File Path"}
-          </p>
-          <p>
-            <strong>Size:</strong>{" "}
-            {((src.length * 0.75) / 1024 / 1024).toFixed(2)} MB
-          </p>
-          <p>
-            <strong>Dimensions:</strong> Checking...
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
+import { useTheme } from "../../hooks/useTheme";
+import { KTPImageWithFallback } from "../../components/penyewa/KTPImageWithFallback";
+import { PenyewaHistory } from "../../components/penyewa/PenyewaHistory";
 
 export const PenyewaDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [penyewa, setPenyewa] = useState<Penyewa | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState<{
@@ -217,26 +20,17 @@ export const PenyewaDetail: React.FC = () => {
     type: "success" | "error";
   } | null>(null);
 
+  // State untuk modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showBlacklistModal, setShowBlacklistModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
   const loadPenyewa = useCallback(async () => {
     if (!id) return;
 
     try {
       setIsLoading(true);
       const penyewaData = await penyewaService.getById(Number(id));
-
-      console.log("Loaded penyewa data:", {
-        id,
-        hasFotoKtp: !!penyewaData.foto_ktp,
-        fotoKtpType: penyewaData.foto_ktp?.startsWith("data:image/")
-          ? "BASE64_DATA_URL"
-          : "OTHER",
-        fotoKtpSize: penyewaData.foto_ktp
-          ? `${((penyewaData.foto_ktp.length * 0.75) / 1024 / 1024).toFixed(
-              2
-            )} MB`
-          : "N/A",
-      });
-
       setPenyewa(penyewaData);
     } catch (error) {
       console.error("Error loading penyewa:", error);
@@ -256,6 +50,7 @@ export const PenyewaDetail: React.FC = () => {
   const handleToggleBlacklist = async () => {
     if (!penyewa) return;
 
+    setActionLoading(true);
     try {
       const updatedPenyewa = await penyewaService.toggleBlacklist(penyewa.id);
       setPenyewa(updatedPenyewa);
@@ -265,37 +60,38 @@ export const PenyewaDetail: React.FC = () => {
         } blacklist`,
         type: "success",
       });
+      setShowBlacklistModal(false);
     } catch (error) {
       console.error("Error toggling blacklist:", error);
       setToast({
         message: "Gagal mengubah status blacklist",
         type: "error",
       });
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDelete = async () => {
     if (!penyewa) return;
 
-    if (
-      window.confirm(
-        `Apakah Anda yakin ingin menghapus penyewa ${penyewa.nama}? Tindakan ini tidak dapat dibatalkan.`
-      )
-    ) {
-      try {
-        await penyewaService.delete(penyewa.id);
-        setToast({
-          message: "Penyewa berhasil dihapus",
-          type: "success",
-        });
-        setTimeout(() => navigate("/penyewas"), 1000);
-      } catch (error) {
-        console.error("Error deleting penyewa:", error);
-        setToast({
-          message: "Gagal menghapus penyewa",
-          type: "error",
-        });
-      }
+    setActionLoading(true);
+    try {
+      await penyewaService.delete(penyewa.id);
+      setToast({
+        message: "Penyewa berhasil dihapus",
+        type: "success",
+      });
+      setShowDeleteModal(false);
+      setTimeout(() => navigate("/penyewas"), 1000);
+    } catch (error) {
+      console.error("Error deleting penyewa:", error);
+      setToast({
+        message: "Gagal menghapus penyewa",
+        type: "error",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -303,10 +99,20 @@ export const PenyewaDetail: React.FC = () => {
     navigate(`/penyewas/edit/${penyewa?.id}`);
   };
 
+  const handleBack = () => {
+    navigate("/penyewas");
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Memuat data penyewa...</div>
+        <div
+          className={`text-lg ${
+            isDark ? "text-dark-primary" : "text-gray-900"
+          }`}
+        >
+          Memuat data penyewa...
+        </div>
       </div>
     );
   }
@@ -315,10 +121,14 @@ export const PenyewaDetail: React.FC = () => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <div className="text-lg text-red-600 mb-4">
+          <div
+            className={`text-lg mb-4 ${
+              isDark ? "text-red-400" : "text-red-600"
+            }`}
+          >
             Penyewa tidak ditemukan
           </div>
-          <Button variant="outline" onClick={() => navigate("/penyewas")}>
+          <Button variant="outline" onClick={handleBack}>
             Kembali ke Daftar Penyewa
           </Button>
         </div>
@@ -328,12 +138,36 @@ export const PenyewaDetail: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" onClick={() => navigate("/penyewas")}>
-            ← Kembali ke Daftar
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            className="flex items-center gap-2"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Kembali ke Daftar
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Detail Penyewa</h1>
+          <h1
+            className={`text-2xl font-bold ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
+            Detail Penyewa
+          </h1>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={handleEdit}>
@@ -341,54 +175,94 @@ export const PenyewaDetail: React.FC = () => {
           </Button>
           <Button
             variant={penyewa.is_blacklisted ? "success" : "secondary"}
-            onClick={handleToggleBlacklist}
+            onClick={() => setShowBlacklistModal(true)}
           >
             {penyewa.is_blacklisted
               ? "Hapus dari Blacklist"
               : "Tambah ke Blacklist"}
           </Button>
-          <Button variant="danger" onClick={handleDelete}>
+          <Button variant="danger" onClick={() => setShowDeleteModal(true)}>
             Hapus
           </Button>
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      {/* Informasi Penyewa Card */}
+      <div
+        className={`rm-card ${
+          isDark
+            ? "bg-dark-card border-dark-border"
+            : "bg-white border-gray-200"
+        }`}
+      >
+        <div
+          className={`px-6 py-4 border-b ${
+            isDark ? "border-dark-border" : "border-gray-200"
+          }`}
+        >
+          <h2
+            className={`text-lg font-semibold ${
+              isDark ? "text-dark-primary" : "text-gray-900"
+            }`}
+          >
             Informasi Penyewa
           </h2>
         </div>
-
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Informasi Utama */}
             <div className="md:col-span-2 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${
+                      isDark ? "text-dark-secondary" : "text-gray-700"
+                    }`}
+                  >
                     Nama Lengkap
                   </label>
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p
+                    className={`text-lg font-semibold ${
+                      isDark ? "text-dark-primary" : "text-gray-900"
+                    }`}
+                  >
                     {penyewa.nama}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${
+                      isDark ? "text-dark-secondary" : "text-gray-700"
+                    }`}
+                  >
                     Nomor WhatsApp
                   </label>
-                  <p className="text-lg text-gray-900">{penyewa.no_whatsapp}</p>
+                  <p
+                    className={`text-lg ${
+                      isDark ? "text-dark-primary" : "text-gray-900"
+                    }`}
+                  >
+                    {penyewa.no_whatsapp}
+                  </p>
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${
+                      isDark ? "text-dark-secondary" : "text-gray-700"
+                    }`}
+                  >
                     Status
                   </label>
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                       penyewa.is_blacklisted
-                        ? "bg-red-100 text-red-800"
+                        ? isDark
+                          ? "bg-red-900/20 text-red-300"
+                          : "bg-red-100 text-red-800"
+                        : isDark
+                        ? "bg-green-900/20 text-green-300"
                         : "bg-green-100 text-green-800"
                     }`}
                   >
@@ -398,10 +272,18 @@ export const PenyewaDetail: React.FC = () => {
 
                 {penyewa.alamat && (
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      className={`block text-sm font-medium mb-1 ${
+                        isDark ? "text-dark-secondary" : "text-gray-700"
+                      }`}
+                    >
                       Alamat
                     </label>
-                    <p className="text-gray-900 whitespace-pre-wrap">
+                    <p
+                      className={`whitespace-pre-wrap ${
+                        isDark ? "text-dark-primary" : "text-gray-900"
+                      }`}
+                    >
                       {penyewa.alamat}
                     </p>
                   </div>
@@ -409,16 +291,30 @@ export const PenyewaDetail: React.FC = () => {
               </div>
 
               {/* Informasi Tambahan */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-medium text-gray-900 mb-3">
+              <div
+                className={`pt-4 border-t ${
+                  isDark ? "border-dark-border" : "border-gray-200"
+                }`}
+              >
+                <h3
+                  className={`text-md font-medium mb-3 ${
+                    isDark ? "text-dark-primary" : "text-gray-900"
+                  }`}
+                >
                   Informasi Tambahan
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <label className="block text-gray-600 mb-1">
+                    <label
+                      className={`block mb-1 ${
+                        isDark ? "text-dark-secondary" : "text-gray-600"
+                      }`}
+                    >
                       Tanggal Dibuat
                     </label>
-                    <p className="text-gray-900">
+                    <p
+                      className={isDark ? "text-dark-primary" : "text-gray-900"}
+                    >
                       {new Date(penyewa.created_at).toLocaleDateString(
                         "id-ID",
                         {
@@ -433,10 +329,16 @@ export const PenyewaDetail: React.FC = () => {
                     </p>
                   </div>
                   <div>
-                    <label className="block text-gray-600 mb-1">
+                    <label
+                      className={`block mb-1 ${
+                        isDark ? "text-dark-secondary" : "text-gray-600"
+                      }`}
+                    >
                       Terakhir Diupdate
                     </label>
-                    <p className="text-gray-900">
+                    <p
+                      className={isDark ? "text-dark-primary" : "text-gray-900"}
+                    >
                       {new Date(penyewa.updated_at).toLocaleDateString(
                         "id-ID",
                         {
@@ -457,13 +359,21 @@ export const PenyewaDetail: React.FC = () => {
             {/* Foto KTP */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label
+                  className={`block text-sm font-medium mb-3 ${
+                    isDark ? "text-dark-secondary" : "text-gray-700"
+                  }`}
+                >
                   Foto KTP
                 </label>
                 <KTPImageWithFallback
-                  src={penyewa.foto_ktp || null} // Konversi undefined ke null
+                  src={penyewa.foto_ktp || null}
                   alt="Foto KTP"
-                  className="w-full h-64 object-contain border border-gray-300 rounded-lg bg-gray-50"
+                  className={`w-full h-64 object-contain border rounded-lg ${
+                    isDark
+                      ? "border-dark-border bg-dark-secondary/50"
+                      : "border-gray-300 bg-gray-50"
+                  }`}
                 />
               </div>
             </div>
@@ -471,6 +381,188 @@ export const PenyewaDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Komponen History Sewa */}
+      {penyewa && <PenyewaHistory penyewaId={penyewa.id} />}
+
+      {/* Modal Hapus Penyewa */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Hapus Penyewa"
+        size="md"
+      >
+        <ModalBody>
+          <div className="text-center py-4">
+            <div
+              className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${
+                isDark ? "bg-red-900/20" : "bg-red-100"
+              } mb-4`}
+            >
+              <svg
+                className={`h-6 w-6 ${
+                  isDark ? "text-red-400" : "text-red-600"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <h3
+              className={`text-lg font-medium mb-2 ${
+                isDark ? "text-dark-primary" : "text-gray-900"
+              }`}
+            >
+              Konfirmasi Penghapusan
+            </h3>
+            <p
+              className={`text-sm ${
+                isDark ? "text-dark-secondary" : "text-gray-600"
+              } mb-4`}
+            >
+              Apakah Anda yakin ingin menghapus penyewa{" "}
+              <strong>{penyewa.nama}</strong>?
+            </p>
+            <div
+              className={`text-xs p-3 rounded-lg ${
+                isDark
+                  ? "bg-dark-secondary/30 text-dark-muted"
+                  : "bg-red-50 text-red-700"
+              }`}
+            >
+              <p className="font-medium">
+                Tindakan ini tidak dapat dibatalkan!
+              </p>
+              <p className="mt-1">
+                Semua data penyewa termasuk riwayat sewa akan dihapus permanen.
+              </p>
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="outline"
+            onClick={() => setShowDeleteModal(false)}
+            disabled={actionLoading}
+          >
+            Batal
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            isLoading={actionLoading}
+          >
+            Ya, Hapus
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Modal Blacklist */}
+      <Modal
+        isOpen={showBlacklistModal}
+        onClose={() => setShowBlacklistModal(false)}
+        title={
+          penyewa.is_blacklisted
+            ? "Hapus dari Blacklist"
+            : "Tambah ke Blacklist"
+        }
+        size="md"
+      >
+        <ModalBody>
+          <div className="text-center py-4">
+            <div
+              className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${
+                isDark
+                  ? penyewa.is_blacklisted
+                    ? "bg-green-900/20"
+                    : "bg-yellow-900/20"
+                  : penyewa.is_blacklisted
+                  ? "bg-green-100"
+                  : "bg-yellow-100"
+              } mb-4`}
+            >
+              <svg
+                className={`h-6 w-6 ${
+                  isDark
+                    ? penyewa.is_blacklisted
+                      ? "text-green-400"
+                      : "text-yellow-400"
+                    : penyewa.is_blacklisted
+                    ? "text-green-600"
+                    : "text-yellow-600"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <h3
+              className={`text-lg font-medium mb-2 ${
+                isDark ? "text-dark-primary" : "text-gray-900"
+              }`}
+            >
+              {penyewa.is_blacklisted
+                ? "Hapus dari Blacklist"
+                : "Tambah ke Blacklist"}
+            </h3>
+            <p
+              className={`text-sm ${
+                isDark ? "text-dark-secondary" : "text-gray-600"
+              } mb-4`}
+            >
+              {penyewa.is_blacklisted
+                ? `Apakah Anda yakin ingin menghapus ${penyewa.nama} dari blacklist?`
+                : `Apakah Anda yakin ingin menambahkan ${penyewa.nama} ke blacklist?`}
+            </p>
+            <div
+              className={`text-xs p-3 rounded-lg ${
+                isDark
+                  ? "bg-dark-secondary/30 text-dark-muted"
+                  : "bg-yellow-50 text-yellow-700"
+              }`}
+            >
+              <p className="font-medium">
+                {penyewa.is_blacklisted
+                  ? "Penyewa akan dapat melakukan penyewaan kembali."
+                  : "Penyewa tidak akan dapat melakukan penyewaan baru."}
+              </p>
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="outline"
+            onClick={() => setShowBlacklistModal(false)}
+            disabled={actionLoading}
+          >
+            Batal
+          </Button>
+          <Button
+            variant={penyewa.is_blacklisted ? "success" : "secondary"}
+            onClick={handleToggleBlacklist}
+            isLoading={actionLoading}
+          >
+            {penyewa.is_blacklisted
+              ? "Ya, Hapus dari Blacklist"
+              : "Ya, Tambah ke Blacklist"}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Toast Notification */}
       {toast && (
         <Toast
           message={toast.message}
