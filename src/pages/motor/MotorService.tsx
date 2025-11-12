@@ -18,11 +18,6 @@ import ServiceForm from "../../components/motor/ServiceForm";
 import ServiceHistory from "../../components/motor/ServiceHistory";
 import { Modal, ModalBody, ModalFooter } from "../../components/ui/Modal";
 import { formatDate, formatCurrency } from "../../utils/formatters";
-import { useWebSocketContext } from "../../contexts/WebSocketContext"; // <-- Tambahkan ini
-import {
-  useMotorWebSocket,
-  MotorServiceUpdate,
-} from "../../hooks/useMotorWebSocket"; // <-- Tambahkan ini
 
 interface ServiceFormData {
   service_type: "rutin" | "berat" | "perbaikan" | "emergency";
@@ -34,37 +29,6 @@ interface ServiceFormData {
   estimated_completion?: string;
   notes?: string;
 }
-
-// Komponen Status WebSocket
-const WebSocketStatusIndicator: React.FC = () => {
-  const { isConnected, connectionStatus } = useWebSocketContext();
-
-  const getStatusInfo = () => {
-    switch (connectionStatus) {
-      case "connected":
-        return { color: "bg-green-500", text: "Real-time Active" };
-      case "disconnected":
-        return { color: "bg-gray-500", text: "Real-time Offline" };
-      case "connecting":
-        return { color: "bg-yellow-500", text: "Connecting..." };
-      case "error":
-        return { color: "bg-red-500", text: "Connection Error" };
-      default:
-        return { color: "bg-gray-500", text: "Unknown" };
-    }
-  };
-
-  const statusInfo = getStatusInfo();
-
-  return (
-    <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-opacity-10 border text-sm">
-      <div
-        className={`w-2 h-2 rounded-full ${statusInfo.color} animate-pulse`}
-      />
-      <span className="text-xs font-medium">{statusInfo.text}</span>
-    </div>
-  );
-};
 
 const MotorService: React.FC = () => {
   const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
@@ -81,9 +45,6 @@ const MotorService: React.FC = () => {
     type: "success" | "error";
   } | null>(null);
 
-  // WebSocket Context
-  const { isConnected } = useWebSocketContext();
-
   // Modal states
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -93,284 +54,6 @@ const MotorService: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
-
-  // ========== WEBSOCKET REAL-TIME UPDATES ==========
-
-  // Handle service updates from WebSocket
-  useEffect(() => {
-    if (!isConnected) return;
-
-    const handleServiceUpdate = (data: MotorServiceUpdate) => {
-      console.log("Service update via WebSocket:", data);
-
-      // Update state berdasarkan service status
-      switch (data.serviceStatus) {
-        case "pending":
-          // Motor ditandai untuk service - tambah ke pending
-          setPendingService((prev) => {
-            const exists = prev.find((m) => m.id === data.motorId);
-            if (exists) return prev;
-            return [
-              ...prev,
-              {
-                id: data.motorId,
-                plat_nomor: data.plat_nomor,
-                merk: "", // Data lengkap akan di-load via API
-                model: "",
-                tahun: 0,
-                harga: 0,
-                status: "pending_perbaikan",
-                gps_status: "Offline",
-                created_at: "",
-                updated_at: "",
-                service_notes: data.notes,
-              } as Motor,
-            ];
-          });
-          break;
-
-        case "in_progress":
-          // Service dimulai - pindah dari pending ke inService
-          setPendingService((prev) =>
-            prev.filter((m) => m.id !== data.motorId)
-          );
-          setInService((prev) => {
-            const exists = prev.find((m) => m.id === data.motorId);
-            if (exists) return prev;
-            return [
-              ...prev,
-              {
-                id: data.motorId,
-                plat_nomor: data.plat_nomor,
-                merk: "",
-                model: "",
-                tahun: 0,
-                harga: 0,
-                status: "perbaikan",
-                gps_status: "Offline",
-                created_at: "",
-                updated_at: "",
-                service_technician: data.technician,
-              } as Motor,
-            ];
-          });
-          break;
-
-        case "completed":
-          // Service selesai - hapus dari semua list
-          setPendingService((prev) =>
-            prev.filter((m) => m.id !== data.motorId)
-          );
-          setInService((prev) => prev.filter((m) => m.id !== data.motorId));
-          break;
-
-        case "cancelled":
-          // Service dibatalkan - hapus dari semua list
-          setPendingService((prev) =>
-            prev.filter((m) => m.id !== data.motorId)
-          );
-          setInService((prev) => prev.filter((m) => m.id !== data.motorId));
-          break;
-      }
-
-      // Juga reload data untuk memastikan konsistensi
-      loadData();
-
-      // Show notification
-      let message = "";
-      switch (data.serviceStatus) {
-        case "pending":
-          message = `Motor ${data.plat_nomor} ditandai untuk service`;
-          break;
-        case "in_progress":
-          message = `Service ${data.plat_nomor} dimulai oleh ${
-            data.technician || "teknisi"
-          }`;
-          break;
-        case "completed":
-          message = `Service ${data.plat_nomor} berhasil diselesaikan`;
-          break;
-        case "cancelled":
-          message = `Service ${data.plat_nomor} dibatalkan`;
-          break;
-        default:
-          message = `Status service ${data.plat_nomor} diperbarui`;
-      }
-
-      setToast({
-        message,
-        type: data.serviceStatus === "cancelled" ? "error" : "success",
-      });
-    };
-
-    const handleStatusUpdate = (data: any) => {
-      // Handle status changes that might affect service
-      if (data.newStatus === "pending_perbaikan") {
-        // Motor ditandai untuk service
-        setPendingService((prev) => {
-          const exists = prev.find((m) => m.id === data.motorId);
-          if (exists) return prev;
-          return [
-            ...prev,
-            {
-              id: data.motorId,
-              plat_nomor: data.plat_nomor,
-              merk: "",
-              model: "",
-              tahun: 0,
-              harga: 0,
-              status: "pending_perbaikan",
-              gps_status: "Offline",
-              created_at: "",
-              updated_at: "",
-            } as Motor,
-          ];
-        });
-        setInService((prev) => prev.filter((m) => m.id !== data.motorId));
-      } else if (data.newStatus === "perbaikan") {
-        // Motor dalam service
-        setPendingService((prev) => prev.filter((m) => m.id !== data.motorId));
-        setInService((prev) => {
-          const exists = prev.find((m) => m.id === data.motorId);
-          if (exists) return prev;
-          return [
-            ...prev,
-            {
-              id: data.motorId,
-              plat_nomor: data.plat_nomor,
-              merk: "",
-              model: "",
-              tahun: 0,
-              harga: 0,
-              status: "perbaikan",
-              gps_status: "Offline",
-              created_at: "",
-              updated_at: "",
-            } as Motor,
-          ];
-        });
-      } else if (data.newStatus === "tersedia") {
-        // Motor kembali tersedia - hapus dari semua service list
-        setPendingService((prev) => prev.filter((m) => m.id !== data.motorId));
-        setInService((prev) => prev.filter((m) => m.id !== data.motorId));
-      }
-    };
-
-    // Subscribe to service events
-    const unsubscribeService = window.websocketService?.on(
-      "motor:service:update",
-      handleServiceUpdate
-    );
-    const unsubscribeStatus = window.websocketService?.on(
-      "motor:status:update",
-      handleStatusUpdate
-    );
-    const unsubscribeStatusChanged = window.websocketService?.on(
-      "motor:status:changed",
-      handleStatusUpdate
-    );
-
-    return () => {
-      unsubscribeService?.();
-      unsubscribeStatus?.();
-      unsubscribeStatusChanged?.();
-    };
-  }, [isConnected]);
-
-  // Handle motor creation/deletion that might affect service
-  useEffect(() => {
-    if (!isConnected) return;
-
-    const handleMotorCreated = (data: { motor: Motor; timestamp: string }) => {
-      // Jika motor baru memiliki status service, update lists
-      if (data.motor.status === "pending_perbaikan") {
-        setPendingService((prev) => {
-          const exists = prev.find((m) => m.id === data.motor.id);
-          if (exists) return prev;
-          return [...prev, data.motor];
-        });
-      } else if (data.motor.status === "perbaikan") {
-        setInService((prev) => {
-          const exists = prev.find((m) => m.id === data.motor.id);
-          if (exists) return prev;
-          return [...prev, data.motor];
-        });
-      }
-    };
-
-    const handleMotorDeleted = (data: {
-      motorId: number;
-      plat_nomor: string;
-      timestamp: string;
-    }) => {
-      // Hapus motor dari service lists jika ada
-      setPendingService((prev) =>
-        prev.filter((motor) => motor.id !== data.motorId)
-      );
-      setInService((prev) => prev.filter((motor) => motor.id !== data.motorId));
-      setServiceRecords((prev) =>
-        prev.filter((record) => record.motor_id !== data.motorId)
-      );
-    };
-
-    const unsubscribeCreated = window.websocketService?.on(
-      "motor:created",
-      handleMotorCreated
-    );
-    const unsubscribeDeleted = window.websocketService?.on(
-      "motor:deleted",
-      handleMotorDeleted
-    );
-
-    return () => {
-      unsubscribeCreated?.();
-      unsubscribeDeleted?.();
-    };
-  }, [isConnected]);
-
-  // Handle motor creation/deletion that might affect service
-  useEffect(() => {
-    if (!isConnected) return;
-
-    const handleMotorCreated = (data: { motor: Motor; timestamp: string }) => {
-      // Jika motor baru memiliki status service, reload data
-      if (
-        data.motor.status === "pending_perbaikan" ||
-        data.motor.status === "perbaikan"
-      ) {
-        loadData();
-      }
-    };
-
-    const handleMotorDeleted = (data: {
-      motorId: number;
-      plat_nomor: string;
-      timestamp: string;
-    }) => {
-      // Hapus motor dari service lists jika ada
-      setPendingService((prev) =>
-        prev.filter((motor) => motor.id !== data.motorId)
-      );
-      setInService((prev) => prev.filter((motor) => motor.id !== data.motorId));
-      setServiceRecords((prev) =>
-        prev.filter((record) => record.motor_id !== data.motorId)
-      );
-    };
-
-    const unsubscribeCreated = window.websocketService?.on(
-      "motor:created",
-      handleMotorCreated
-    );
-    const unsubscribeDeleted = window.websocketService?.on(
-      "motor:deleted",
-      handleMotorDeleted
-    );
-
-    return () => {
-      unsubscribeCreated?.();
-      unsubscribeDeleted?.();
-    };
-  }, [isConnected]);
 
   const loadData = async () => {
     try {
@@ -433,11 +116,11 @@ const MotorService: React.FC = () => {
         startServiceData
       );
 
-      // WebSocket akan meng-handle update real-time melalui event motor:service:update
-      // Jadi kita tidak perlu manual update state di sini
-
       setShowServiceForm(false);
       setSelectedMotor(null);
+
+      // Reload data untuk update terbaru
+      await loadData();
 
       setToast({
         message: "Service berhasil dimulai",
@@ -462,9 +145,6 @@ const MotorService: React.FC = () => {
     try {
       setActionLoading(selectedMotor.id);
 
-      // Immediate UI update
-      setInService((prev) => prev.filter((m) => m.id !== selectedMotor.id));
-
       const activeService = serviceRecords.find(
         (record) =>
           record.motor_id === selectedMotor.id &&
@@ -484,9 +164,12 @@ const MotorService: React.FC = () => {
         );
       }
 
-      // WebSocket akan meng-handle update real-time
       setShowFinishModal(false);
       setSelectedMotor(null);
+
+      // Reload data untuk update terbaru
+      await loadData();
+
       setToast({
         message: "Service berhasil diselesaikan",
         type: "success",
@@ -494,9 +177,6 @@ const MotorService: React.FC = () => {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Gagal menyelesaikan service";
-
-      // Jika gagal, reload data
-      loadData();
 
       setToast({
         message: errorMessage,
@@ -506,17 +186,12 @@ const MotorService: React.FC = () => {
       setActionLoading(null);
     }
   };
+
   const handleCancelService = async () => {
     if (!selectedMotor?.id) return;
 
     try {
       setActionLoading(selectedMotor.id);
-
-      // Immediate UI update - remove from lists
-      setPendingService((prev) =>
-        prev.filter((m) => m.id !== selectedMotor.id)
-      );
-      setInService((prev) => prev.filter((m) => m.id !== selectedMotor.id));
 
       const activeService = serviceRecords.find(
         (record) =>
@@ -537,9 +212,12 @@ const MotorService: React.FC = () => {
         await motorService.update(selectedMotor.id, minimalUpdateData);
       }
 
-      // WebSocket akan meng-handle update real-time dan memastikan konsistensi
       setShowCancelModal(false);
       setSelectedMotor(null);
+
+      // Reload data untuk update terbaru
+      await loadData();
+
       setToast({
         message: "Service berhasil dibatalkan",
         type: "success",
@@ -547,9 +225,6 @@ const MotorService: React.FC = () => {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Gagal membatalkan service";
-
-      // Jika gagal, reload data untuk mengembalikan state yang benar
-      loadData();
 
       setToast({
         message: errorMessage,
@@ -567,7 +242,7 @@ const MotorService: React.FC = () => {
       setActionLoading(selectedRecordId);
       await motorServiceService.deleteServiceRecord(selectedRecordId);
 
-      // Update local state untuk immediate feedback
+      // Update local state
       setServiceRecords((prev) =>
         prev.filter((record) => record.id !== selectedRecordId)
       );
@@ -644,89 +319,70 @@ const MotorService: React.FC = () => {
   if (isLoading) return <Loading />;
 
   return (
-    <div className="space-y-6">
-      {/* Header dengan WebSocket Status */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <div className="space-y-4 p-3 sm:p-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-3">
           <Link to="/motors">
-            <Button variant="outline">← Kembali ke Daftar Motor</Button>
+            <Button variant="outline" size="sm" className="px-3">
+              ← Kembali
+            </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Manajemen Service</h1>
-            <p className="text-gray-600 dark:text-dark-secondary text-sm">
-              Real-time service monitoring{" "}
-              {isConnected && "• Live updates active"}
+            <h1 className="text-xl sm:text-2xl font-bold">Manajemen Service</h1>
+            <p className="text-gray-600 text-sm">
+              Kelola service dan perbaikan motor
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <WebSocketStatusIndicator />
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => {
-                setSelectedMotor(null);
-                setShowServiceHistory(true);
-              }}
-              variant="outline"
-            >
-              Riwayat Service
-            </Button>
-          </div>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => {
+              setSelectedMotor(null);
+              setShowServiceHistory(true);
+            }}
+            variant="outline"
+            size="sm"
+          >
+            Riwayat Service
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards dengan real-time updates */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-orange-500">
+      {/* Stats Cards - Mobile friendly */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card className="p-3 border-l-4 border-l-orange-500">
           <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-lg sm:text-xl font-bold text-orange-600">
               {pendingService.length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-dark-secondary">
-              Pending Service
-            </div>
-            {pendingService.length > 0 && (
-              <div className="text-xs text-orange-500 mt-1">
-                {isConnected ? "Live" : "Manual update"}
-              </div>
-            )}
+            <div className="text-xs sm:text-sm text-gray-600">Pending</div>
           </div>
         </Card>
-        <Card className="p-4 border-l-4 border-l-yellow-500">
+        <Card className="p-3 border-l-4 border-l-yellow-500">
           <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-lg sm:text-xl font-bold text-yellow-600">
               {inService.length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-dark-secondary">
+            <div className="text-xs sm:text-sm text-gray-600">
               Dalam Service
             </div>
-            {inService.length > 0 && (
-              <div className="text-xs text-yellow-500 mt-1">
-                {isConnected ? "Live" : "Manual update"}
-              </div>
-            )}
           </div>
         </Card>
-        <Card className="p-4 border-l-4 border-l-blue-500">
+        <Card className="p-3 border-l-4 border-l-blue-500">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-lg sm:text-xl font-bold text-blue-600">
               {serviceRecords.filter((r) => r?.status === "completed").length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-dark-secondary">
-              Selesai
-            </div>
-            <div className="text-xs text-blue-500 mt-1">Total bulan ini</div>
+            <div className="text-xs sm:text-sm text-gray-600">Selesai</div>
           </div>
         </Card>
-        <Card className="p-4 border-l-4 border-l-green-500">
+        <Card className="p-3 border-l-4 border-l-green-500">
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-lg sm:text-xl font-bold text-green-600">
               {serviceRecords.length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-dark-secondary">
-              Total Service
-            </div>
-            <div className="text-xs text-green-500 mt-1">Semua waktu</div>
+            <div className="text-xs sm:text-sm text-gray-600">Total</div>
           </div>
         </Card>
       </div>
@@ -735,94 +391,68 @@ const MotorService: React.FC = () => {
       {pendingService.length > 0 && (
         <Card className="border-l-4 border-l-orange-500">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-lg font-semibold text-orange-700 dark:text-orange-400">
-                Pending Service ({pendingService.length})
-              </h2>
-              {isConnected && (
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-              )}
-            </div>
-            <Badge variant="warning">Menunggu Service</Badge>
+            <h2 className="text-lg font-semibold text-orange-700">
+              Pending Service ({pendingService.length})
+            </h2>
+            <Badge variant="warning">Menunggu</Badge>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Plat Nomor
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Merk
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Tahun
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Alasan Service
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
-                {pendingService.map((motor) => (
-                  <tr
-                    key={motor.id}
-                    className="hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-dark-primary">
-                      {motor.plat_nomor || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                      {motor.merk || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                      {motor.tahun || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
+          <div className="space-y-3">
+            {pendingService.map((motor) => (
+              <div
+                key={motor.id}
+                className="p-3 border rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold text-sm truncate">
+                        {motor.plat_nomor || "-"}
+                      </h3>
+                      <span className="text-xs text-gray-500">
+                        {motor.merk} {motor.model}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 line-clamp-2">
                       {motor.service_notes || "Service rutin"}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="flex flex-wrap gap-2">
-                        <Link to={`/motors/${motor.id}`}>
-                          <Button size="sm" variant="outline">
-                            Detail
-                          </Button>
-                        </Link>
-                        <Button
-                          size="sm"
-                          onClick={() => handleStartService(motor)}
-                          disabled={!motor.id}
-                        >
-                          Mulai Service
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewHistory(motor)}
-                          disabled={!motor.id}
-                        >
-                          Riwayat
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleCancelClick(motor)}
-                          disabled={!motor.id || actionLoading === motor.id}
-                          isLoading={actionLoading === motor.id}
-                        >
-                          {actionLoading === motor.id
-                            ? "Membatalkan..."
-                            : "Batal"}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link to={`/motors/${motor.id}`}>
+                      <Button size="sm" variant="outline" className="text-xs">
+                        Detail
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      onClick={() => handleStartService(motor)}
+                      disabled={!motor.id}
+                      className="text-xs"
+                    >
+                      Mulai
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewHistory(motor)}
+                      disabled={!motor.id}
+                      className="text-xs"
+                    >
+                      Riwayat
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => handleCancelClick(motor)}
+                      disabled={!motor.id || actionLoading === motor.id}
+                      isLoading={actionLoading === motor.id}
+                      className="text-xs"
+                    >
+                      Batal
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       )}
@@ -831,108 +461,80 @@ const MotorService: React.FC = () => {
       {inService.length > 0 && (
         <Card className="border-l-4 border-l-yellow-500">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-lg font-semibold text-yellow-700 dark:text-yellow-400">
-                Dalam Service ({inService.length})
-              </h2>
-              {isConnected && (
-                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-              )}
-            </div>
+            <h2 className="text-lg font-semibold text-yellow-700">
+              Dalam Service ({inService.length})
+            </h2>
             <Badge variant="warning">Sedang Diperbaiki</Badge>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Plat Nomor
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Merk
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Tahun
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Teknisi
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Tanggal Mulai
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
-                {inService.map((motor) => {
-                  const currentService = getServiceRecordForMotor(motor.id);
-                  return (
-                    <tr
-                      key={motor.id}
-                      className="hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-dark-primary">
-                        {motor.plat_nomor || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                        {motor.merk || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                        {motor.tahun || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                        {currentService?.service_technician ||
-                          motor.service_technician ||
-                          "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                        {safeFormatDate(currentService?.service_date)}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex flex-wrap gap-2">
-                          <Link to={`/motors/${motor.id}`}>
-                            <Button size="sm" variant="outline">
-                              Detail
-                            </Button>
-                          </Link>
-                          <Button
-                            size="sm"
-                            onClick={() => handleFinishClick(motor)}
-                            isLoading={actionLoading === motor.id}
-                            disabled={!motor.id || actionLoading === motor.id}
-                          >
-                            {actionLoading === motor.id
-                              ? "Menyelesaikan..."
-                              : "Selesai"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewHistory(motor)}
-                            disabled={!motor.id}
-                          >
-                            Riwayat
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleCancelClick(motor)}
-                            disabled={!motor.id || actionLoading === motor.id}
-                            isLoading={actionLoading === motor.id}
-                          >
-                            {actionLoading === motor.id
-                              ? "Membatalkan..."
-                              : "Batal"}
-                          </Button>
+          <div className="space-y-3">
+            {inService.map((motor) => {
+              const currentService = getServiceRecordForMotor(motor.id);
+              return (
+                <div
+                  key={motor.id}
+                  className="p-3 border rounded-lg hover:bg-yellow-50 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-sm truncate">
+                          {motor.plat_nomor || "-"}
+                        </h3>
+                        <span className="text-xs text-gray-500">
+                          {motor.merk} {motor.model}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div>
+                          Teknisi:{" "}
+                          {currentService?.service_technician ||
+                            motor.service_technician ||
+                            "-"}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        <div>
+                          Mulai: {safeFormatDate(currentService?.service_date)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Link to={`/motors/${motor.id}`}>
+                        <Button size="sm" variant="outline" className="text-xs">
+                          Detail
+                        </Button>
+                      </Link>
+                      <Button
+                        size="sm"
+                        onClick={() => handleFinishClick(motor)}
+                        isLoading={actionLoading === motor.id}
+                        disabled={!motor.id || actionLoading === motor.id}
+                        className="text-xs"
+                      >
+                        Selesai
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewHistory(motor)}
+                        disabled={!motor.id}
+                        className="text-xs"
+                      >
+                        Riwayat
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleCancelClick(motor)}
+                        disabled={!motor.id || actionLoading === motor.id}
+                        isLoading={actionLoading === motor.id}
+                        className="text-xs"
+                      >
+                        Batal
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}
@@ -944,7 +546,7 @@ const MotorService: React.FC = () => {
       ).length > 0 && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-dark-primary">
+            <h2 className="text-lg font-semibold">
               Riwayat Service (
               {
                 serviceRecords.filter(
@@ -957,113 +559,91 @@ const MotorService: React.FC = () => {
             </h2>
             <Badge variant="secondary">Riwayat</Badge>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Plat Nomor
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Tipe Service
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Tanggal
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Biaya
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-secondary uppercase">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
-                {serviceRecords
-                  .filter(
-                    (record) =>
-                      record.status === "completed" ||
-                      record.status === "cancelled"
-                  )
-                  .sort(
-                    (a, b) =>
-                      new Date(b.service_date).getTime() -
-                      new Date(a.service_date).getTime()
-                  )
-                  .slice(0, 10)
-                  .map((record) => (
-                    <tr
-                      key={record.id}
-                      className="hover:bg-gray-50 dark:hover:bg-dark-hover transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-dark-primary">
-                        {record.motor?.plat_nomor || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary capitalize">
-                        {record.service_type}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {record.status === "completed" ? (
-                          <Badge variant="success">Selesai</Badge>
-                        ) : (
-                          <Badge variant="danger">Dibatalkan</Badge>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                        {safeFormatDate(record.service_date)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-dark-primary">
-                        {safeFormatCurrency(
-                          record.actual_cost || record.estimated_cost
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedMotor(
-                                record.motor
-                                  ? ({
-                                      id: record.motor_id,
-                                      plat_nomor: record.motor.plat_nomor,
-                                      merk: record.motor.merk,
-                                      model: record.motor.model,
-                                      tahun: 0,
-                                      harga: 0,
-                                      status: "tersedia",
-                                      gps_status: "Offline",
-                                      created_at: "",
-                                      updated_at: "",
-                                    } as Motor)
-                                  : null
-                              );
-                              setShowServiceHistory(true);
-                            }}
-                          >
-                            Detail
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleDeleteClick(record.id)}
-                            disabled={actionLoading === record.id}
-                            isLoading={actionLoading === record.id}
-                          >
-                            {actionLoading === record.id
-                              ? "Menghapus..."
-                              : "Hapus"}
-                          </Button>
+          <div className="space-y-3">
+            {serviceRecords
+              .filter(
+                (record) =>
+                  record.status === "completed" || record.status === "cancelled"
+              )
+              .sort(
+                (a, b) =>
+                  new Date(b.service_date).getTime() -
+                  new Date(a.service_date).getTime()
+              )
+              .slice(0, 5) // Limit untuk mobile
+              .map((record) => (
+                <div
+                  key={record.id}
+                  className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-sm">
+                          {record.motor?.plat_nomor || "-"}
+                        </h3>
+                        <Badge
+                          variant={
+                            record.status === "completed" ? "success" : "danger"
+                          }
+                          className="text-xs"
+                        >
+                          {record.status === "completed"
+                            ? "Selesai"
+                            : "Dibatalkan"}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div className="capitalize">{record.service_type}</div>
+                        <div>
+                          {safeFormatDate(record.service_date)} •{" "}
+                          {safeFormatCurrency(
+                            record.actual_cost || record.estimated_cost
+                          )}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedMotor(
+                            record.motor
+                              ? ({
+                                  id: record.motor_id,
+                                  plat_nomor: record.motor.plat_nomor,
+                                  merk: record.motor.merk,
+                                  model: record.motor.model,
+                                  tahun: 0,
+                                  harga: 0,
+                                  status: "tersedia",
+                                  gps_status: "Offline",
+                                  created_at: "",
+                                  updated_at: "",
+                                } as Motor)
+                              : null
+                          );
+                          setShowServiceHistory(true);
+                        }}
+                        className="text-xs"
+                      >
+                        Detail
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDeleteClick(record.id)}
+                        disabled={actionLoading === record.id}
+                        isLoading={actionLoading === record.id}
+                        className="text-xs"
+                      >
+                        Hapus
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
           </div>
         </Card>
       )}
@@ -1072,11 +652,10 @@ const MotorService: React.FC = () => {
         inService.length === 0 &&
         serviceRecords.length === 0 && (
           <Card>
-            <div className="text-center py-8 text-gray-500 dark:text-dark-secondary">
+            <div className="text-center py-8 text-gray-500">
               <p>Tidak ada motor yang perlu service</p>
               <p className="text-sm mt-2">
                 Semua motor dalam kondisi baik dan siap digunakan
-                {isConnected && " • Monitoring real-time aktif"}
               </p>
             </div>
           </Card>
@@ -1086,22 +665,17 @@ const MotorService: React.FC = () => {
       <Modal
         isOpen={showFinishModal}
         onClose={() => setShowFinishModal(false)}
-        title="Konfirmasi Selesaikan Service"
+        title="Selesaikan Service"
         size="sm"
       >
         <ModalBody>
-          <p className="text-gray-600 dark:text-dark-secondary">
+          <p className="text-gray-600">
             Apakah Anda yakin ingin menyelesaikan service untuk motor{" "}
-            <span className="font-semibold text-gray-900 dark:text-dark-primary">
+            <span className="font-semibold">
               {selectedMotor?.plat_nomor} - {selectedMotor?.merk}
             </span>
             ?
           </p>
-          {isConnected && (
-            <p className="text-xs text-green-600 mt-2">
-              Perubahan akan terlihat secara real-time di semua perangkat
-            </p>
-          )}
         </ModalBody>
         <ModalFooter>
           <Button variant="outline" onClick={() => setShowFinishModal(false)}>
@@ -1120,22 +694,17 @@ const MotorService: React.FC = () => {
       <Modal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
-        title="Konfirmasi Batalkan Service"
+        title="Batalkan Service"
         size="sm"
       >
         <ModalBody>
-          <p className="text-gray-600 dark:text-dark-secondary">
+          <p className="text-gray-600">
             Apakah Anda yakin ingin membatalkan service untuk motor{" "}
-            <span className="font-semibold text-gray-900 dark:text-dark-primary">
+            <span className="font-semibold">
               {selectedMotor?.plat_nomor} - {selectedMotor?.merk}
             </span>
             ?
           </p>
-          {isConnected && (
-            <p className="text-xs text-green-600 mt-2">
-              Perubahan akan terlihat secara real-time di semua perangkat
-            </p>
-          )}
         </ModalBody>
         <ModalFooter>
           <Button variant="outline" onClick={() => setShowCancelModal(false)}>
@@ -1155,11 +724,11 @@ const MotorService: React.FC = () => {
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Konfirmasi Hapus Record Service"
+        title="Hapus Record Service"
         size="sm"
       >
         <ModalBody>
-          <p className="text-gray-600 dark:text-dark-secondary">
+          <p className="text-gray-600">
             Apakah Anda yakin ingin menghapus record service ini? Tindakan ini
             tidak dapat dibatalkan.
           </p>

@@ -82,11 +82,30 @@ const SewaCreate: React.FC = () => {
     return motors.filter((motor) => motor.status === "tersedia");
   };
 
-  // Filter penyewa yang tidak memiliki sewa aktif dan tidak blacklisted
+  // ✅ PERBAIKAN: Filter penyewa yang tidak memiliki sewa aktif dan tidak blacklisted
   const getAvailablePenyewas = () => {
+    // Dapatkan ID penyewa yang memiliki sewa dengan status aktif atau lewat tempo
     const activePenyewaIds = activeSewas
-      .filter((sewa) => sewa.status === "aktif")
-      .map((sewa) => sewa.penyewa_id);
+      .filter(
+        (sewa) =>
+          sewa.status === "aktif" ||
+          sewa.status === "Lewat Tempo" ||
+          sewaService.isSewaAktif(sewa)
+      )
+      .map((sewa) => sewa.penyewa_id)
+      .filter((id): id is number => id !== undefined && id !== null);
+
+    console.log("🔍 DEBUG Available Penyewas:", {
+      totalPenyewas: penyewas.length,
+      activeSewasCount: activeSewas.length,
+      activePenyewaIds,
+      activeSewas: activeSewas.map((s) => ({
+        id: s.id,
+        penyewa_id: s.penyewa_id,
+        status: s.status,
+        isSewaAktif: sewaService.isSewaAktif(s),
+      })),
+    });
 
     return penyewas.filter(
       (penyewa) =>

@@ -32,38 +32,50 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
 
   return (
     <div
-      className={`rm-card p-6 space-y-6 ${
-        isDark ? "bg-dark-card border-dark-border" : "bg-white border-gray-200"
+      className={`p-6 rounded-lg border space-y-6 ${
+        isDark
+          ? "bg-gray-800 border-gray-700 text-white"
+          : "bg-white border-gray-200 text-gray-900"
       }`}
     >
-      {/* Status */}
-      <Badge
-        variant={
-          sewa.status === "aktif"
-            ? isLewatTempo
-              ? "danger"
-              : "warning"
-            : "success"
-        }
-        className="text-lg"
-      >
-        {sewa.status}
-        {isLewatTempo && " (Lewat Tempo)"}
-      </Badge>
+      {/* Status Sewa - DIUBAH: Gunakan h2 dengan styling yang sama */}
+      <div className="flex justify-between items-center">
+        <h2
+          className={`text-xl font-semibold ${
+            isDark ? "text-white" : "text-gray-900"
+          }`}
+        >
+          Detail Sewa
+        </h2>
+        <Badge
+          variant={
+            sewa.status === "aktif"
+              ? isLewatTempo
+                ? "danger"
+                : "warning"
+              : "success"
+          }
+          className="text-base px-3 py-1" // DIUBAH: Sesuaikan ukuran badge
+        >
+          {sewa.status === "aktif" && isLewatTempo
+            ? "LEWAT TEMPO"
+            : sewa.status.toUpperCase()}
+        </Badge>
+      </div>
 
       {/* Grid Informasi */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Informasi Sewa */}
         <div className="space-y-4">
-          <h2
+          <h3
             className={`text-lg font-semibold border-b pb-2 ${
               isDark
-                ? "text-dark-primary border-dark-border"
-                : "text-gray-900 border-gray-200"
+                ? "border-gray-600 text-white"
+                : "border-gray-200 text-gray-900"
             }`}
           >
             Informasi Sewa
-          </h2>
+          </h3>
           <InfoRow label="Tanggal Sewa" value={formatDateTime(sewa.tgl_sewa)} />
           <InfoRow
             label="Tanggal Kembali"
@@ -76,11 +88,7 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
           <InfoRow
             label="Total Harga"
             value={formatCurrency(sewa.total_harga)}
-            valueClass={
-              isDark
-                ? "text-green-400 font-semibold"
-                : "text-green-600 font-semibold"
-            }
+            valueClass="text-green-600 font-semibold"
           />
           {sewa.admin && (
             <InfoRow label="Admin Input" value={sewa.admin.nama_lengkap} />
@@ -89,15 +97,15 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
 
         {/* Pembayaran & Jaminan */}
         <div className="space-y-4">
-          <h2
+          <h3
             className={`text-lg font-semibold border-b pb-2 ${
               isDark
-                ? "text-dark-primary border-dark-border"
-                : "text-gray-900 border-gray-200"
+                ? "border-gray-600 text-white"
+                : "border-gray-200 text-gray-900"
             }`}
           >
             Pembayaran & Jaminan
-          </h2>
+          </h3>
           <InfoRow label="Metode Pembayaran" value={sewa.pembayaran || "-"} />
           <InfoRow
             label="Jaminan"
@@ -105,7 +113,11 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
               jaminan.length > 0 ? (
                 <div className="flex flex-wrap gap-1">
                   {jaminan.map((item: string) => (
-                    <Badge key={item} variant="default">
+                    <Badge
+                      key={item}
+                      variant="default"
+                      className="text-xs px-2 py-1"
+                    >
                       {item}
                     </Badge>
                   ))}
@@ -118,33 +130,37 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
         </div>
       </div>
 
-      {/* Motor & Penyewa */}
+      {/* Informasi Motor */}
       <div
-        className={`grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t ${
-          isDark ? "border-dark-border" : "border-gray-200"
+        className={`pt-6 border-t ${
+          isDark ? "border-gray-600" : "border-gray-200"
         }`}
       >
-        <div>
-          <h3
-            className={`text-lg font-semibold mb-3 ${
-              isDark ? "text-dark-primary" : "text-gray-900"
-            }`}
-          >
-            Motor
-          </h3>
-          {sewa.motor && (
+        <h3
+          className={`text-lg font-semibold mb-3 ${
+            isDark ? "text-white" : "text-gray-900"
+          }`}
+        >
+          Motor
+        </h3>
+        {sewa.motor && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <InfoRow label="Plat" value={sewa.motor.plat_nomor} />
+              <InfoRow label="Plat Nomor" value={sewa.motor.plat_nomor} />
+              <InfoRow label="Merk" value={sewa.motor.merk} />
+              <InfoRow label="Model" value={sewa.motor.model} />
+            </div>
+            <div className="space-y-2">
               <InfoRow
-                label="Merk/Model"
-                value={`${sewa.motor.merk} ${sewa.motor.model}`}
+                label="Tahun"
+                value={sewa.motor.tahun?.toString() || "-"}
               />
               <InfoRow
-                label="Harga/Hari"
+                label="Harga per Hari"
                 value={formatCurrency(sewa.motor.harga)}
               />
               <InfoRow
-                label="Status"
+                label="Status Motor"
                 value={
                   <Badge
                     variant={
@@ -156,24 +172,33 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
                 }
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        <div>
-          <h3
-            className={`text-lg font-semibold mb-3 ${
-              isDark ? "text-dark-primary" : "text-gray-900"
-            }`}
-          >
-            Penyewa
-          </h3>
-          {sewa.penyewa && (
+      {/* Informasi Penyewa */}
+      <div
+        className={`pt-6 border-t ${
+          isDark ? "border-gray-600" : "border-gray-200"
+        }`}
+      >
+        <h3
+          className={`text-lg font-semibold mb-3 ${
+            isDark ? "text-white" : "text-gray-900"
+          }`}
+        >
+          Penyewa
+        </h3>
+        {sewa.penyewa && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <InfoRow label="Nama" value={sewa.penyewa.nama} />
               <InfoRow
                 label="WhatsApp"
                 value={sewa.penyewa.no_whatsapp || "-"}
               />
+            </div>
+            <div className="space-y-2">
               {sewa.penyewa.alamat && (
                 <InfoRow label="Alamat" value={sewa.penyewa.alamat} />
               )}
@@ -188,20 +213,20 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
                 }
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Riwayat */}
+      {/* Riwayat Penyelesaian */}
       {sewa.histories && sewa.histories.length > 0 && (
         <div
           className={`pt-6 border-t ${
-            isDark ? "border-dark-border" : "border-gray-200"
+            isDark ? "border-gray-600" : "border-gray-200"
           }`}
         >
           <h3
             className={`text-lg font-semibold mb-4 ${
-              isDark ? "text-dark-primary" : "text-gray-900"
+              isDark ? "text-white" : "text-gray-900"
             }`}
           >
             Riwayat Penyelesaian
@@ -211,13 +236,13 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
               <div
                 key={history.id}
                 className={`p-4 rounded-lg ${
-                  isDark ? "bg-dark-secondary/50" : "bg-gray-50"
+                  isDark ? "bg-gray-700" : "bg-gray-50"
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <span
                     className={`font-medium ${
-                      isDark ? "text-dark-primary" : "text-gray-900"
+                      isDark ? "text-white" : "text-gray-900"
                     }`}
                   >
                     {formatDateTime(history.tgl_selesai)}
@@ -234,13 +259,22 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
                 </div>
                 <div
                   className={`text-sm space-y-1 ${
-                    isDark ? "text-dark-secondary" : "text-gray-600"
+                    isDark ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
                   <InfoRow
                     label="Denda"
                     value={formatCurrency(history.denda)}
                   />
+                  {history.keterlambatan_menit &&
+                    history.keterlambatan_menit > 0 && (
+                      <InfoRow
+                        label="Keterlambatan"
+                        value={`${Math.ceil(
+                          history.keterlambatan_menit / 60
+                        )} jam`}
+                      />
+                    )}
                   <InfoRow label="Catatan" value={history.catatan || "-"} />
                 </div>
               </div>
@@ -253,18 +287,20 @@ const SewaInfo: React.FC<SewaInfoProps> = ({ sewa, isLewatTempo }) => {
       <div
         className={`pt-6 border-t text-sm ${
           isDark
-            ? "text-dark-muted border-dark-border"
+            ? "text-gray-400 border-gray-600"
             : "text-gray-500 border-gray-200"
         }`}
       >
-        <InfoRow label="Dibuat" value={formatDateTime(sewa.created_at)} />
-        <InfoRow label="Diupdate" value={formatDateTime(sewa.updated_at)} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <InfoRow label="Dibuat" value={formatDateTime(sewa.created_at)} />
+          <InfoRow label="Diupdate" value={formatDateTime(sewa.updated_at)} />
+        </div>
       </div>
     </div>
   );
 };
 
-// Komponen helper
+// Komponen helper untuk baris informasi
 interface InfoRowProps {
   label: string;
   value: React.ReactNode;
@@ -275,13 +311,17 @@ const InfoRow: React.FC<InfoRowProps> = ({ label, value, valueClass = "" }) => {
   const { isDark } = useTheme();
 
   return (
-    <div className="flex justify-between">
-      <span className={isDark ? "text-dark-secondary" : "text-gray-600"}>
+    <div className="flex justify-between items-start">
+      <span
+        className={`font-medium flex-shrink-0 mr-4 ${
+          isDark ? "text-gray-300" : "text-gray-600"
+        }`}
+      >
         {label}:
       </span>
       <span
-        className={`font-medium ${valueClass} ${
-          isDark ? "text-dark-primary" : "text-gray-900"
+        className={`text-right break-words max-w-[60%] ${valueClass} ${
+          isDark ? "text-white" : "text-gray-900"
         }`}
       >
         {value}

@@ -137,14 +137,15 @@ export const PenyewaDetail: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-2 sm:px-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             onClick={handleBack}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1 px-3 py-2"
+            size="sm"
           >
             <svg
               className="w-4 h-4"
@@ -159,29 +160,39 @@ export const PenyewaDetail: React.FC = () => {
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Kembali ke Daftar
+            <span className="hidden xs:inline">Kembali</span>
           </Button>
           <h1
-            className={`text-2xl font-bold ${
+            className={`text-xl sm:text-2xl font-bold truncate ${
               isDark ? "text-dark-primary" : "text-gray-900"
             }`}
           >
             Detail Penyewa
           </h1>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleEdit}>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={handleEdit}
+            className="flex-1 min-w-[80px] sm:flex-none"
+            size="sm"
+          >
             Edit
           </Button>
           <Button
             variant={penyewa.is_blacklisted ? "success" : "secondary"}
             onClick={() => setShowBlacklistModal(true)}
+            className="flex-1 min-w-[120px] sm:flex-none"
+            size="sm"
           >
-            {penyewa.is_blacklisted
-              ? "Hapus dari Blacklist"
-              : "Tambah ke Blacklist"}
+            {penyewa.is_blacklisted ? "Hapus Blacklist" : "Tambah Blacklist"}
           </Button>
-          <Button variant="danger" onClick={() => setShowDeleteModal(true)}>
+          <Button
+            variant="danger"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex-1 min-w-[80px] sm:flex-none"
+            size="sm"
+          >
             Hapus
           </Button>
         </div>
@@ -196,7 +207,7 @@ export const PenyewaDetail: React.FC = () => {
         }`}
       >
         <div
-          className={`px-6 py-4 border-b ${
+          className={`px-4 py-3 border-b ${
             isDark ? "border-dark-border" : "border-gray-200"
           }`}
         >
@@ -208,11 +219,11 @@ export const PenyewaDetail: React.FC = () => {
             Informasi Penyewa
           </h2>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-4">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Informasi Utama */}
-            <div className="md:col-span-2 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex-1 space-y-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label
                     className={`block text-sm font-medium mb-1 ${
@@ -222,7 +233,7 @@ export const PenyewaDetail: React.FC = () => {
                     Nama Lengkap
                   </label>
                   <p
-                    className={`text-lg font-semibold ${
+                    className={`text-base font-semibold break-words ${
                       isDark ? "text-dark-primary" : "text-gray-900"
                     }`}
                   >
@@ -239,7 +250,7 @@ export const PenyewaDetail: React.FC = () => {
                     Nomor WhatsApp
                   </label>
                   <p
-                    className={`text-lg ${
+                    className={`text-base break-words ${
                       isDark ? "text-dark-primary" : "text-gray-900"
                     }`}
                   >
@@ -247,7 +258,7 @@ export const PenyewaDetail: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label
                     className={`block text-sm font-medium mb-1 ${
                       isDark ? "text-dark-secondary" : "text-gray-700"
@@ -271,7 +282,7 @@ export const PenyewaDetail: React.FC = () => {
                 </div>
 
                 {penyewa.alamat && (
-                  <div className="md:col-span-2">
+                  <div>
                     <label
                       className={`block text-sm font-medium mb-1 ${
                         isDark ? "text-dark-secondary" : "text-gray-700"
@@ -280,7 +291,7 @@ export const PenyewaDetail: React.FC = () => {
                       Alamat
                     </label>
                     <p
-                      className={`whitespace-pre-wrap ${
+                      className={`whitespace-pre-wrap break-words ${
                         isDark ? "text-dark-primary" : "text-gray-900"
                       }`}
                     >
@@ -303,7 +314,7 @@ export const PenyewaDetail: React.FC = () => {
                 >
                   Informasi Tambahan
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 gap-3 text-sm">
                   <div>
                     <label
                       className={`block mb-1 ${
@@ -313,7 +324,9 @@ export const PenyewaDetail: React.FC = () => {
                       Tanggal Dibuat
                     </label>
                     <p
-                      className={isDark ? "text-dark-primary" : "text-gray-900"}
+                      className={`break-words ${
+                        isDark ? "text-dark-primary" : "text-gray-900"
+                      }`}
                     >
                       {new Date(penyewa.created_at).toLocaleDateString(
                         "id-ID",
@@ -337,7 +350,9 @@ export const PenyewaDetail: React.FC = () => {
                       Terakhir Diupdate
                     </label>
                     <p
-                      className={isDark ? "text-dark-primary" : "text-gray-900"}
+                      className={`break-words ${
+                        isDark ? "text-dark-primary" : "text-gray-900"
+                      }`}
                     >
                       {new Date(penyewa.updated_at).toLocaleDateString(
                         "id-ID",
@@ -357,7 +372,7 @@ export const PenyewaDetail: React.FC = () => {
             </div>
 
             {/* Foto KTP */}
-            <div className="space-y-4">
+            <div className="lg:w-80 space-y-4">
               <div>
                 <label
                   className={`block text-sm font-medium mb-3 ${
@@ -369,7 +384,7 @@ export const PenyewaDetail: React.FC = () => {
                 <KTPImageWithFallback
                   src={penyewa.foto_ktp || null}
                   alt="Foto KTP"
-                  className={`w-full h-64 object-contain border rounded-lg ${
+                  className={`w-full max-w-xs mx-auto lg:max-w-none h-48 lg:h-64 object-contain border rounded-lg ${
                     isDark
                       ? "border-dark-border bg-dark-secondary/50"
                       : "border-gray-300 bg-gray-50"
@@ -446,20 +461,24 @@ export const PenyewaDetail: React.FC = () => {
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button
-            variant="outline"
-            onClick={() => setShowDeleteModal(false)}
-            disabled={actionLoading}
-          >
-            Batal
-          </Button>
-          <Button
-            variant="danger"
-            onClick={handleDelete}
-            isLoading={actionLoading}
-          >
-            Ya, Hapus
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={actionLoading}
+              className="flex-1"
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              isLoading={actionLoading}
+              className="flex-1"
+            >
+              Ya, Hapus
+            </Button>
+          </div>
         </ModalFooter>
       </Modal>
 
@@ -543,22 +562,26 @@ export const PenyewaDetail: React.FC = () => {
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button
-            variant="outline"
-            onClick={() => setShowBlacklistModal(false)}
-            disabled={actionLoading}
-          >
-            Batal
-          </Button>
-          <Button
-            variant={penyewa.is_blacklisted ? "success" : "secondary"}
-            onClick={handleToggleBlacklist}
-            isLoading={actionLoading}
-          >
-            {penyewa.is_blacklisted
-              ? "Ya, Hapus dari Blacklist"
-              : "Ya, Tambah ke Blacklist"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
+            <Button
+              variant="outline"
+              onClick={() => setShowBlacklistModal(false)}
+              disabled={actionLoading}
+              className="flex-1"
+            >
+              Batal
+            </Button>
+            <Button
+              variant={penyewa.is_blacklisted ? "success" : "secondary"}
+              onClick={handleToggleBlacklist}
+              isLoading={actionLoading}
+              className="flex-1"
+            >
+              {penyewa.is_blacklisted
+                ? "Ya, Hapus dari Blacklist"
+                : "Ya, Tambah ke Blacklist"}
+            </Button>
+          </div>
         </ModalFooter>
       </Modal>
 

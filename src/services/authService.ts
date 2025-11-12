@@ -35,29 +35,12 @@ export const authService = {
    */
   adminLogin: async (
     username: string,
-    password: string,
+    password: string
   ): Promise<LoginResponse> => {
     try {
-      const response = await api.post<LoginResponse>("/admins/login", {
+      const response = await api.post<LoginResponse>("/auth/admin/login", {
+        // ✅ PERBAIKAN: endpoint yang benar
         username,
-        password,
-      });
-      return response.data;
-    } catch (error: unknown) {
-      return handleAuthError(error, "Login gagal");
-    }
-  },
-
-  /**
-   * Login untuk user biasa
-   */
-  userLogin: async (
-    email: string,
-    password: string,
-  ): Promise<LoginResponse> => {
-    try {
-      const response = await api.post<LoginResponse>("/auth/login", {
-        email,
         password,
       });
       return response.data;
@@ -70,14 +53,15 @@ export const authService = {
    * Ambil token dari storage
    */
   getToken: (): string | null =>
-    localStorage.getItem("authToken") || sessionStorage.getItem("authToken"),
+    localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token"), // ✅ PERBAIKAN: konsisten "auth_token"
 
   /**
    * Ambil data admin dari storage
    */
   getCurrentAdminFromStorage: (): Admin | null => {
     const adminData =
-      localStorage.getItem("admin") || sessionStorage.getItem("admin");
+      localStorage.getItem("auth_admin") ||
+      sessionStorage.getItem("auth_admin"); // ✅ PERBAIKAN: konsisten "auth_admin"
     return adminData ? JSON.parse(adminData) : null;
   },
 
@@ -85,10 +69,10 @@ export const authService = {
    * Logout admin/user
    */
   logout: (): void => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("admin");
-    sessionStorage.removeItem("authToken");
-    sessionStorage.removeItem("admin");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_admin");
+    sessionStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_admin");
   },
 
   /**
@@ -99,7 +83,7 @@ export const authService = {
     if (!token) return false;
 
     try {
-      const response = await api.get<{ success: boolean }>("/admins/me");
+      const response = await api.get<{ success: boolean }>("/auth/admin/me"); // ✅ PERBAIKAN: endpoint yang benar
       return response.data.success;
     } catch {
       return false;
@@ -112,10 +96,11 @@ export const authService = {
   changePassword: async (
     currentPassword: string,
     newPassword: string,
-    confirmPassword: string,
+    confirmPassword: string
   ): Promise<void> => {
     try {
-      await api.post("/admins/change-password", {
+      await api.post("/auth/admin/change-password", {
+        // ✅ PERBAIKAN: endpoint yang benar
         current_password: currentPassword,
         password: newPassword,
         password_confirmation: confirmPassword,
@@ -130,7 +115,7 @@ export const authService = {
    */
   getProfile: async (): Promise<Admin> => {
     try {
-      const response = await api.get<{ data: Admin }>("/admins/me");
+      const response = await api.get<{ data: Admin }>("/auth/admin/me"); // ✅ PERBAIKAN: endpoint yang benar
       return response.data.data;
     } catch (error: unknown) {
       return handleAuthError(error, "Gagal mengambil profil");
@@ -147,7 +132,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 api.interceptors.response.use(
@@ -158,7 +143,7 @@ api.interceptors.response.use(
       window.location.href = "/login";
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export default authService;

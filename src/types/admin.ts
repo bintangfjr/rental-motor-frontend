@@ -1,5 +1,7 @@
 // src/types/admin.ts
 
+export { Admin, LoginRequest, ChangePasswordData } from "./auth";
+
 /** -------------------------------
  * Tipe data admin dari backend
  * -------------------------------
@@ -10,11 +12,22 @@ export interface Admin {
   username: string;
   email: string;
   is_super_admin: boolean;
+  role?: "admin" | "super_admin"; // Jadikan optional untuk kompatibilitas
+  created_at?: string;
+  updated_at?: string;
   deleted_at?: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
+export interface LoginData {
+  username: string;
+  password: string;
+}
+
+export interface ChangePasswordData {
+  current_password: string;
+  password: string;
+  password_confirmation: string;
+}
 /** -------------------------------
  * Data untuk membuat admin baru
  * -------------------------------

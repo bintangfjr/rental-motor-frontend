@@ -1,6 +1,6 @@
 // src/pages/history/HistoryDetail.tsx
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { historyService } from "../../services/historyService";
 import { History } from "../../types/history";
 import { Button } from "../../components/ui/Button";
@@ -32,7 +32,8 @@ const HistoryDetail: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const loadHistory = async () => {
+  // ✅ FIXED: Gunakan useCallback untuk menghindari dependency warning
+  const loadHistory = useCallback(async () => {
     if (!id) return;
 
     setIsLoading(true);
@@ -48,11 +49,11 @@ const HistoryDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]); // ✅ Tambahkan id sebagai dependency
 
   useEffect(() => {
     loadHistory();
-  }, [id]);
+  }, [loadHistory]); // ✅ Sekarang loadHistory stable
 
   const handleDelete = async () => {
     if (!history) return;

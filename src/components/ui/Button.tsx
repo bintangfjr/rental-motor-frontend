@@ -8,6 +8,7 @@ export interface ButtonProps
     | "primary"
     | "secondary"
     | "success"
+    | "warning" // ✅ TAMBAHKAN: Variant warning
     | "danger"
     | "outline"
     | "ghost"
@@ -67,7 +68,7 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles =
     "inline-flex items-center justify-center font-medium transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden";
 
-  // ✅ Modern variants dengan dark theme support
+  // ✅ PERBAIKAN: Tambah variant warning dan perbaiki konsistensi
   const variantStyles: Record<string, string> = {
     primary: cn(
       "border-2 shadow-sm hover:shadow-md transition-all duration-200",
@@ -86,6 +87,13 @@ export const Button: React.FC<ButtonProps> = ({
       isDark
         ? "text-green-300 border-green-600 hover:text-green-200 hover:border-green-500 focus:ring-green-500 bg-green-900/20"
         : "text-green-600 border-green-600 hover:text-green-700 hover:border-green-700 focus:ring-green-500 bg-transparent"
+    ),
+    // ✅ TAMBAHKAN: Variant warning untuk tombol "Selesaikan (Lewat Tempo)"
+    warning: cn(
+      "border-2 shadow-sm hover:shadow-md transition-all duration-200",
+      isDark
+        ? "text-yellow-300 border-yellow-600 hover:text-yellow-200 hover:border-yellow-500 focus:ring-yellow-500 bg-yellow-900/20"
+        : "text-yellow-600 border-yellow-600 hover:text-yellow-700 hover:border-yellow-700 focus:ring-yellow-500 bg-transparent"
     ),
     danger: cn(
       "border-2 shadow-sm hover:shadow-md transition-all duration-200",
@@ -133,9 +141,9 @@ export const Button: React.FC<ButtonProps> = ({
     send: "relative bg-transparent border-none shadow-none",
   };
 
-  // Hover effects yang konsisten
+  // ✅ PERBAIKAN: Hover effects yang konsisten untuk SEMUA tombol
   const hoverEffects = cn(
-    "hover:scale-105 active:scale-95",
+    "hover:scale-105 active:scale-95 transition-transform duration-200",
     variant === "modern" && "hover:-translate-y-0.5"
   );
 
@@ -352,17 +360,18 @@ export const Button: React.FC<ButtonProps> = ({
         </div>
       )}
 
-      {/* ✅ Button Content with Hover Effects */}
+      {/* ✅ PERBAIKAN: Button Content - Hapus efek translate yang tidak konsisten */}
       <span
         className={cn(
           "flex items-center gap-2 transition-all duration-300",
-          isLoading ? "opacity-0" : "opacity-100",
-          "group-hover:translate-x-0.5"
+          isLoading ? "opacity-0" : "opacity-100"
+          // Hapus: "group-hover:translate-x-0.5" karena menyebabkan pergeseran tidak konsisten
         )}
       >
         {children}
 
-        {/* ✅ Optional Arrow Icon on Hover */}
+        {/* ✅ PERBAIKAN: Hapus arrow icon untuk tombol aksi agar konsisten */}
+        {/* 
         {variant !== "modern" && !isLoading && (
           <svg
             className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 opacity-0 group-hover:opacity-100"
@@ -378,6 +387,7 @@ export const Button: React.FC<ButtonProps> = ({
             />
           </svg>
         )}
+        */}
       </span>
 
       {/* ✅ Modern Button Shine Effect */}

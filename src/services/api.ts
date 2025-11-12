@@ -26,8 +26,9 @@ api.interceptors.request.use((config) => {
 
   if (token) {
     // Gunakan header Authorization
-    (config.headers as Record<string, string>)["Authorization"] =
-      `Bearer ${token}`;
+    (config.headers as Record<string, string>)[
+      "Authorization"
+    ] = `Bearer ${token}`;
   }
 
   return config;
@@ -50,7 +51,7 @@ api.interceptors.response.use(
 
     console.error("API error:", error.response?.data || error.message);
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;

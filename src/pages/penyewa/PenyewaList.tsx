@@ -10,7 +10,6 @@ import { DataTable, Column } from "../../components/ui/DataTable";
 import { Card } from "../../components/ui/Card";
 import Toast from "../../components/ui/Toast";
 import { Modal, ModalBody, ModalFooter } from "../../components/ui/Modal";
-import { formatPhoneNumber, formatDate } from "../../utils/formatters";
 import { useTheme } from "../../hooks/useTheme";
 
 // Settings Icon Component
@@ -88,28 +87,28 @@ const ActionMenu: React.FC<{
     <div
       ref={menuRef}
       className="absolute right-0 z-50 animate-scale-in origin-top-right"
-      style={{ top: "100%", marginTop: "8px" }}
+      style={{ top: "100%", marginTop: "4px" }}
     >
       <div
-        className={`rm-card border shadow-xl p-2 min-w-[280px] ${
+        className={`rm-card border shadow-xl p-2 min-w-[140px] sm:min-w-[280px] ${
           isDark
-            ? "bg-dark-card border-dark-border"
-            : "bg-white border-gray-200"
+            ? "bg-dark-card/95 backdrop-blur-md border-dark-border/50"
+            : "bg-white/95 backdrop-blur-md border-white/20 shadow-2xl"
         }`}
       >
         {/* Grid 2x2 untuk action buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          {/* Detail - Kiri Bawah */}
+        <div className="grid grid-cols-2 gap-1 sm:gap-2">
+          {/* Detail */}
           <button
             onClick={() => onDetail(penyewa)}
-            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 active:scale-95 ${
               isDark
-                ? "text-dark-secondary hover:bg-dark-hover border-dark-border"
-                : "text-gray-700 hover:bg-gray-50 border-gray-100"
+                ? "text-dark-secondary hover:bg-dark-hover border-dark-border/50"
+                : "text-gray-700 hover:bg-white/80 border-white/30 bg-white/50 backdrop-blur-sm"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -130,17 +129,17 @@ const ActionMenu: React.FC<{
             <span className="text-xs font-medium">Detail</span>
           </button>
 
-          {/* Edit - Kanan Bawah */}
+          {/* Edit */}
           <button
             onClick={() => onEdit(penyewa)}
-            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 active:scale-95 ${
               isDark
-                ? "text-dark-secondary hover:bg-dark-hover border-dark-border"
-                : "text-gray-700 hover:bg-gray-50 border-gray-100"
+                ? "text-dark-secondary hover:bg-dark-hover border-dark-border/50"
+                : "text-gray-700 hover:bg-white/80 border-white/30 bg-white/50 backdrop-blur-sm"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -155,21 +154,21 @@ const ActionMenu: React.FC<{
             <span className="text-xs font-medium">Edit</span>
           </button>
 
-          {/* Blacklist - Kiri Atas */}
+          {/* Blacklist */}
           <button
             onClick={() => onToggleBlacklist(penyewa)}
-            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 active:scale-95 ${
               penyewa.is_blacklisted
                 ? isDark
                   ? "text-green-400 hover:bg-green-900/20 border-green-900/30"
-                  : "text-green-600 hover:bg-green-50 border-green-100"
+                  : "text-green-600 hover:bg-green-50/80 border-green-100 bg-green-50/50 backdrop-blur-sm"
                 : isDark
                 ? "text-yellow-400 hover:bg-yellow-900/20 border-yellow-900/30"
-                : "text-yellow-600 hover:bg-yellow-50 border-yellow-100"
+                : "text-yellow-600 hover:bg-yellow-50/80 border-yellow-100 bg-yellow-50/50 backdrop-blur-sm"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -190,22 +189,22 @@ const ActionMenu: React.FC<{
                 />
               )}
             </svg>
-            <span className="text-xs font-medium">
-              {penyewa.is_blacklisted ? "Buka Blacklist" : "Blacklist"}
+            <span className="text-xs font-medium text-center">
+              {penyewa.is_blacklisted ? "Buka" : "Blacklist"}
             </span>
           </button>
 
-          {/* Hapus - Kanan Atas */}
+          {/* Hapus */}
           <button
             onClick={() => onDelete(penyewa)}
-            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 active:scale-95 ${
               isDark
                 ? "text-red-400 hover:bg-red-900/20 border-red-900/30"
-                : "text-red-600 hover:bg-red-50 border-red-100"
+                : "text-red-600 hover:bg-red-50/80 border-red-100 bg-red-50/50 backdrop-blur-sm"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -357,9 +356,13 @@ const PenyewaList: React.FC = () => {
 
   const getStatusBadge = (isBlacklisted: boolean) => {
     return isBlacklisted ? (
-      <Badge variant="danger">Blacklist</Badge>
+      <Badge variant="danger" className="text-xs px-2 py-1">
+        Blacklist
+      </Badge>
     ) : (
-      <Badge variant="success">Aktif</Badge>
+      <Badge variant="success" className="text-xs px-2 py-1">
+        Aktif
+      </Badge>
     );
   };
 
@@ -375,35 +378,30 @@ const PenyewaList: React.FC = () => {
   const columns: Column<Penyewa>[] = [
     {
       key: "nama",
-      header: "Nama",
+      header: "Nama Penyewa",
       sortable: true,
       render: (value, row) => (
         <div
-          className="cursor-pointer hover:text-blue-600 transition-colors"
+          className="cursor-pointer hover:text-blue-600 transition-colors duration-200 group"
           onClick={(e) => {
             e.stopPropagation();
             handleRowClick(row);
           }}
         >
-          {value}
+          <div className="font-medium text-sm sm:text-base group-hover:translate-x-1 transition-transform">
+            {value}
+          </div>
+          {row.alamat && (
+            <div
+              className={`text-xs mt-1 truncate max-w-[200px] ${
+                isDark ? "text-dark-muted" : "text-gray-500"
+              }`}
+            >
+              {row.alamat}
+            </div>
+          )}
         </div>
       ),
-    },
-    {
-      key: "no_whatsapp",
-      header: "WhatsApp",
-      render: (_, row) => (
-        <div
-          className="cursor-pointer hover:text-blue-600 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleRowClick(row);
-          }}
-        >
-          {formatPhoneNumber(row.no_whatsapp)}
-        </div>
-      ),
-      sortable: true,
     },
     {
       key: "is_blacklisted",
@@ -422,22 +420,6 @@ const PenyewaList: React.FC = () => {
       sortable: true,
     },
     {
-      key: "created_at",
-      header: "Tanggal Daftar",
-      render: (_, row) => (
-        <div
-          className="cursor-pointer hover:text-blue-600 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleRowClick(row);
-          }}
-        >
-          {formatDate(row.created_at)}
-        </div>
-      ),
-      sortable: true,
-    },
-    {
       key: "id",
       header: "Aksi",
       render: (_, row) => (
@@ -450,14 +432,14 @@ const PenyewaList: React.FC = () => {
               e.stopPropagation();
               setOpenMenuId(openMenuId === row.id ? null : row.id);
             }}
-            className={`p-2 transition-colors rounded-lg hover:scale-105 ${
+            className={`p-2 transition-all duration-200 rounded-lg hover:scale-110 active:scale-95 ${
               isDark
-                ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-hover"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-hover/80 backdrop-blur-sm"
+                : "text-gray-500 hover:text-gray-700 hover:bg-white/80 backdrop-blur-sm border border-transparent hover:border-white/30 shadow-sm hover:shadow-md"
             }`}
             title="Pengaturan"
           >
-            <SettingsIcon className="w-5 h-5" />
+            <SettingsIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           <ActionMenu
@@ -478,37 +460,65 @@ const PenyewaList: React.FC = () => {
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className={`${isDark ? "text-red-400" : "text-red-600"}`}>{error}</p>
-        <Button onClick={loadPenyewas} className="mt-4">
-          Coba Lagi
-        </Button>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <div
+            className={`p-4 rounded-lg mb-4 ${
+              isDark ? "bg-red-900/20 text-red-300" : "bg-red-100 text-red-600"
+            }`}
+          >
+            <p className="text-sm sm:text-base">{error}</p>
+          </div>
+          <Button
+            onClick={loadPenyewas}
+            className="w-full sm:w-auto"
+            variant={isDark ? "outline" : "default"}
+          >
+            Coba Lagi
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen space-y-4 px-3 sm:px-4 py-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="text-center sm:text-left">
           <h1
-            className={`text-2xl font-bold ${
+            className={`text-xl sm:text-2xl font-bold ${
               isDark ? "text-dark-primary" : "text-gray-900"
             }`}
           >
             Daftar Penyewa
           </h1>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
+          <p
+            className={`mt-1 text-sm ${
+              isDark ? "text-dark-secondary" : "text-gray-600"
+            }`}
+          >
             Total {filteredPenyewas.length} penyewa
           </p>
         </div>
-        <Link to="/penyewas/create">
-          <Button>+ Tambah Penyewa</Button>
+        <Link
+          to="/penyewas/create"
+          className="flex justify-center sm:justify-start"
+        >
+          <Button className="w-full sm:w-auto px-4 py-2" size="sm">
+            + Tambah Penyewa
+          </Button>
         </Link>
       </div>
 
-      <Card>
+      {/* Data Table Card */}
+      <Card
+        className={`transition-all duration-300 ${
+          isDark
+            ? "bg-dark-card/80 backdrop-blur-md border-dark-border/50"
+            : "bg-white/80 backdrop-blur-md border-white/20 shadow-xl"
+        }`}
+      >
         {penyewas.length === 0 ? (
           <EmptyState
             title="Belum ada penyewa"
@@ -523,7 +533,7 @@ const PenyewaList: React.FC = () => {
             columns={columns}
             data={filteredPenyewas}
             search={{
-              placeholder: "Cari nama, WhatsApp, atau alamat...",
+              placeholder: "Cari nama atau alamat...",
               onSearch: setSearchQuery,
             }}
             pagination={{
@@ -536,9 +546,13 @@ const PenyewaList: React.FC = () => {
               },
             }}
             onRowClick={handleRowClick}
-            rowClassName={`cursor-pointer transition-all duration-200 ${
-              isDark ? "hover:bg-dark-hover/50" : "hover:bg-gray-50"
+            rowClassName={`cursor-pointer transition-all duration-200 border-b ${
+              isDark
+                ? "hover:bg-dark-hover/50 border-dark-border/30"
+                : "hover:bg-white/60 backdrop-blur-sm border-gray-100"
             }`}
+            className={isDark ? "" : "bg-transparent"}
+            headerClassName={isDark ? "bg-dark-card/50" : "bg-white/50"}
           />
         )}
       </Card>
@@ -551,7 +565,11 @@ const PenyewaList: React.FC = () => {
         size="sm"
       >
         <ModalBody>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
+          <p
+            className={`${
+              isDark ? "text-dark-secondary" : "text-gray-600"
+            } text-sm`}
+          >
             Apakah Anda yakin ingin menghapus penyewa{" "}
             <span
               className={`font-semibold ${
@@ -567,7 +585,7 @@ const PenyewaList: React.FC = () => {
               className={`mt-3 p-3 rounded-lg text-sm ${
                 isDark
                   ? "bg-dark-secondary/30 text-dark-muted"
-                  : "bg-red-50 text-red-700"
+                  : "bg-red-50/80 backdrop-blur-sm text-red-700 border border-red-100"
               }`}
             >
               <p className="font-medium">
@@ -580,20 +598,24 @@ const PenyewaList: React.FC = () => {
           )}
         </ModalBody>
         <ModalFooter>
-          <Button
-            variant="outline"
-            onClick={() => setShowDeleteModal(false)}
-            disabled={actionLoading}
-          >
-            Batal
-          </Button>
-          <Button
-            variant="danger"
-            onClick={handleDelete}
-            isLoading={actionLoading}
-          >
-            Ya, Hapus
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={actionLoading}
+              className="flex-1"
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              isLoading={actionLoading}
+              className="flex-1"
+            >
+              Ya, Hapus
+            </Button>
+          </div>
         </ModalFooter>
       </Modal>
 
@@ -609,7 +631,11 @@ const PenyewaList: React.FC = () => {
         size="sm"
       >
         <ModalBody>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
+          <p
+            className={`${
+              isDark ? "text-dark-secondary" : "text-gray-600"
+            } text-sm`}
+          >
             {selectedPenyewa?.is_blacklisted
               ? `Apakah Anda yakin ingin menghapus ${selectedPenyewa?.nama} dari blacklist?`
               : `Apakah Anda yakin ingin menambahkan ${selectedPenyewa?.nama} ke blacklist?`}
@@ -619,7 +645,7 @@ const PenyewaList: React.FC = () => {
               className={`mt-3 p-3 rounded-lg text-sm ${
                 isDark
                   ? "bg-dark-secondary/30 text-dark-muted"
-                  : "bg-yellow-50 text-yellow-700"
+                  : "bg-yellow-50/80 backdrop-blur-sm text-yellow-700 border border-yellow-100"
               }`}
             >
               <p className="font-medium">
@@ -631,22 +657,26 @@ const PenyewaList: React.FC = () => {
           )}
         </ModalBody>
         <ModalFooter>
-          <Button
-            variant="outline"
-            onClick={() => setShowBlacklistModal(false)}
-            disabled={actionLoading}
-          >
-            Batal
-          </Button>
-          <Button
-            variant={selectedPenyewa?.is_blacklisted ? "success" : "secondary"}
-            onClick={handleToggleBlacklist}
-            isLoading={actionLoading}
-          >
-            {selectedPenyewa?.is_blacklisted
-              ? "Ya, Hapus dari Blacklist"
-              : "Ya, Tambah ke Blacklist"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
+            <Button
+              variant="outline"
+              onClick={() => setShowBlacklistModal(false)}
+              disabled={actionLoading}
+              className="flex-1"
+            >
+              Batal
+            </Button>
+            <Button
+              variant={
+                selectedPenyewa?.is_blacklisted ? "success" : "secondary"
+              }
+              onClick={handleToggleBlacklist}
+              isLoading={actionLoading}
+              className="flex-1"
+            >
+              {selectedPenyewa?.is_blacklisted ? "Ya, Hapus" : "Ya, Tambah"}
+            </Button>
+          </div>
         </ModalFooter>
       </Modal>
 

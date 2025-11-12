@@ -26,15 +26,15 @@ const SewaDetail = lazy(() => import("../pages/sewa/SewaDetail"));
 
 // History & Report Routes
 const HistoryList = lazy(() => import("../pages/history/HistoryList"));
-const ReportView = lazy(() => import("../pages/report/ReportView"));
+const ReportView = lazy(() => import("../pages/report/DashboardReport"));
 
 // Settings Routes
 const ProfileSettings = lazy(() => import("../pages/settings/ProfileSettings"));
 const SecuritySettings = lazy(
-  () => import("../pages/settings/SecuritySettings"),
+  () => import("../pages/settings/SecuritySettings")
 );
 const NotificationSettings = lazy(
-  () => import("../pages/settings/NotificationSettings"),
+  () => import("../pages/settings/NotificationSettings")
 );
 
 // Utility Pages
@@ -267,7 +267,7 @@ export const getRouteConfig = (path: string): RouteConfig | undefined => {
 
 export const isProtectedRoute = (path: string): boolean => {
   const route = getRouteConfig(path);
-  return route ? (route.protected ?? true) : true;
+  return route ? route.protected ?? true : true;
 };
 
 export const getPageTitle = (path: string): string => {

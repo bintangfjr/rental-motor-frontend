@@ -86,6 +86,38 @@ const ServiceHistory: React.FC<ServiceHistoryProps> = ({
     }
   };
 
+  // ✅ FIXED: Safe array handler untuk parts
+  const getSafePartsArray = (parts: any): string[] => {
+    if (!parts) return [];
+    if (Array.isArray(parts)) return parts;
+    if (typeof parts === "string") {
+      try {
+        // Coba parse jika berupa JSON string
+        const parsed = JSON.parse(parts);
+        return Array.isArray(parsed) ? parsed : [parts];
+      } catch {
+        // Jika bukan JSON, anggap sebagai string biasa
+        return [parts];
+      }
+    }
+    return [];
+  };
+
+  // ✅ FIXED: Safe array handler untuk services
+  const getSafeServicesArray = (services: any): string[] => {
+    if (!services) return [];
+    if (Array.isArray(services)) return services;
+    if (typeof services === "string") {
+      try {
+        const parsed = JSON.parse(services);
+        return Array.isArray(parsed) ? parsed : [services];
+      } catch {
+        return [services];
+      }
+    }
+    return [];
+  };
+
   const getServiceTypeBadge = (type: string) => {
     const types = {
       rutin: <Badge variant="success">Rutin</Badge>,
@@ -188,219 +220,229 @@ const ServiceHistory: React.FC<ServiceHistoryProps> = ({
               </div>
             ) : (
               <div className="space-y-4">
-                {serviceRecords.map((record) => (
-                  <div
-                    key={record.id}
-                    className={`border rounded-lg p-4 transition-all duration-200 ${
-                      isDark
-                        ? "bg-dark-secondary border-dark-border hover:bg-dark-hover"
-                        : "bg-white border-gray-200 hover:shadow-md"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3
-                            className={`font-semibold ${
+                {serviceRecords.map((record) => {
+                  // ✅ FIXED: Gunakan safe array handlers
+                  const safeParts = getSafePartsArray(record.parts);
+                  const safeServices = getSafeServicesArray(record.services);
+
+                  return (
+                    <div
+                      key={record.id}
+                      className={`border rounded-lg p-4 transition-all duration-200 ${
+                        isDark
+                          ? "bg-dark-secondary border-dark-border hover:bg-dark-hover"
+                          : "bg-white border-gray-200 hover:shadow-md"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3
+                              className={`font-semibold ${
+                                isDark ? "text-dark-primary" : "text-gray-900"
+                              }`}
+                            >
+                              {formatDate(record.service_date)}
+                            </h3>
+                            {getServiceTypeBadge(record.service_type)}
+                            {getStatusBadge(record.status)}
+                          </div>
+                          <p
+                            className={`text-sm ${
+                              isDark ? "text-dark-secondary" : "text-gray-600"
+                            }`}
+                          >
+                            {record.service_location} •{" "}
+                            {record.service_technician}
+                          </p>
+                          {record.estimated_completion && (
+                            <p
+                              className={`text-sm mt-1 ${
+                                isDark ? "text-dark-muted" : "text-gray-500"
+                              }`}
+                            >
+                              Estimasi selesai:{" "}
+                              {formatDate(record.estimated_completion)}
+                            </p>
+                          )}
+                          {record.actual_completion && (
+                            <p
+                              className={`text-sm mt-1 ${
+                                isDark ? "text-green-400" : "text-green-600"
+                              }`}
+                            >
+                              Selesai: {formatDate(record.actual_completion)}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div
+                            className={`text-sm font-semibold ${
                               isDark ? "text-dark-primary" : "text-gray-900"
                             }`}
                           >
-                            {formatDate(record.service_date)}
-                          </h3>
-                          {getServiceTypeBadge(record.service_type)}
-                          {getStatusBadge(record.status)}
+                            {record.actual_cost ? (
+                              formatCurrency(record.actual_cost)
+                            ) : record.estimated_cost ? (
+                              <span
+                                className={
+                                  isDark
+                                    ? "text-dark-secondary"
+                                    : "text-gray-600"
+                                }
+                              >
+                                Est. {formatCurrency(record.estimated_cost)}
+                              </span>
+                            ) : (
+                              <span
+                                className={
+                                  isDark ? "text-dark-muted" : "text-gray-400"
+                                }
+                              >
+                                -
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 mt-2">
+                            {canCancel(record) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCancelService(record.id)}
+                                disabled={isActionLoading(record.id)}
+                              >
+                                {cancellingId === record.id
+                                  ? "Membatalkan..."
+                                  : "Batalkan"}
+                              </Button>
+                            )}
+
+                            {canDelete(record) && (
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => handleDeleteService(record.id)}
+                                disabled={isActionLoading(record.id)}
+                              >
+                                {deletingId === record.id
+                                  ? "Menghapus..."
+                                  : "Hapus"}
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        <p
-                          className={`text-sm ${
-                            isDark ? "text-dark-secondary" : "text-gray-600"
-                          }`}
-                        >
-                          {record.service_location} •{" "}
-                          {record.service_technician}
-                        </p>
-                        {record.estimated_completion && (
-                          <p
-                            className={`text-sm mt-1 ${
-                              isDark ? "text-dark-muted" : "text-gray-500"
-                            }`}
-                          >
-                            Estimasi selesai:{" "}
-                            {formatDate(record.estimated_completion)}
-                          </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {/* ✅ FIXED: Gunakan safeParts bukan record.parts langsung */}
+                        {safeParts.length > 0 && (
+                          <div>
+                            <h4
+                              className={`font-medium mb-1 ${
+                                isDark ? "text-dark-secondary" : "text-gray-700"
+                              }`}
+                            >
+                              Part Diganti:
+                            </h4>
+                            <div className="flex flex-wrap gap-1">
+                              {safeParts.map((part, index) => (
+                                <span
+                                  key={index}
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    isDark
+                                      ? "bg-blue-900/30 text-blue-300"
+                                      : "bg-blue-100 text-blue-700"
+                                  }`}
+                                >
+                                  {part}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         )}
-                        {record.actual_completion && (
-                          <p
-                            className={`text-sm mt-1 ${
-                              isDark ? "text-green-400" : "text-green-600"
-                            }`}
-                          >
-                            Selesai: {formatDate(record.actual_completion)}
-                          </p>
+
+                        {/* ✅ FIXED: Gunakan safeServices bukan record.services langsung */}
+                        {safeServices.length > 0 && (
+                          <div>
+                            <h4
+                              className={`font-medium mb-1 ${
+                                isDark ? "text-dark-secondary" : "text-gray-700"
+                              }`}
+                            >
+                              Service Dilakukan:
+                            </h4>
+                            <div className="flex flex-wrap gap-1">
+                              {safeServices.map((service, index) => (
+                                <span
+                                  key={index}
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    isDark
+                                      ? "bg-green-900/30 text-green-300"
+                                      : "bg-green-100 text-green-700"
+                                  }`}
+                                >
+                                  {service}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <div className="text-right">
+
+                      {record.notes && (
+                        <div className="mt-3">
+                          <h4
+                            className={`font-medium text-sm mb-1 ${
+                              isDark ? "text-dark-secondary" : "text-gray-700"
+                            }`}
+                          >
+                            Catatan:
+                          </h4>
+                          <p
+                            className={`text-sm ${
+                              isDark ? "text-dark-secondary" : "text-gray-600"
+                            }`}
+                          >
+                            {record.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Perbaikan: Gunakan properti yang ada di ServiceRecord */}
+                      {(record as any).service_summary && (
+                        <div className="mt-3">
+                          <h4
+                            className={`font-medium text-sm mb-1 ${
+                              isDark ? "text-dark-secondary" : "text-gray-700"
+                            }`}
+                          >
+                            Ringkasan Service:
+                          </h4>
+                          <p
+                            className={`text-sm ${
+                              isDark ? "text-dark-secondary" : "text-gray-600"
+                            }`}
+                          >
+                            {(record as any).service_summary}
+                          </p>
+                        </div>
+                      )}
+
+                      {record.mileage_at_service && (
                         <div
-                          className={`text-sm font-semibold ${
-                            isDark ? "text-dark-primary" : "text-gray-900"
+                          className={`mt-2 text-xs ${
+                            isDark ? "text-dark-muted" : "text-gray-500"
                           }`}
                         >
-                          {record.actual_cost ? (
-                            formatCurrency(record.actual_cost)
-                          ) : record.estimated_cost ? (
-                            <span
-                              className={
-                                isDark ? "text-dark-secondary" : "text-gray-600"
-                              }
-                            >
-                              Est. {formatCurrency(record.estimated_cost)}
-                            </span>
-                          ) : (
-                            <span
-                              className={
-                                isDark ? "text-dark-muted" : "text-gray-400"
-                              }
-                            >
-                              -
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 mt-2">
-                          {canCancel(record) && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleCancelService(record.id)}
-                              disabled={isActionLoading(record.id)}
-                            >
-                              {cancellingId === record.id
-                                ? "Membatalkan..."
-                                : "Batalkan"}
-                            </Button>
-                          )}
-
-                          {canDelete(record) && (
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              onClick={() => handleDeleteService(record.id)}
-                              disabled={isActionLoading(record.id)}
-                            >
-                              {deletingId === record.id
-                                ? "Menghapus..."
-                                : "Hapus"}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      {record.parts && record.parts.length > 0 && (
-                        <div>
-                          <h4
-                            className={`font-medium mb-1 ${
-                              isDark ? "text-dark-secondary" : "text-gray-700"
-                            }`}
-                          >
-                            Part Diganti:
-                          </h4>
-                          <div className="flex flex-wrap gap-1">
-                            {record.parts.map((part, index) => (
-                              <span
-                                key={index}
-                                className={`px-2 py-1 text-xs rounded ${
-                                  isDark
-                                    ? "bg-blue-900/30 text-blue-300"
-                                    : "bg-blue-100 text-blue-700"
-                                }`}
-                              >
-                                {part}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {record.services && record.services.length > 0 && (
-                        <div>
-                          <h4
-                            className={`font-medium mb-1 ${
-                              isDark ? "text-dark-secondary" : "text-gray-700"
-                            }`}
-                          >
-                            Service Dilakukan:
-                          </h4>
-                          <div className="flex flex-wrap gap-1">
-                            {record.services.map((service, index) => (
-                              <span
-                                key={index}
-                                className={`px-2 py-1 text-xs rounded ${
-                                  isDark
-                                    ? "bg-green-900/30 text-green-300"
-                                    : "bg-green-100 text-green-700"
-                                }`}
-                              >
-                                {service}
-                              </span>
-                            ))}
-                          </div>
+                          Kilometer saat service:{" "}
+                          {record.mileage_at_service.toLocaleString()} km
                         </div>
                       )}
                     </div>
-
-                    {record.notes && (
-                      <div className="mt-3">
-                        <h4
-                          className={`font-medium text-sm mb-1 ${
-                            isDark ? "text-dark-secondary" : "text-gray-700"
-                          }`}
-                        >
-                          Catatan:
-                        </h4>
-                        <p
-                          className={`text-sm ${
-                            isDark ? "text-dark-secondary" : "text-gray-600"
-                          }`}
-                        >
-                          {record.notes}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Perbaikan: Gunakan properti yang ada di ServiceRecord */}
-                    {(record as any).service_summary && (
-                      <div className="mt-3">
-                        <h4
-                          className={`font-medium text-sm mb-1 ${
-                            isDark ? "text-dark-secondary" : "text-gray-700"
-                          }`}
-                        >
-                          Ringkasan Service:
-                        </h4>
-                        <p
-                          className={`text-sm ${
-                            isDark ? "text-dark-secondary" : "text-gray-600"
-                          }`}
-                        >
-                          {(record as any).service_summary}
-                        </p>
-                      </div>
-                    )}
-
-                    {record.mileage_at_service && (
-                      <div
-                        className={`mt-2 text-xs ${
-                          isDark ? "text-dark-muted" : "text-gray-500"
-                        }`}
-                      >
-                        Kilometer saat service:{" "}
-                        {record.mileage_at_service.toLocaleString()} km
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

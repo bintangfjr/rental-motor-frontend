@@ -8,9 +8,9 @@ interface SewaActionsProps {
   sewa: Sewa;
   onSelesai: () => void;
   onHapus: () => void;
-  onWhatsAppAction: (action: "reminder" | "alert") => void; // ✅ Perbaiki type di sini
+  onWhatsAppAction: (action: "reminder" | "alert") => void;
   isLewatTempo: boolean;
-  isProcessing?: boolean; // ✅ Tambah prop untuk loading state
+  isProcessing?: boolean;
 }
 
 const SewaActions: React.FC<SewaActionsProps> = ({
@@ -28,6 +28,18 @@ const SewaActions: React.FC<SewaActionsProps> = ({
     null
   );
 
+  // ✅ DEBUG: Lihat data sewa yang diterima
+  console.log("🔍 SewaActions Data:", {
+    sewaId: sewa.id,
+    status: sewa.status,
+    isLewatTempo,
+    shouldShowSelesai: sewa.status === "aktif" || sewa.status === "Lewat Tempo",
+  });
+
+  // ✅ PERBAIKAN: Tampilkan tombol untuk status aktif ATAU Lewat Tempo ATAU berdasarkan isLewatTempo
+  const shouldShowSelesai =
+    sewa.status === "aktif" || sewa.status === "Lewat Tempo" || isLewatTempo;
+
   const handleWhatsAppClick = async (action: "reminder" | "alert") => {
     setIsSending(true);
     setSentAction(action);
@@ -42,16 +54,10 @@ const SewaActions: React.FC<SewaActionsProps> = ({
   const handleSendMessage = () => {
     if (!sewa.penyewa?.no_whatsapp) return;
 
-    // Format nomor WhatsApp (hapus karakter selain angka)
     const phoneNumber = sewa.penyewa.no_whatsapp.replace(/\D/g, "");
-
-    // Buat pesan default
     const defaultMessage = `Halo ${sewa.penyewa.nama}, mengenai sewa motor ${sewa.motor?.merk} ${sewa.motor?.model} (${sewa.motor?.plat_nomor})`;
-
-    // Encode message untuk URL
     const encodedMessage = encodeURIComponent(defaultMessage);
 
-    // Buka WhatsApp
     window.open(
       `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
       "_blank"
@@ -59,9 +65,35 @@ const SewaActions: React.FC<SewaActionsProps> = ({
     setWhatsappDropdown(false);
   };
 
-  const canSendReminder = sewa.status === "aktif" && sewa.penyewa?.no_whatsapp;
-  const canSendAlert = isLewatTempo && sewa.status === "aktif";
+  // ✅ PERBAIKAN: Update kondisi WhatsApp
+  const canSendReminder =
+    (sewa.status === "aktif" || sewa.status === "Lewat Tempo") &&
+    sewa.penyewa?.no_whatsapp;
+  const canSendAlert =
+    (sewa.status === "Lewat Tempo" || isLewatTempo) &&
+    sewa.penyewa?.no_whatsapp;
   const canSendMessage = sewa.penyewa?.no_whatsapp;
+
+  // ✅ PERBAIKAN: Tentukan variant dan teks untuk tombol Selesai
+  const getSelesaiButtonProps = () => {
+    if (sewa.status === "Lewat Tempo" || isLewatTempo) {
+      return {
+        variant: "warning" as const,
+        text: "Selesaikan (Lewat Tempo)",
+        className:
+          "min-w-[180px] hover:scale-105 active:scale-95 transition-transform",
+      };
+    } else {
+      return {
+        variant: "success" as const,
+        text: "Selesai Sewa",
+        className:
+          "min-w-[140px] hover:scale-105 active:scale-95 transition-transform",
+      };
+    }
+  };
+
+  const selesaiButtonProps = getSelesaiButtonProps();
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -72,7 +104,7 @@ const SewaActions: React.FC<SewaActionsProps> = ({
             variant="outline"
             onClick={() => setWhatsappDropdown(!whatsappDropdown)}
             disabled={isProcessing}
-            className={`flex items-center gap-2 ${
+            className={`flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform ${
               isDark
                 ? "border-dark-border text-dark-secondary hover:bg-dark-hover"
                 : "border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -208,30 +240,37 @@ const SewaActions: React.FC<SewaActionsProps> = ({
         </div>
       )}
 
-      {/* Aksi Lainnya */}
-      {sewa.status === "aktif" && (
+      {/* ✅ PERBAIKAN: Tombol Selesai dengan styling yang konsisten */}
+      {shouldShowSelesai && (
         <Button
           onClick={onSelesai}
-          variant="success"
+          variant={selesaiButtonProps.variant}
           disabled={isProcessing}
-          isLoading={isProcessing} // ✅ Gunakan isLoading bukan loading
+          isLoading={isProcessing}
+          className={selesaiButtonProps.className}
         >
-          Selesai Sewa
+          {isProcessing ? "Memproses..." : selesaiButtonProps.text}
         </Button>
       )}
 
+      {/* Tombol Edit */}
       <Link to={`/sewas/${sewa.id}/edit`}>
-        <Button variant="outline" disabled={isProcessing}>
+        <Button
+          variant="outline"
+          disabled={isProcessing}
+          className="min-w-[80px] hover:scale-105 active:scale-95 transition-transform"
+        >
           Edit
         </Button>
       </Link>
 
+      {/* Tombol Hapus */}
       <Button
         variant="danger"
         onClick={onHapus}
         disabled={isProcessing}
-        isLoading={isProcessing} // ✅ Gunakan isLoading bukan loading
-        className="hover:scale-105 active:scale-95 transition-transform"
+        isLoading={isProcessing}
+        className="min-w-[80px] hover:scale-105 active:scale-95 transition-transform"
       >
         Hapus
       </Button>

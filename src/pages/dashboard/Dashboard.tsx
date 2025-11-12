@@ -4,21 +4,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/Card";
 import Loading from "@/components/ui/Loading";
 import api from "@/services/api";
-import { useTheme } from "@/hooks/useTheme"; // Tambahkan useTheme
+import { useTheme } from "@/hooks/useTheme";
 
 // Import komponen modular
 import StatsCard from "./StatsCard";
 import RecentActivity from "./RecentActivity";
+import { SewaHarianStats } from "@/components/dashboard/SewaHarianStats";
 
 // ==== Interfaces ==== //
-interface MotorPerluService {
-  id: number;
-  plat_nomor: string;
-  merk: string;
-  model: string;
-  status: string;
-}
-
 interface SewaTerbaru {
   id: number;
   status: string;
@@ -46,9 +39,18 @@ interface DashboardData {
   totalSewa: number;
   pendapatanBulanIni: number;
   sewaTerbaru: SewaTerbaru[];
-  motorPerluService: MotorPerluService[];
   totalAdmins: number;
   totalUsers: number;
+  statistikHarian: {
+    hari_ini: number;
+    kemarin: number;
+    persentase_perubahan: number;
+    tren_harian: Array<{
+      tanggal: string;
+      jumlah_sewa: number;
+      total_pendapatan: number;
+    }>;
+  };
 }
 
 interface ApiResponse<T> {
@@ -59,7 +61,7 @@ interface ApiResponse<T> {
 // ==== Main Component ==== //
 const Dashboard: React.FC = () => {
   const { admin } = useAuth();
-  const { isDark } = useTheme(); // Ambil theme state
+  const { isDark } = useTheme();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
@@ -152,7 +154,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Statistik Cards Grid - Compact di Mobile */}
+      {/* ✅ PERBAIKAN: Grid Statistik hanya 4 cards saja */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Motor"
@@ -184,11 +186,11 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Pendapatan & Overview */}
+      {/* ✅ PERBAIKAN: Grid Konten Utama dengan Statistik Sewa Harian */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Pendapatan Card */}
         <Card
-          className={`p-4 sm:p-6 border lg:col-span-2 ${
+          className={`p-4 sm:p-6 border ${
             isDark
               ? "bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-700/30"
               : "bg-gradient-to-br from-green-50 to-emerald-100 border-green-200"
@@ -220,8 +222,49 @@ const Dashboard: React.FC = () => {
           >
             Total pendapatan dari semua sewa aktif bulan ini
           </p>
+
+          {/* ✅ TAMBAHAN: Quick Stats Sewa Harian */}
+          {dashboardData?.statistikHarian && (
+            <div className="mt-4 pt-4 border-t border-green-700/30 dark:border-green-300/30">
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div>
+                  <p className="text-xs text-green-600 dark:text-green-400">
+                    Sewa Hari Ini
+                  </p>
+                  <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                    {dashboardData.statistikHarian.hari_ini}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-green-600 dark:text-green-400">
+                    Vs Kemarin
+                  </p>
+                  <p
+                    className={`text-sm font-bold ${
+                      dashboardData.statistikHarian.persentase_perubahan >= 0
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {dashboardData.statistikHarian.persentase_perubahan >= 0
+                      ? "+"
+                      : ""}
+                    {dashboardData.statistikHarian.persentase_perubahan}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
 
+        {/* ✅ STATISTIK HARIAN LENGKAP - Hanya di sini saja */}
+        <div className="lg:col-span-2">
+          <SewaHarianStats />
+        </div>
+      </div>
+
+      {/* Overview & Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Overview Card */}
         <Card
           className={`p-4 sm:p-6 border ${
@@ -329,13 +372,12 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </Card>
-      </div>
 
-      {/* Sewa Terbaru & Motor Perlu Service */}
-      <RecentActivity
-        sewaTerbaru={dashboardData?.sewaTerbaru || []}
-        motorPerluService={dashboardData?.motorPerluService || []}
-      />
+        {/* Recent Activity - mengambil 2 kolom */}
+        <div className="lg:col-span-2">
+          <RecentActivity sewaTerbaru={dashboardData?.sewaTerbaru || []} />
+        </div>
+      </div>
     </div>
   );
 };

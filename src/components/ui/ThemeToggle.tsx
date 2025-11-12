@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/utils";
 
@@ -16,16 +16,34 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   const { isDark, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const animationRef = useRef<number | null>(null);
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Cleanup animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
   const handleToggle = () => {
+    if (isAnimating) return; // Prevent multiple clicks during animation
+
     setIsAnimating(true);
     toggleTheme();
-    setTimeout(() => setIsAnimating(false), 600);
+
+    // Smooth animation timeout
+    const timer = setTimeout(() => {
+      setIsAnimating(false);
+    }, 600);
+
+    return () => clearTimeout(timer);
   };
 
   if (!mounted) {
@@ -48,18 +66,21 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
       toggle: "w-4 h-4",
       icon: "w-2 h-2",
       text: "text-xs",
+      togglePosition: isDark ? "left-7" : "left-0.5",
     },
     md: {
       container: "w-14 h-7",
       toggle: "w-5 h-5",
       icon: "w-3 h-3",
       text: "text-sm",
+      togglePosition: isDark ? "left-8" : "left-0.5",
     },
     lg: {
       container: "w-16 h-8",
       toggle: "w-6 h-6",
       icon: "w-4 h-4",
       text: "text-base",
+      togglePosition: isDark ? "left-9" : "left-0.5",
     },
   };
 
@@ -72,7 +93,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
           className={cn(
             "font-medium transition-colors duration-300",
             currentSize.text,
-            "text-gray-600 dark:text-gray-400"
+            "text-gray-600 dark:text-gray-300"
           )}
         >
           {isDark ? "Dark" : "Light"}
@@ -81,57 +102,87 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
 
       <button
         onClick={handleToggle}
+        disabled={isAnimating}
         className={cn(
-          "relative rounded-full transition-all duration-500 ease-in-out",
-          "border-2 focus:outline-none focus:ring-2 focus:ring-offset-2",
-          "transform-gpu will-change-transform",
-          isAnimating ? "scale-110" : "scale-100",
+          "relative rounded-full transition-all duration-500 ease-out",
+          "border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50",
+          "transform-gpu will-change-transform overflow-hidden",
+          "hover:scale-105 active:scale-95",
+          isAnimating ? "scale-105" : "scale-100",
           currentSize.container,
           isDark
-            ? "bg-gradient-to-r from-purple-600 to-blue-600 border-purple-500 focus:ring-purple-500"
-            : "bg-gradient-to-r from-amber-400 to-orange-400 border-amber-300 focus:ring-amber-500"
+            ? "bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 border-purple-500/50 focus:ring-purple-400"
+            : "bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-500 border-amber-300/50 focus:ring-amber-400",
+          "disabled:opacity-70 disabled:cursor-not-allowed"
         )}
         aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+        aria-busy={isAnimating}
       >
-        {/* Background Animation */}
+        {/* Animated Background Overlay */}
         <div
           className={cn(
-            "absolute inset-0 rounded-full transition-opacity duration-500",
-            "bg-gradient-to-r from-blue-400 to-purple-600",
+            "absolute inset-0 rounded-full transition-opacity duration-700 ease-in-out",
+            "bg-gradient-to-r from-blue-500/20 to-purple-600/20",
             isDark ? "opacity-100" : "opacity-0"
           )}
         />
 
         <div
           className={cn(
-            "absolute inset-0 rounded-full transition-opacity duration-500",
-            "bg-gradient-to-r from-amber-300 to-orange-400",
+            "absolute inset-0 rounded-full transition-opacity duration-700 ease-in-out",
+            "bg-gradient-to-r from-amber-300/20 to-orange-400/20",
             isDark ? "opacity-0" : "opacity-100"
           )}
         />
 
-        {/* Toggle Handle */}
+        {/* Animated Sun/Moon Rays */}
         <div
           className={cn(
-            "absolute top-1/2 transform -translate-y-1/2 transition-all duration-500 ease-in-out",
-            "bg-white rounded-full shadow-lg flex items-center justify-center",
-            "border border-gray-200",
-            currentSize.toggle,
-            isDark
-              ? "left-[calc(100%-theme(spacing.5))] translate-x-[-90%]"
-              : "left-0.5 translate-x-0",
-            size === "sm" && (isDark ? "left-7" : "left-0.5"),
-            size === "md" && (isDark ? "left-8" : "left-0.5"),
-            size === "lg" && (isDark ? "left-9" : "left-0.5")
+            "absolute inset-0 transition-opacity duration-500",
+            isDark ? "opacity-0" : "opacity-100"
           )}
         >
-          {/* Sun Icon */}
+          {/* Sun rays */}
+          <div className="absolute inset-0 animate-spin-slow">
+            <div className="w-full h-full relative">
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-0.5 h-1 bg-yellow-300/40 rounded-full"
+                  style={{
+                    top: "50%",
+                    left: "50%",
+                    transform: `translate(-50%, -50%) rotate(${
+                      i * 45
+                    }deg) translateY(-8px)`,
+                    transformOrigin: "center",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Toggle Handle dengan transform yang lebih smooth */}
+        <div
+          className={cn(
+            "absolute top-1/2 transform -translate-y-1/2 transition-all duration-500 ease-out",
+            "bg-white rounded-full shadow-lg flex items-center justify-center",
+            "border border-gray-200/80 backdrop-blur-sm",
+            "will-change-transform",
+            currentSize.toggle,
+            currentSize.togglePosition,
+            isAnimating && "scale-110"
+          )}
+        >
+          {/* Sun Icon dengan animasi yang smooth */}
           <svg
             className={cn(
-              "absolute transition-all duration-500 text-amber-500",
+              "absolute transition-all duration-500 ease-out",
+              "text-amber-500",
               currentSize.icon,
               isDark
-                ? "opacity-0 scale-0 rotate-90"
+                ? "opacity-0 scale-50 rotate-90"
                 : "opacity-100 scale-100 rotate-0"
             )}
             fill="currentColor"
@@ -144,14 +195,15 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
             />
           </svg>
 
-          {/* Moon Icon */}
+          {/* Moon Icon dengan animasi yang smooth */}
           <svg
             className={cn(
-              "absolute transition-all duration-500 text-blue-600",
+              "absolute transition-all duration-500 ease-out",
+              "text-indigo-600",
               currentSize.icon,
               isDark
                 ? "opacity-100 scale-100 rotate-0"
-                : "opacity-0 scale-0 -rotate-90"
+                : "opacity-0 scale-50 -rotate-90"
             )}
             fill="currentColor"
             viewBox="0 0 20 20"
@@ -159,49 +211,75 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
           </svg>
 
-          {/* Sparkle Effects */}
+          {/* Pulse Animation hanya saat animating */}
           {isAnimating && (
-            <>
-              <div
-                className={cn(
-                  "absolute rounded-full bg-yellow-300 animate-ping",
-                  currentSize.icon
-                )}
-                style={{ animationDuration: "1s" }}
-              />
-              <div
-                className={cn(
-                  "absolute rounded-full bg-white animate-pulse",
-                  currentSize.icon
-                )}
-                style={{ animationDuration: "2s" }}
-              />
-            </>
+            <div
+              className={cn(
+                "absolute rounded-full bg-yellow-300/30 animate-ping",
+                currentSize.toggle
+              )}
+              style={{ animationDuration: "800ms" }}
+            />
           )}
         </div>
 
-        {/* Stars for Dark Mode */}
+        {/* Floating Stars untuk Dark Mode */}
         {isDark && (
           <>
             <div
               className={cn(
-                "absolute bg-white rounded-full animate-twinkle",
-                size === "sm" && "w-0.5 h-0.5 top-1 left-3",
-                size === "md" && "w-1 h-1 top-1 left-4",
-                size === "lg" && "w-1 h-1 top-2 left-5"
+                "absolute bg-white rounded-full animate-float",
+                size === "sm" && "w-0.5 h-0.5",
+                size === "md" && "w-1 h-1",
+                size === "lg" && "w-1.5 h-1.5"
               )}
-              style={{ animationDelay: "0.2s" }}
+              style={{
+                top: "20%",
+                left: "30%",
+                animationDelay: "0.1s",
+                animationDuration: "3s",
+              }}
             />
             <div
               className={cn(
-                "absolute bg-white rounded-full animate-twinkle",
-                size === "sm" && "w-0.5 h-0.5 top-3 left-2",
-                size === "md" && "w-1 h-1 top-4 left-3",
-                size === "lg" && "w-1 h-1 top-5 left-4"
+                "absolute bg-white rounded-full animate-float",
+                size === "sm" && "w-0.5 h-0.5",
+                size === "md" && "w-1 h-1",
+                size === "lg" && "w-1.5 h-1.5"
               )}
-              style={{ animationDelay: "0.5s" }}
+              style={{
+                top: "60%",
+                left: "20%",
+                animationDelay: "0.7s",
+                animationDuration: "2.5s",
+              }}
+            />
+            <div
+              className={cn(
+                "absolute bg-white rounded-full animate-float",
+                size === "sm" && "w-0.5 h-0.5",
+                size === "md" && "w-1 h-1",
+                size === "lg" && "w-1.5 h-1.5"
+              )}
+              style={{
+                top: "40%",
+                left: "70%",
+                animationDelay: "1.3s",
+                animationDuration: "3.2s",
+              }}
             />
           </>
+        )}
+
+        {/* Cloud-like effect untuk Light Mode */}
+        {!isDark && (
+          <div
+            className={cn(
+              "absolute inset-0 transition-opacity duration-700",
+              "bg-gradient-to-b from-white/10 to-transparent",
+              "rounded-full"
+            )}
+          />
         )}
       </button>
     </div>

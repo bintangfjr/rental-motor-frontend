@@ -45,14 +45,16 @@ const SettingsIcon: React.FC<{ className?: string }> = ({ className = "" }) => (
   </svg>
 );
 
-// Action Menu Component dengan layout grid 2x2
+// Action Menu Component
 const ActionMenu: React.FC<{
   sewa: Sewa;
   onDetail: (sewa: Sewa) => void;
   onSelesai: (sewa: Sewa) => void;
+  onEdit: (sewa: Sewa) => void;
+  onHapus: (sewa: Sewa) => void;
   isOpen: boolean;
   onClose: () => void;
-}> = ({ sewa, onDetail, onSelesai, isOpen, onClose }) => {
+}> = ({ sewa, onDetail, onSelesai, onEdit, onHapus, isOpen, onClose }) => {
   const { isDark } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +76,22 @@ const ActionMenu: React.FC<{
 
   if (!isOpen) return null;
 
+  // ✅ PERBAIKAN: Gunakan service helper untuk menentukan aksi
+  const isLewatTempo = sewaService.isSewaOverdue(sewa);
+  const canExtend =
+    sewaService.canExtendSewa && sewaService.canExtendSewa(sewa);
+  const canComplete = sewaService.canCompleteSewa(sewa);
+  const statusInfo = sewaService.getStatusDisplay(sewa);
+
+  console.log("🔍 ActionMenu DEBUG:", {
+    sewaId: sewa.id,
+    status: sewa.status,
+    isLewatTempo,
+    canExtend,
+    canComplete,
+    statusInfo,
+  });
+
   return (
     <div
       ref={menuRef}
@@ -81,21 +99,19 @@ const ActionMenu: React.FC<{
       style={{ top: "100%", marginTop: "8px" }}
     >
       <div
-        className={`rm-card border shadow-xl p-2 min-w-[200px] ${
-          isDark
-            ? "bg-dark-card border-dark-border"
-            : "bg-white border-gray-200"
+        className={`border shadow-xl p-2 min-w-[160px] rounded-lg ${
+          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
         }`}
       >
-        {/* Grid 2x2 untuk action buttons */}
+        {/* Grid untuk action buttons */}
         <div className="grid grid-cols-2 gap-2">
-          {/* Detail - Kiri Bawah */}
+          {/* Detail */}
           <button
             onClick={() => onDetail(sewa)}
             className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
               isDark
-                ? "text-dark-secondary hover:bg-dark-hover border-dark-border"
-                : "text-gray-700 hover:bg-gray-50 border-gray-100"
+                ? "text-gray-300 hover:bg-gray-700 border-gray-600"
+                : "text-gray-700 hover:bg-gray-100 border-gray-300"
             }`}
           >
             <svg
@@ -120,14 +136,43 @@ const ActionMenu: React.FC<{
             <span className="text-xs font-medium">Detail</span>
           </button>
 
-          {/* Selesai - Kanan Bawah */}
-          {sewa.status === "aktif" && (
+          {/* Edit */}
+          <button
+            onClick={() => onEdit(sewa)}
+            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+              isDark
+                ? "text-blue-400 hover:bg-blue-900/20 border-blue-900/30"
+                : "text-blue-600 hover:bg-blue-50 border-blue-200"
+            }`}
+          >
+            <svg
+              className="w-5 h-5 mb-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            <span className="text-xs font-medium">Edit</span>
+          </button>
+
+          {/* Selesai - hanya untuk sewa yang bisa diselesaikan */}
+          {canComplete && (
             <button
               onClick={() => onSelesai(sewa)}
               className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
-                isDark
+                isLewatTempo
+                  ? isDark
+                    ? "text-red-400 hover:bg-red-900/20 border-red-900/30"
+                    : "text-red-600 hover:bg-red-50 border-red-200"
+                  : isDark
                   ? "text-green-400 hover:bg-green-900/20 border-green-900/30"
-                  : "text-green-600 hover:bg-green-50 border-green-100"
+                  : "text-green-600 hover:bg-green-50 border-green-200"
               }`}
             >
               <svg
@@ -143,36 +188,55 @@ const ActionMenu: React.FC<{
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="text-xs font-medium">Selesai</span>
+              <span className="text-xs font-medium">
+                {isLewatTempo ? "Selesaikan" : "Selesai"}
+              </span>
             </button>
           )}
 
-          {/* Placeholder untuk sewa yang sudah selesai/dibatalkan */}
-          {sewa.status !== "aktif" && (
-            <div
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border opacity-50 ${
-                isDark
-                  ? "text-dark-muted border-dark-border"
-                  : "text-gray-400 border-gray-100"
-              }`}
+          {/* Hapus */}
+          <button
+            onClick={() => onHapus(sewa)}
+            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+              isDark
+                ? "text-red-400 hover:bg-red-900/20 border-red-900/30"
+                : "text-red-600 hover:bg-red-50 border-red-200"
+            }`}
+          >
+            <svg
+              className="w-5 h-5 mb-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg
-                className="w-5 h-5 mb-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="text-xs">Selesai</span>
-            </div>
-          )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            <span className="text-xs font-medium">Hapus</span>
+          </button>
         </div>
+
+        {/* Info tambahan untuk sewa overdue */}
+        {isLewatTempo && (
+          <div
+            className={`mt-2 p-2 rounded border text-center ${
+              isDark
+                ? "border-red-400 bg-red-900/20 text-red-300"
+                : "border-red-300 bg-red-50 text-red-600"
+            }`}
+          >
+            <div className="text-xs font-medium">
+              Terlambat: {sewaService.calculateOverdueHours(sewa)} jam
+            </div>
+            <div className="text-xs">
+              Denda: {formatCurrency(sewaService.calculateEstimatedDenda(sewa))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -195,15 +259,30 @@ const SewaList: React.FC = () => {
 
   // Modal states
   const [showSelesaiModal, setShowSelesaiModal] = useState(false);
+  const [showHapusModal, setShowHapusModal] = useState(false);
   const [selectedSewa, setSelectedSewa] = useState<Sewa | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // State untuk real-time countdown
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const loadSewas = async () => {
     setIsLoading(true);
     try {
+      // ✅ PERBAIKAN: Ambil semua sewa (aktif + lewat tempo + selesai)
       const data = await sewaService.getAll();
       setSewas(data);
       setError(null);
+
+      console.log("🔍 SewaList Loaded:", {
+        total: data.length,
+        byStatus: data.reduce((acc: any, sewa) => {
+          acc[sewa.status] = (acc[sewa.status] || 0) + 1;
+          return acc;
+        }, {}),
+        overdueCount: data.filter((sewa) => sewaService.isSewaOverdue(sewa))
+          .length,
+      });
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Gagal memuat data sewa";
@@ -218,22 +297,43 @@ const SewaList: React.FC = () => {
     loadSewas();
   }, []);
 
+  // Real-time timer untuk countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update setiap 1 menit
+
+    return () => clearInterval(timer);
+  }, []);
+
   const handleSelesai = async () => {
     if (!selectedSewa) return;
 
     setActionLoading(true);
     try {
-      await sewaService.selesai(selectedSewa.id, {
-        tgl_selesai: new Date().toISOString(),
+      // ✅ FORMAT TANGGAL YANG BENAR
+      const sekarang = new Date();
+      const tglSelesai = sekarang.toISOString().slice(0, 16);
+
+      console.log("🕐 Menyelesaikan sewa:", {
+        sewaId: selectedSewa.id,
+        status: selectedSewa.status,
+        isOverdue: sewaService.isSewaOverdue(selectedSewa),
+        tglSelesai,
+      });
+
+      const result = await sewaService.selesai(selectedSewa.id, {
+        tgl_selesai: tglSelesai,
         catatan: "Selesai dari daftar sewa",
       });
+
       setToast({
-        message: "Sewa berhasil diselesaikan",
+        message: result.message || "Sewa berhasil diselesaikan",
         type: "success",
       });
       setShowSelesaiModal(false);
       setSelectedSewa(null);
-      await loadSewas(); // Reload data untuk update status
+      await loadSewas();
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Gagal menyelesaikan sewa";
@@ -247,74 +347,97 @@ const SewaList: React.FC = () => {
     }
   };
 
-  // Helper function untuk menghitung sisa waktu
-  const calculateRemainingTime = (tglKembali: string | Date): string => {
-    try {
-      const end =
-        tglKembali instanceof Date ? tglKembali : new Date(tglKembali);
-      const now = new Date();
+  const handleHapus = async () => {
+    if (!selectedSewa) return;
 
-      if (isNaN(end.getTime())) return "-";
+    setActionLoading(true);
+    try {
+      await sewaService.delete(selectedSewa.id);
+
+      setToast({
+        message: "Sewa berhasil dihapus",
+        type: "success",
+      });
+      setShowHapusModal(false);
+      setSelectedSewa(null);
+      await loadSewas();
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Gagal menghapus sewa";
+      setToast({
+        message: errorMessage,
+        type: "error",
+      });
+      console.error("Error deleting sewa:", err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ✅ PERBAIKAN: Helper function untuk menghitung sisa waktu yang real-time
+  const calculateRemainingTime = (
+    tglKembali: string | Date
+  ): {
+    text: string;
+    isOverdue: boolean;
+    hours: number;
+    minutes: number;
+  } => {
+    try {
+      const end = new Date(tglKembali);
+      const now = currentTime; // Gunakan currentTime state untuk real-time update
+
+      if (isNaN(end.getTime())) {
+        return { text: "-", isOverdue: false, hours: 0, minutes: 0 };
+      }
 
       const sisaWaktuMs = end.getTime() - now.getTime();
 
       // Jika sudah lewat tempo
       if (sisaWaktuMs <= 0) {
         const overdueMs = Math.abs(sisaWaktuMs);
-        const daysOverdue = Math.floor(overdueMs / (1000 * 60 * 60 * 24));
-        const hoursOverdue = Math.floor(
-          (overdueMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        const hoursOverdue = Math.floor(overdueMs / (1000 * 60 * 60));
+        const minutesOverdue = Math.floor(
+          (overdueMs % (1000 * 60 * 60)) / (1000 * 60)
         );
 
-        if (daysOverdue > 0) {
-          return `+${daysOverdue}h ${hoursOverdue}j`;
-        }
-        return `+${hoursOverdue}j`;
+        return {
+          text: `+${hoursOverdue}j ${minutesOverdue}m`,
+          isOverdue: true,
+          hours: hoursOverdue,
+          minutes: minutesOverdue,
+        };
       }
 
       // Hitung sisa waktu
-      const days = Math.floor(sisaWaktuMs / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (sisaWaktuMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
+      const hours = Math.floor(sisaWaktuMs / (1000 * 60 * 60));
       const minutes = Math.floor(
         (sisaWaktuMs % (1000 * 60 * 60)) / (1000 * 60)
       );
 
-      if (days > 0) {
-        return `${days}h ${hours}j`;
-      } else if (hours > 0) {
-        return `${hours}j ${minutes}m`;
+      let text = "";
+      if (hours > 0) {
+        text = `${hours}j ${minutes}m`;
       } else {
-        return `${minutes}m`;
+        text = `${minutes}m`;
       }
+
+      return {
+        text,
+        isOverdue: false,
+        hours,
+        minutes,
+      };
     } catch (error) {
       console.error("Error calculating remaining time:", error);
-      return "-";
+      return { text: "-", isOverdue: false, hours: 0, minutes: 0 };
     }
   };
 
-  // Helper function untuk mendapatkan status badge
-  const getStatusBadge = (status: string, tglKembali: string | Date) => {
-    if (status === "selesai") {
-      return <Badge variant="success">Selesai</Badge>;
-    }
-    if (status === "dibatalkan") {
-      return <Badge variant="secondary">Dibatalkan</Badge>;
-    }
-
-    // Untuk status aktif, cek apakah lewat tempo
-    try {
-      const end =
-        tglKembali instanceof Date ? tglKembali : new Date(tglKembali);
-      const now = new Date();
-      if (end < now) {
-        return <Badge variant="danger">Lewat Tempo</Badge>;
-      }
-      return <Badge variant="warning">Aktif</Badge>;
-    } catch {
-      return <Badge variant="warning">Aktif</Badge>;
-    }
+  // ✅ PERBAIKAN: Helper function untuk mendapatkan status badge
+  const getStatusBadge = (sewa: Sewa) => {
+    const statusInfo = sewaService.getStatusDisplay(sewa);
+    return <Badge variant={statusInfo.variant}>{statusInfo.status}</Badge>;
   };
 
   // Helper function untuk format date yang aman
@@ -323,14 +446,19 @@ const SewaList: React.FC = () => {
   ): string => {
     if (!dateValue) return "-";
     try {
-      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      const date = new Date(dateValue);
       return isNaN(date.getTime()) ? "-" : formatDate(date);
     } catch {
       return "-";
     }
   };
 
-  // ✅ FIXED: Handle row click dengan parameter yang benar
+  // ✅ PERBAIKAN: Helper untuk mengecek apakah sewa aktif
+  const isSewaAktif = (sewa: Sewa): boolean => {
+    return sewa.status === "aktif" || sewa.status === "Lewat Tempo";
+  };
+
+  // Event handlers
   const handleRowClick = (sewa: Sewa) => {
     navigate(`/sewas/${sewa.id}`);
   };
@@ -340,9 +468,20 @@ const SewaList: React.FC = () => {
     setOpenMenuId(null);
   };
 
+  const handleEdit = (sewa: Sewa) => {
+    navigate(`/sewas/${sewa.id}/edit`);
+    setOpenMenuId(null);
+  };
+
   const handleSelesaiClick = (sewa: Sewa) => {
     setSelectedSewa(sewa);
     setShowSelesaiModal(true);
+    setOpenMenuId(null);
+  };
+
+  const handleHapusClick = (sewa: Sewa) => {
+    setSelectedSewa(sewa);
+    setShowHapusModal(true);
     setOpenMenuId(null);
   };
 
@@ -362,10 +501,13 @@ const SewaList: React.FC = () => {
         .includes(searchQuery.toLowerCase()) ||
       (sewa.penyewa?.nama || "")
         .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (sewa.penyewa?.no_whatsapp || "")
+        .toLowerCase()
         .includes(searchQuery.toLowerCase())
   );
 
-  // ✅ FIXED: Columns yang lebih sederhana dan aman
+  // ✅ PERBAIKAN: Columns yang menampilkan semua sewa dengan status yang benar
   const columns: Column<Sewa>[] = [
     {
       key: "motor",
@@ -375,9 +517,12 @@ const SewaList: React.FC = () => {
           className="cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleRowClick(row)}
         >
-          {row.motor
-            ? `${row.motor.merk} ${row.motor.model} (${row.motor.plat_nomor})`
-            : "-"}
+          <div className="font-medium text-sm">
+            {row.motor?.plat_nomor || "-"}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {row.motor ? `${row.motor.merk} ${row.motor.model}` : "-"}
+          </div>
         </div>
       ),
       sortable: true,
@@ -390,20 +535,36 @@ const SewaList: React.FC = () => {
           className="cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleRowClick(row)}
         >
-          {row.penyewa?.nama ?? "-"}
+          <div className="font-medium text-sm">{row.penyewa?.nama || "-"}</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {row.penyewa?.no_whatsapp || "-"}
+          </div>
         </div>
       ),
       sortable: true,
     },
     {
       key: "tgl_sewa",
-      header: "Tanggal Sewa",
+      header: "Tgl Sewa",
       render: (_, row) => (
         <div
           className="cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleRowClick(row)}
         >
-          {safeFormatDate(row.tgl_sewa)}
+          <div className="text-sm">{safeFormatDate(row.tgl_sewa)}</div>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      key: "tgl_kembali",
+      header: "Tgl Kembali",
+      render: (_, row) => (
+        <div
+          className="cursor-pointer hover:text-blue-600 transition-colors"
+          onClick={() => handleRowClick(row)}
+        >
+          <div className="text-sm">{safeFormatDate(row.tgl_kembali)}</div>
         </div>
       ),
       sortable: true,
@@ -412,30 +573,47 @@ const SewaList: React.FC = () => {
       key: "sisa_waktu",
       header: "Sisa Waktu",
       render: (_, row) => {
-        if (row.status !== "aktif" || !row.tgl_kembali) {
-          return "-";
+        // ✅ PERBAIKAN: Hanya tampilkan untuk sewa aktif atau lewat tempo
+        const isAktif = isSewaAktif(row);
+
+        if (!isAktif || !row.tgl_kembali) {
+          return <div className="text-sm text-gray-500">-</div>;
         }
+
+        const { text, isOverdue } = calculateRemainingTime(row.tgl_kembali);
+
         return (
           <div
             className="cursor-pointer hover:text-blue-600 transition-colors"
             onClick={() => handleRowClick(row)}
           >
-            {calculateRemainingTime(row.tgl_kembali)}
+            <div
+              className={`text-sm font-medium ${
+                isOverdue ? "text-red-600" : "text-green-600"
+              }`}
+            >
+              {text}
+            </div>
+            {isOverdue && (
+              <div className="text-xs text-red-500 mt-1">Terlambat</div>
+            )}
           </div>
         );
       },
     },
     {
       key: "total_harga",
-      header: "Total Harga",
+      header: "Total",
       render: (_, row) => (
         <div
           className="cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleRowClick(row)}
         >
-          {typeof row.total_harga === "number"
-            ? formatCurrency(row.total_harga)
-            : "-"}
+          <div className="text-sm font-medium">
+            {typeof row.total_harga === "number"
+              ? formatCurrency(row.total_harga)
+              : "-"}
+          </div>
         </div>
       ),
       sortable: true,
@@ -444,10 +622,9 @@ const SewaList: React.FC = () => {
       key: "status",
       header: "Status",
       render: (_, row) => {
-        if (!row.status || !row.tgl_kembali) return "-";
         return (
           <div className="cursor-pointer" onClick={() => handleRowClick(row)}>
-            {getStatusBadge(row.status, row.tgl_kembali)}
+            {getStatusBadge(row)}
           </div>
         );
       },
@@ -466,9 +643,9 @@ const SewaList: React.FC = () => {
               e.stopPropagation();
               setOpenMenuId(openMenuId === row.id ? null : row.id);
             }}
-            className={`p-2 transition-colors rounded-lg hover:scale-105 ${
+            className={`p-2 transition-all duration-200 rounded-lg hover:scale-105 ${
               isDark
-                ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-hover"
+                ? "text-gray-400 hover:text-gray-300 hover:bg-gray-700"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             }`}
             title="Pengaturan"
@@ -480,6 +657,8 @@ const SewaList: React.FC = () => {
             sewa={row}
             onDetail={handleDetail}
             onSelesai={handleSelesaiClick}
+            onEdit={handleEdit}
+            onHapus={handleHapusClick}
             isOpen={openMenuId === row.id}
             onClose={() => setOpenMenuId(null)}
           />
@@ -492,7 +671,7 @@ const SewaList: React.FC = () => {
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-8 px-4">
         <p className={`${isDark ? "text-red-400" : "text-red-600"}`}>{error}</p>
         <Button onClick={loadSewas} className="mt-4">
           Coba Lagi
@@ -502,30 +681,38 @@ const SewaList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1
             className={`text-2xl font-bold ${
-              isDark ? "text-dark-primary" : "text-gray-900"
+              isDark ? "text-white" : "text-gray-900"
             }`}
           >
-            Daftar Sewa Aktif
+            Daftar Sewa
           </h1>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
-            Total {filteredSewas.length} sewa aktif
+          <p className={`mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            Total {filteredSewas.length} sewa
+            {sewas.length > 0 && (
+              <span className="text-sm">
+                {" "}
+                ({sewas.filter((s) => sewaService.isSewaOverdue(s)).length}{" "}
+                lewat tempo)
+              </span>
+            )}
           </p>
         </div>
         <Link to="/sewas/create">
-          <Button>+ Tambah Sewa</Button>
+          <Button className="w-full sm:w-auto">+ Tambah Sewa</Button>
         </Link>
       </div>
 
-      <Card>
+      {/* Data Table */}
+      <Card className={isDark ? "bg-gray-800" : ""}>
         {sewas.length === 0 ? (
           <EmptyState
-            title="Belum ada sewa aktif"
+            title="Belum ada sewa"
             description="Tambahkan sewa pertama Anda untuk mulai mengelola rental."
             action={{
               label: "Tambah Sewa",
@@ -537,7 +724,7 @@ const SewaList: React.FC = () => {
             columns={columns}
             data={filteredSewas}
             search={{
-              placeholder: "Cari motor, penyewa...",
+              placeholder: "Cari plat motor, merk, nama penyewa...",
               onSearch: setSearchQuery,
             }}
             pagination={{
@@ -550,52 +737,28 @@ const SewaList: React.FC = () => {
               },
             }}
             onRowClick={handleRowClick}
-            rowClassName={`cursor-pointer transition-all duration-200 ${
-              isDark ? "hover:bg-dark-hover/50" : "hover:bg-gray-50"
+            rowClassName={`cursor-pointer transition-colors ${
+              isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"
             }`}
           />
         )}
       </Card>
 
-      {/* Selesai Confirmation Modal */}
+      {/* ✅ MODAL SELESAI SEWA */}
       <Modal
         isOpen={showSelesaiModal}
         onClose={() => setShowSelesaiModal(false)}
-        title="Konfirmasi Selesai Sewa"
-        size="sm"
+        title="Selesaikan Sewa"
       >
         <ModalBody>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
-            Apakah Anda yakin ingin menyelesaikan sewa{" "}
-            <span
-              className={`font-semibold ${
-                isDark ? "text-dark-primary" : "text-gray-900"
-              }`}
-            >
-              {selectedSewa?.motor?.plat_nomor} - {selectedSewa?.motor?.merk}
-            </span>{" "}
-            oleh{" "}
-            <span
-              className={`font-semibold ${
-                isDark ? "text-dark-primary" : "text-gray-900"
-              }`}
-            >
-              {selectedSewa?.penyewa?.nama}
-            </span>
-            ?
+          <p className={isDark ? "text-gray-300" : "text-gray-600"}>
+            Apakah Anda yakin ingin menyelesaikan sewa ini?
+            {selectedSewa && sewaService.isSewaOverdue(selectedSewa) && (
+              <span className="block mt-2 text-red-500 font-medium">
+                Sewa ini terlambat! Akan dikenakan denda.
+              </span>
+            )}
           </p>
-          {selectedSewa && (
-            <div
-              className={`mt-3 p-3 rounded-lg text-sm ${
-                isDark
-                  ? "bg-dark-secondary/30 text-dark-muted"
-                  : "bg-blue-50 text-blue-700"
-              }`}
-            >
-              <p className="font-medium">Sewa akan ditandai sebagai selesai.</p>
-              <p className="mt-1">Motor akan kembali tersedia untuk disewa.</p>
-            </div>
-          )}
         </ModalBody>
         <ModalFooter>
           <Button
@@ -606,11 +769,47 @@ const SewaList: React.FC = () => {
             Batal
           </Button>
           <Button
-            variant="success"
             onClick={handleSelesai}
-            isLoading={actionLoading}
+            loading={actionLoading}
+            variant={
+              selectedSewa && sewaService.isSewaOverdue(selectedSewa)
+                ? "danger" // ✅ PERBAIKAN: ganti "destructive" dengan "danger"
+                : "primary"
+            }
           >
-            Ya, Selesaikan
+            {selectedSewa && sewaService.isSewaOverdue(selectedSewa)
+              ? "Selesaikan & Hitung Denda"
+              : "Ya, Selesaikan"}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* ✅ MODAL HAPUS SEWA */}
+      <Modal
+        isOpen={showHapusModal}
+        onClose={() => setShowHapusModal(false)}
+        title="Hapus Sewa"
+      >
+        <ModalBody>
+          <p className={isDark ? "text-gray-300" : "text-gray-600"}>
+            Apakah Anda yakin ingin menghapus sewa ini? Tindakan ini tidak dapat
+            dibatalkan.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="outline"
+            onClick={() => setShowHapusModal(false)}
+            disabled={actionLoading}
+          >
+            Batal
+          </Button>
+          <Button
+            onClick={handleHapus}
+            loading={actionLoading}
+            variant="danger" // ✅ PERBAIKAN: ganti "destructive" dengan "danger"
+          >
+            Ya, Hapus
           </Button>
         </ModalFooter>
       </Modal>

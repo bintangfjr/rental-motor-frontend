@@ -162,83 +162,56 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Desktop navigation items */}
-        <div className="hidden lg:flex items-center space-x-4 2xl:space-x-6">
-          {/* Status indicator untuk layar besar */}
-          {(screenSize === "xl" || screenSize === "2xl") && (
-            <div
-              className={cn(
-                "flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-colors duration-300",
-                isDark
-                  ? "bg-green-900 bg-opacity-20 border-green-800"
-                  : "bg-green-50 border-green-200"
-              )}
-              style={{ contain: "layout" }}
-            >
-              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-              <span
-                className={cn(
-                  "text-sm font-medium whitespace-nowrap transition-colors duration-300",
-                  isDark ? "text-green-300" : "text-green-700"
-                )}
-              >
-                System Online
-              </span>
-            </div>
-          )}
+        {/* Right section - Theme toggle dan User profile */}
+        <div className="flex items-center space-x-3 lg:space-x-4">
+          {/* Theme Toggle */}
+          <ThemeToggle
+            size={screenSize === "2xl" ? "lg" : "md"}
+            showLabel={false}
+          />
 
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              className={cn(
-                "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                screenSize === "2xl" && "p-2.5",
-                isDark
-                  ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-accent focus:ring-offset-dark-secondary"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              )}
-              aria-label="Notifications"
-            >
-              <svg
-                className={getIconSize()}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-            </button>
-            {/* Notification badge */}
-            <span
-              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 font-medium transition-colors duration-300"
-              style={{
-                contain: "layout",
-                borderColor: isDark ? "#1e293b" : "#ffffff", // dark-secondary atau white
-              }}
-            >
-              3
-            </span>
-          </div>
-
-          {/* User profile */}
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-3">
+          {/* Desktop Profile Section */}
+          <div className="hidden lg:flex items-center space-x-3">
+            {/* Status indicator untuk layar besar */}
+            {(screenSize === "xl" || screenSize === "2xl") && (
               <div
                 className={cn(
-                  "bg-blue-500 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0 transition-colors duration-300",
-                  screenSize === "2xl"
-                    ? "w-10 h-10 text-base"
-                    : "w-8 h-8 text-sm"
+                  "flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-colors duration-300",
+                  isDark
+                    ? "bg-green-900 bg-opacity-20 border-green-800"
+                    : "bg-green-50 border-green-200"
                 )}
                 style={{ contain: "layout" }}
               >
-                A
+                <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                <span
+                  className={cn(
+                    "text-sm font-medium whitespace-nowrap transition-colors duration-300",
+                    isDark ? "text-green-300" : "text-green-700"
+                  )}
+                >
+                  System Online
+                </span>
               </div>
+            )}
+
+            {/* User Profile - tanpa dropdown */}
+            <div className="flex items-center space-x-3">
+              {/* Avatar dengan gradient */}
+              <div
+                className={cn(
+                  "rounded-full flex items-center justify-center text-white font-medium flex-shrink-0 transition-all duration-300 shadow-lg",
+                  screenSize === "2xl"
+                    ? "w-10 h-10 text-base"
+                    : "w-8 h-8 text-sm",
+                  "bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transform hover:scale-105"
+                )}
+                style={{ contain: "layout" }}
+              >
+                <span className="font-semibold">A</span>
+              </div>
+
+              {/* User info - hanya untuk layar besar */}
               {(screenSize === "xl" || screenSize === "2xl") && (
                 <div
                   className="flex flex-col items-start min-w-0"
@@ -246,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <span
                     className={cn(
-                      "text-sm font-medium truncate max-w-[120px] transition-colors duration-300",
+                      "text-sm font-semibold truncate max-w-[120px] transition-colors duration-300",
                       isDark ? "text-dark-primary" : "text-gray-900"
                     )}
                   >
@@ -264,133 +237,78 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* Dropdown arrow untuk layar besar */}
-            {(screenSize === "xl" || screenSize === "2xl") && (
-              <svg
+            {/* Quick actions untuk layar sangat besar */}
+            {screenSize === "2xl" && (
+              <div
                 className={cn(
-                  "w-4 h-4 flex-shrink-0 transition-colors duration-300",
-                  isDark ? "text-dark-muted" : "text-gray-400"
+                  "flex items-center space-x-2 border-l pl-4 ml-2 transition-colors duration-300",
+                  isDark ? "border-dark-border" : "border-gray-200"
                 )}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                style={{ contain: "layout" }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+                <button
+                  className={cn(
+                    "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                    isDark
+                      ? "text-dark-secondary hover:text-blue-400 hover:bg-blue-900 hover:bg-opacity-20 focus:ring-offset-dark-secondary"
+                      : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                  )}
+                  aria-label="Add new rental"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                </button>
+                <button
+                  className={cn(
+                    "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
+                    isDark
+                      ? "text-dark-secondary hover:text-green-400 hover:bg-green-900 hover:bg-opacity-20 focus:ring-offset-dark-secondary"
+                      : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                  )}
+                  aria-label="Export report"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Quick actions untuk layar sangat besar */}
-          {screenSize === "2xl" && (
+          {/* Mobile Profile Section - tanpa dropdown */}
+          <div className="flex lg:hidden items-center">
+            {/* User avatar untuk mobile */}
             <div
               className={cn(
-                "flex items-center space-x-2 border-l pl-4 ml-2 transition-colors duration-300",
-                isDark ? "border-dark-border" : "border-gray-200"
+                "rounded-full flex items-center justify-center text-white font-medium flex-shrink-0 transition-all duration-300 shadow-md",
+                "w-8 h-8 text-sm",
+                "bg-gradient-to-br from-blue-500 to-purple-600"
               )}
               style={{ contain: "layout" }}
             >
-              <button
-                className={cn(
-                  "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                  isDark
-                    ? "text-dark-secondary hover:text-blue-400 hover:bg-blue-900 hover:bg-opacity-20 focus:ring-offset-dark-secondary"
-                    : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-                )}
-                aria-label="Add new"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-              </button>
-              <button
-                className={cn(
-                  "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
-                  isDark
-                    ? "text-dark-secondary hover:text-green-400 hover:bg-green-900 hover:bg-opacity-20 focus:ring-offset-dark-secondary"
-                    : "text-gray-600 hover:text-green-600 hover:bg-green-50"
-                )}
-                aria-label="Export"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-              </button>
+              <span className="font-semibold">A</span>
             </div>
-          )}
-        </div>
-
-        <ThemeToggle size="md" showLabel={false} />
-
-        {/* Mobile header actions */}
-        <div className="flex lg:hidden items-center space-x-2 sm:space-x-3">
-          {/* Notification button for mobile */}
-          <div className="relative">
-            <button
-              className={cn(
-                "p-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                isDark
-                  ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-accent focus:ring-offset-dark-secondary"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              )}
-              aria-label="Notifications"
-            >
-              <svg
-                className="w-5 h-5 sm:w-6 sm:h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-            </button>
-            {/* Notification badge */}
-            <span
-              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 font-medium transition-colors duration-300"
-              style={{
-                contain: "layout",
-                borderColor: isDark ? "#1e293b" : "#ffffff",
-              }}
-            >
-              3
-            </span>
-          </div>
-
-          {/* User avatar for mobile */}
-          <div
-            className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 transition-colors duration-300"
-            style={{ contain: "layout" }}
-          >
-            A
           </div>
         </div>
       </div>

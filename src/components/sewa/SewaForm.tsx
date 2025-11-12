@@ -15,7 +15,7 @@ import {
 } from "../../utils/date";
 import { useTheme } from "../../hooks/useTheme";
 
-// ✅ Schema tetap sama
+// Schema validation
 const sewaSchema = z.object({
   motor_id: z.number().min(1, "Pilih motor"),
   penyewa_id: z.number().min(1, "Pilih penyewa"),
@@ -39,26 +39,10 @@ type SewaFormData = z.infer<typeof sewaSchema>;
 
 interface SewaFormProps {
   sewa?: Sewa;
-  motors: Motor[];
-  penyewas: Penyewa[];
+  motors: any[];
+  penyewas: any[];
   onSubmit: (data: CreateSewaData | UpdateSewaData) => void;
   isLoading?: boolean;
-}
-
-interface Motor {
-  id: number;
-  plat_nomor: string;
-  merk: string;
-  model: string;
-  harga: number;
-  status: string;
-}
-
-interface Penyewa {
-  id: number;
-  nama: string;
-  no_whatsapp: string;
-  is_blacklisted: boolean;
 }
 
 const SewaForm: React.FC<SewaFormProps> = ({
@@ -69,15 +53,17 @@ const SewaForm: React.FC<SewaFormProps> = ({
   isLoading = false,
 }) => {
   const { isDark } = useTheme();
+
   const {
     register,
     handleSubmit,
     watch,
     control,
     setValue,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<SewaFormData>({
     resolver: zodResolver(sewaSchema),
+    mode: "onChange",
     defaultValues: sewa
       ? {
           motor_id: sewa.motor_id,
@@ -87,7 +73,7 @@ const SewaForm: React.FC<SewaFormProps> = ({
           jaminan: Array.isArray(sewa.jaminan)
             ? sewa.jaminan
             : typeof sewa.jaminan === "string"
-            ? sewa.jaminan.split(",").map((j) => j.trim())
+            ? sewa.jaminan.split(",").map((j: string) => j.trim())
             : [],
           pembayaran: (sewa.pembayaran as "Cash" | "Transfer") || "Cash",
           additional_costs: Array.isArray(sewa.additional_costs)
@@ -96,6 +82,8 @@ const SewaForm: React.FC<SewaFormProps> = ({
           catatan_tambahan: sewa.catatan_tambahan || "",
         }
       : {
+          motor_id: 0,
+          penyewa_id: 0,
           jaminan: [],
           additional_costs: [],
           pembayaran: "Cash",
@@ -103,105 +91,109 @@ const SewaForm: React.FC<SewaFormProps> = ({
         },
   });
 
+  // Watch form values
   const watchTglSewa = watch("tgl_sewa");
   const watchTglKembali = watch("tgl_kembali");
-  const watchIdMotor = watch("motor_id");
+  const watchMotorId = watch("motor_id");
   const watchAdditionalCosts = watch("additional_costs") || [];
   const watchCatatanTambahan = watch("catatan_tambahan");
 
   const handleFormSubmit = (data: SewaFormData) => {
-    console.log("📝 Data dari form (WIB):", data);
+    console.log("📝 Form data (WIB):", data);
 
-    if (sewa) {
-      // ✅ UPDATE MODE - KONVERSI WIB ke UTC sebelum kirim ke backend
-      const updateData: UpdateSewaData = {
-        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali),
-        jaminan: data.jaminan,
-        pembayaran: data.pembayaran,
-        additional_costs: data.additional_costs,
-        catatan_tambahan: data.catatan_tambahan,
-      };
+    try {
+      if (sewa) {
+        // Update mode
+        const updateData: UpdateSewaData = {
+          tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali),
+          jaminan: data.jaminan,
+          pembayaran: data.pembayaran,
+          additional_costs: data.additional_costs,
+          catatan_tambahan: data.catatan_tambahan,
+        };
 
-      console.log("🔄 Data update yang dikirim (UTC):", updateData);
-      onSubmit(updateData);
-    } else {
-      // ✅ CREATE MODE - KONVERSI WIB ke UTC sebelum kirim ke backend
-      const createData: CreateSewaData = {
-        motor_id: data.motor_id,
-        penyewa_id: data.penyewa_id,
-        tgl_sewa: formatWIBToUTCForBackend(data.tgl_sewa),
-        tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali),
-        jaminan: data.jaminan,
-        pembayaran: data.pembayaran,
-        additional_costs: data.additional_costs,
-        catatan_tambahan: data.catatan_tambahan,
-        satuan_durasi: "hari",
-      };
+        console.log("🔄 Update data (UTC):", updateData);
+        onSubmit(updateData);
+      } else {
+        // Create mode
+        const createData: CreateSewaData = {
+          motor_id: data.motor_id,
+          penyewa_id: data.penyewa_id,
+          tgl_sewa: formatWIBToUTCForBackend(data.tgl_sewa),
+          tgl_kembali: formatWIBToUTCForBackend(data.tgl_kembali),
+          jaminan: data.jaminan,
+          pembayaran: data.pembayaran,
+          additional_costs: data.additional_costs,
+          catatan_tambahan: data.catatan_tambahan,
+          satuan_durasi: "hari",
+        };
 
-      console.log("🆕 Data create yang dikirim (UTC):", createData);
-      onSubmit(createData);
+        console.log("🆕 Create data (UTC):", createData);
+        onSubmit(createData);
+      }
+    } catch (error) {
+      console.error("❌ Error processing form data:", error);
     }
   };
 
   const getMinDateTime = () => {
     const now = new Date();
-    const nowWIB = new Date(now.getTime() + 7 * 60 * 60 * 1000);
-    return nowWIB.toISOString().slice(0, 16);
+    return now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
   };
 
   const getMinReturnDateTime = () => {
     if (!watchTglSewa) return getMinDateTime();
 
-    const minDate = new Date(watchTglSewa);
-    minDate.setHours(minDate.getHours() + 1);
-    return minDate.toISOString().slice(0, 16);
+    try {
+      const minDate = new Date(watchTglSewa);
+      minDate.setHours(minDate.getHours() + 1);
+      return minDate.toISOString().slice(0, 16);
+    } catch (error) {
+      return getMinDateTime();
+    }
   };
 
-  const selectedMotor = motors.find((m) => m.id === watchIdMotor);
+  const selectedMotor = motors.find((m: any) => m.id === watchMotorId);
 
+  // Debug effect
   useEffect(() => {
     if (sewa) {
-      console.log("🕐 Tanggal sewa dari backend:", sewa.tgl_sewa);
-      console.log(
-        "🕐 Tanggal sewa setelah konversi WIB:",
-        formatDateTimeForInputNoTZ(sewa.tgl_sewa as string)
-      );
+      console.log("🔍 Sewa data loaded:", {
+        original: sewa.tgl_sewa,
+        converted: formatDateTimeForInputNoTZ(sewa.tgl_sewa as string),
+      });
     }
-  }, [sewa, setValue]);
+  }, [sewa]);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-      <BasicInfoSection
-        register={register}
-        errors={errors}
-        control={control}
-        motors={motors}
-        penyewas={penyewas}
-        sewa={sewa}
-        getMinDateTime={getMinDateTime}
-        getMinReturnDateTime={getMinReturnDateTime}
-      />
-
+      {/* Basic Information Section */}
       <div
-        className={`rm-card p-4 ${
-          isDark ? "border-dark-border" : "border-gray-200"
+        className={`p-6 rounded-lg border ${
+          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
         }`}
       >
-        <h3
-          className={`font-semibold mb-3 ${
-            isDark ? "text-dark-primary" : "text-gray-800"
+        <h2
+          className={`text-xl font-bold mb-4 ${
+            isDark ? "text-white" : "text-gray-900"
           }`}
         >
-          Catatan Tambahan
-        </h3>
-        <SewaNotes
-          sewaId={sewa?.id || 0}
-          currentNote={watchCatatanTambahan}
-          onNoteUpdated={(note) => setValue("catatan_tambahan", note)}
-          isCreateMode={!sewa}
+          {sewa ? "Edit Sewa" : "Tambah Sewa Baru"}
+        </h2>
+
+        <BasicInfoSection
+          register={register}
+          errors={errors}
+          control={control}
+          motors={motors}
+          penyewas={penyewas}
+          sewa={sewa}
+          getMinDateTime={getMinDateTime}
+          getMinReturnDateTime={getMinReturnDateTime}
         />
       </div>
 
+      {/* Additional Costs Section */}
       <AdditionalCostsSection
         additionalCosts={watchAdditionalCosts}
         onAddCost={() => {
@@ -228,7 +220,29 @@ const SewaForm: React.FC<SewaFormProps> = ({
         }}
       />
 
-      {watchTglSewa && watchTglKembali && watchIdMotor && (
+      {/* Notes Section */}
+      <div
+        className={`p-6 rounded-lg border ${
+          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+        }`}
+      >
+        <h3
+          className={`font-semibold mb-3 ${
+            isDark ? "text-white" : "text-gray-800"
+          }`}
+        >
+          Catatan Tambahan
+        </h3>
+        <SewaNotes
+          sewaId={sewa?.id || 0}
+          currentNote={watchCatatanTambahan}
+          onNoteUpdated={(note) => setValue("catatan_tambahan", note)}
+          isCreateMode={!sewa}
+        />
+      </div>
+
+      {/* Rental Summary */}
+      {watchTglSewa && watchTglKembali && watchMotorId && (
         <RentalSummary
           tglSewa={watchTglSewa}
           tglKembali={watchTglKembali}
@@ -238,11 +252,15 @@ const SewaForm: React.FC<SewaFormProps> = ({
         />
       )}
 
-      <FormActions isEdit={!!sewa} isLoading={isLoading} />
+      {/* Edit Mode Info */}
+      {sewa && <EditModeInfo />}
 
-      {sewa && (
-        <EditModeInfo additionalInfo="Waktu ditampilkan dalam WIB (UTC+7)" />
-      )}
+      {/* Form Actions */}
+      <FormActions
+        isEdit={!!sewa}
+        isLoading={isLoading}
+        submitLabel={sewa ? "Update Sewa" : "Buat Sewa"}
+      />
     </form>
   );
 };

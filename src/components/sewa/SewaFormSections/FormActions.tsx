@@ -7,6 +7,8 @@ interface FormActionsProps {
   isLoading: boolean;
   onCancel?: () => void;
   showCancel?: boolean;
+  submitLabel?: string;
+  cancelLabel?: string;
 }
 
 const FormActions: React.FC<FormActionsProps> = ({
@@ -14,6 +16,8 @@ const FormActions: React.FC<FormActionsProps> = ({
   isLoading,
   onCancel,
   showCancel = true,
+  submitLabel,
+  cancelLabel = "Batal",
 }) => {
   const { isDark } = useTheme();
 
@@ -21,22 +25,34 @@ const FormActions: React.FC<FormActionsProps> = ({
     if (onCancel) {
       onCancel();
     } else {
-      window.history.back();
+      // Fallback ke history back dengan konfirmasi jika ada perubahan
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "/sewas"; // Fallback ke list sewa
+      }
     }
+  };
+
+  const getSubmitLabel = () => {
+    if (submitLabel) return submitLabel;
+    return isEdit ? "Update Sewa" : "Buat Sewa";
   };
 
   return (
     <div
-      className={`flex gap-4 pt-6 border-t ${
+      className={`flex flex-col sm:flex-row gap-3 pt-6 border-t ${
         isDark ? "border-dark-border" : "border-gray-200"
       }`}
     >
       <Button
         type="submit"
         isLoading={isLoading}
-        className="flex-1 sm:flex-none"
+        loadingText={isEdit ? "Mengupdate..." : "Membuat..."}
+        className="flex-1 sm:flex-none order-2 sm:order-1"
+        size="lg"
       >
-        {isEdit ? "Update Sewa" : "Tambah Sewa"}
+        {getSubmitLabel()}
       </Button>
 
       {showCancel && (
@@ -45,9 +61,10 @@ const FormActions: React.FC<FormActionsProps> = ({
           variant="outline"
           onClick={handleCancel}
           disabled={isLoading}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none order-1 sm:order-2"
+          size="lg"
         >
-          Batal
+          {cancelLabel}
         </Button>
       )}
     </div>

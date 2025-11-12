@@ -1,4 +1,3 @@
-// src/services/dashboardService.ts
 import api from "./api";
 
 // ==== INTERFACES ====
@@ -10,6 +9,9 @@ export interface DashboardData {
   pendapatanBulanIni: number;
   sewaTerbaru: SewaTerbaru[];
   motorPerluService: MotorPerluService[];
+  totalAdmins: number;
+  totalUsers: number;
+  statistikHarian: SewaHarianResponse; // ✅ DITAMBAHKAN
 }
 
 export interface SewaTerbaru {
@@ -39,6 +41,20 @@ export interface MotorPerluService {
   status: string;
 }
 
+// ✅ INTERFACE BARU: Statistik Sewa Harian
+export interface SewaHarianStats {
+  tanggal: string;
+  jumlah_sewa: number;
+  total_pendapatan: number;
+}
+
+export interface SewaHarianResponse {
+  hari_ini: number;
+  kemarin: number;
+  persentase_perubahan: number;
+  tren_harian: SewaHarianStats[];
+}
+
 // ==== RESPONSE API GENERIC ====
 interface ApiResponse<T> {
   success: boolean;
@@ -50,7 +66,6 @@ interface ApiResponse<T> {
 export const dashboardService = {
   async getDashboardData(): Promise<DashboardData> {
     try {
-      // Pastikan endpoint sesuai dengan route di backend NestJS
       const response = await api.get<ApiResponse<DashboardData>>("/dashboard");
 
       if (response.data?.success && response.data?.data) {
@@ -58,7 +73,7 @@ export const dashboardService = {
       }
 
       throw new Error(
-        response.data?.message || "Dashboard data kosong atau tidak valid",
+        response.data?.message || "Dashboard data kosong atau tidak valid"
       );
     } catch (error: unknown) {
       console.error("Error fetching dashboard data:", error);
@@ -68,6 +83,58 @@ export const dashboardService = {
       }
 
       throw new Error("Gagal mengambil data dashboard");
+    }
+  },
+
+  // ✅ SERVICE BARU: Statistik Sewa Harian
+  async getSewaHarianStats(
+    period: "7days" | "30days" = "7days"
+  ): Promise<SewaHarianResponse> {
+    try {
+      const response = await api.get<ApiResponse<SewaHarianResponse>>(
+        `/dashboard/sewa-harian?period=${period}`
+      );
+
+      if (response.data?.success && response.data?.data) {
+        return response.data.data;
+      }
+
+      throw new Error(
+        response.data?.message || "Data statistik harian tidak valid"
+      );
+    } catch (error: unknown) {
+      console.error("Error fetching sewa harian stats:", error);
+
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+
+      throw new Error("Gagal mengambil data statistik harian");
+    }
+  },
+
+  // ✅ SERVICE BARU: Statistik Pendapatan Harian
+  async getPendapatanHarianStats(period: "7days" | "30days" = "7days") {
+    try {
+      const response = await api.get<ApiResponse<any>>(
+        `/dashboard/pendapatan-harian?period=${period}`
+      );
+
+      if (response.data?.success && response.data?.data) {
+        return response.data.data;
+      }
+
+      throw new Error(
+        response.data?.message || "Data pendapatan harian tidak valid"
+      );
+    } catch (error: unknown) {
+      console.error("Error fetching pendapatan harian stats:", error);
+
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+
+      throw new Error("Gagal mengambil data pendapatan harian");
     }
   },
 };

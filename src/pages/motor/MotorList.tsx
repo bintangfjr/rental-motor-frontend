@@ -18,8 +18,7 @@ import {
   useMotorWebSocket,
   MotorStatusUpdate,
   MotorServiceUpdate,
-} from "../../hooks/useMotorWebSocket"; // <-- Tambahkan ini
-import { useWebSocketContext } from "../../contexts/WebSocketContext"; // <-- Tambahkan ini
+} from "../../hooks/useMotorWebSocket";
 
 // Settings Icon Component
 const SettingsIcon: React.FC<{ className?: string }> = ({ className = "" }) => (
@@ -91,7 +90,7 @@ const ActionMenu: React.FC<{
       style={{ top: "100%", marginTop: "8px" }}
     >
       <div
-        className={`border shadow-xl p-2 min-w-[280px] ${
+        className={`border shadow-xl p-2 min-w-[140px] sm:min-w-[280px] ${
           isDark
             ? "bg-dark-card border-dark-border"
             : "bg-white border-gray-200"
@@ -102,14 +101,14 @@ const ActionMenu: React.FC<{
           {/* Detail - Kiri Bawah */}
           <button
             onClick={() => onDetail(motor)}
-            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
               isDark
                 ? "text-dark-secondary hover:bg-dark-hover border-dark-border"
                 : "text-gray-700 hover:bg-gray-50 border-gray-100"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -133,14 +132,14 @@ const ActionMenu: React.FC<{
           {/* Edit - Kanan Bawah */}
           <button
             onClick={() => onEdit(motor)}
-            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
               isDark
                 ? "text-dark-secondary hover:bg-dark-hover border-dark-border"
                 : "text-gray-700 hover:bg-gray-50 border-gray-100"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -159,14 +158,14 @@ const ActionMenu: React.FC<{
           {motor.status === "tersedia" && (
             <button
               onClick={() => onService(motor)}
-              className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+              className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
                 isDark
                   ? "text-dark-secondary hover:bg-dark-hover border-dark-border"
                   : "text-gray-700 hover:bg-gray-50 border-gray-100"
               }`}
             >
               <svg
-                className="w-5 h-5 mb-1"
+                className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -191,14 +190,14 @@ const ActionMenu: React.FC<{
           {/* Hapus - Kanan Atas */}
           <button
             onClick={() => onDelete(motor)}
-            className={`flex flex-col items-center justify-center p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-200 rounded-lg border hover:scale-105 ${
               isDark
                 ? "text-red-400 hover:bg-red-900/20 border-red-900/30"
                 : "text-red-600 hover:bg-red-50 border-red-100"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -217,14 +216,14 @@ const ActionMenu: React.FC<{
         {/* Jika service tidak tersedia, tampilkan placeholder */}
         {motor.status !== "tersedia" && (
           <div
-            className={`flex flex-col items-center justify-center p-3 rounded-lg border opacity-50 ${
+            className={`flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg border opacity-50 ${
               isDark
                 ? "text-dark-muted border-dark-border"
                 : "text-gray-400 border-gray-100"
             }`}
           >
             <svg
-              className="w-5 h-5 mb-1"
+              className="w-4 h-4 sm:w-5 sm:h-5 mb-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -250,37 +249,6 @@ const ActionMenu: React.FC<{
   );
 };
 
-// Komponen Status WebSocket
-const WebSocketStatusIndicator: React.FC = () => {
-  const { isConnected, connectionStatus } = useWebSocketContext();
-
-  const getStatusInfo = () => {
-    switch (connectionStatus) {
-      case "connected":
-        return { color: "bg-green-500", text: "Real-time Active" };
-      case "disconnected":
-        return { color: "bg-gray-500", text: "Real-time Offline" };
-      case "connecting":
-        return { color: "bg-yellow-500", text: "Connecting..." };
-      case "error":
-        return { color: "bg-red-500", text: "Connection Error" };
-      default:
-        return { color: "bg-gray-500", text: "Unknown" };
-    }
-  };
-
-  const statusInfo = getStatusInfo();
-
-  return (
-    <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-opacity-10 border text-sm">
-      <div
-        className={`w-2 h-2 rounded-full ${statusInfo.color} animate-pulse`}
-      />
-      <span className="text-xs font-medium">{statusInfo.text}</span>
-    </div>
-  );
-};
-
 const MotorList: React.FC = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -301,9 +269,6 @@ const MotorList: React.FC = () => {
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [selectedMotor, setSelectedMotor] = useState<Motor | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-
-  // WebSocket Context
-  const { isConnected } = useWebSocketContext();
 
   // Load initial motors
   const loadMotors = async () => {
@@ -334,16 +299,11 @@ const MotorList: React.FC = () => {
 
   // Handle motor creation from WebSocket
   useEffect(() => {
-    if (!isConnected) return;
-
     const handleMotorCreated = (data: { motor: Motor; timestamp: string }) => {
       console.log("Motor created via WebSocket:", data.motor);
       setMotors((prev) => {
-        // Cek apakah motor sudah ada untuk menghindari duplikasi
         const exists = prev.find((m) => m.id === data.motor.id);
         if (exists) return prev;
-
-        // Tambahkan motor baru di awal list
         return [data.motor, ...prev];
       });
 
@@ -381,12 +341,10 @@ const MotorList: React.FC = () => {
       unsubscribeCreated?.();
       unsubscribeDeleted?.();
     };
-  }, [isConnected]);
+  }, []);
 
   // Handle status updates for all motors
   useEffect(() => {
-    if (!isConnected) return;
-
     const handleStatusUpdate = (data: MotorStatusUpdate) => {
       console.log("Motor status updated via WebSocket:", data);
       setMotors((prev) =>
@@ -396,14 +354,6 @@ const MotorList: React.FC = () => {
             : motor
         )
       );
-
-      // Show notification for status changes
-      if (data.oldStatus !== data.newStatus) {
-        setToast({
-          message: `Status ${data.plat_nomor} berubah dari ${data.oldStatus} menjadi ${data.newStatus}`,
-          type: "info",
-        });
-      }
     };
 
     const handleServiceUpdate = (data: MotorServiceUpdate) => {
@@ -425,12 +375,6 @@ const MotorList: React.FC = () => {
             : motor
         )
       );
-
-      // Show notification for service updates
-      setToast({
-        message: `Service ${data.plat_nomor}: ${data.serviceStatus}`,
-        type: "info",
-      });
     };
 
     const unsubscribeStatus = window.websocketService?.on(
@@ -451,7 +395,7 @@ const MotorList: React.FC = () => {
       unsubscribeService?.();
       unsubscribeStatusChanged?.();
     };
-  }, [isConnected]);
+  }, []);
 
   // ========== EVENT HANDLERS ==========
 
@@ -461,8 +405,6 @@ const MotorList: React.FC = () => {
     setActionLoading(true);
     try {
       await motorService.delete(selectedMotor.id);
-      // WebSocket akan meng-handle update real-time melalui event motor:deleted
-      // Jadi kita tidak perlu manual update state di sini
       setToast({
         message: "Motor berhasil dihapus",
         type: "success",
@@ -495,8 +437,6 @@ const MotorList: React.FC = () => {
         selectedMotor.id,
         "Perlu service rutin"
       );
-      // WebSocket akan meng-handle update real-time melalui event motor:service:update
-      // Jadi kita tidak perlu manual update state di sini
       setToast({
         message: `Motor ${selectedMotor.plat_nomor} berhasil ditandai untuk service`,
         type: "success",
@@ -600,7 +540,7 @@ const MotorList: React.FC = () => {
       sortable: true,
       render: (value, row) => (
         <div
-          className="cursor-pointer hover:text-blue-600 transition-colors"
+          className="cursor-pointer hover:text-blue-600 transition-colors text-sm sm:text-base"
           onClick={(e) => {
             e.stopPropagation();
             handleRowClick(row);
@@ -616,7 +556,7 @@ const MotorList: React.FC = () => {
       sortable: true,
       render: (value, row) => (
         <div
-          className="cursor-pointer hover:text-blue-600 transition-colors"
+          className="cursor-pointer hover:text-blue-600 transition-colors text-sm sm:text-base"
           onClick={(e) => {
             e.stopPropagation();
             handleRowClick(row);
@@ -632,7 +572,7 @@ const MotorList: React.FC = () => {
       sortable: true,
       render: (value, row) => (
         <div
-          className="cursor-pointer hover:text-blue-600 transition-colors"
+          className="cursor-pointer hover:text-blue-600 transition-colors text-sm sm:text-base"
           onClick={(e) => {
             e.stopPropagation();
             handleRowClick(row);
@@ -647,7 +587,7 @@ const MotorList: React.FC = () => {
       header: "Harga Sewa",
       render: (_, row) => (
         <div
-          className="cursor-pointer hover:text-blue-600 transition-colors"
+          className="cursor-pointer hover:text-blue-600 transition-colors text-sm sm:text-base"
           onClick={(e) => {
             e.stopPropagation();
             handleRowClick(row);
@@ -687,14 +627,14 @@ const MotorList: React.FC = () => {
               e.stopPropagation();
               setOpenMenuId(openMenuId === row.id ? null : row.id);
             }}
-            className={`p-2 transition-colors rounded-lg hover:scale-105 ${
+            className={`p-1 sm:p-2 transition-colors rounded-lg hover:scale-105 ${
               isDark
                 ? "text-dark-secondary hover:text-dark-primary hover:bg-dark-hover"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             }`}
             title="Pengaturan"
           >
-            <SettingsIcon className="w-5 h-5" />
+            <SettingsIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           <ActionMenu
@@ -715,45 +655,51 @@ const MotorList: React.FC = () => {
 
   if (error)
     return (
-      <div className="text-center py-8">
-        <p className={`${isDark ? "text-red-400" : "text-red-600"}`}>{error}</p>
-        <Button onClick={loadMotors} className="mt-4">
+      <div className="text-center py-8 px-4">
+        <p className={`${isDark ? "text-red-400" : "text-red-600"} mb-4`}>
+          {error}
+        </p>
+        <Button onClick={loadMotors} className="w-full sm:w-auto">
           Coba Lagi
         </Button>
       </div>
     );
 
   return (
-    <div className="space-y-6">
-      {/* Header dengan WebSocket Status */}
-      <div className="flex justify-between items-center">
-        <div>
+    <div className="space-y-4 p-2 sm:p-4 md:p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <h1
-            className={`text-2xl font-bold ${
+            className={`text-xl sm:text-2xl font-bold truncate ${
               isDark ? "text-dark-primary" : "text-gray-900"
             }`}
           >
             Daftar Motor
           </h1>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
+          <p
+            className={`text-sm ${
+              isDark ? "text-dark-secondary" : "text-gray-600"
+            }`}
+          >
             Total {filteredMotors.length} motor
-            {isConnected && " • Real-time updates active"}
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <WebSocketStatusIndicator />
-          <div className="flex space-x-2">
-            <Link to="/motors/service">
-              <Button variant="outline">Manajemen Service</Button>
-            </Link>
-            <Link to="/motors/create">
-              <Button>+ Tambah Motor</Button>
-            </Link>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Link to="/motors/service" className="flex-1 sm:flex-none">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+              Service
+            </Button>
+          </Link>
+          <Link to="/motors/create" className="flex-1 sm:flex-none">
+            <Button size="sm" className="w-full sm:w-auto">
+              + Tambah Motor
+            </Button>
+          </Link>
         </div>
       </div>
 
-      <Card>
+      <Card className="p-2 sm:p-4">
         {motors.length === 0 ? (
           <EmptyState
             title="Belum ada motor"
@@ -796,7 +742,11 @@ const MotorList: React.FC = () => {
         size="sm"
       >
         <ModalBody>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
+          <p
+            className={`text-sm ${
+              isDark ? "text-dark-secondary" : "text-gray-600"
+            }`}
+          >
             Apakah Anda yakin ingin menghapus motor{" "}
             <span
               className={`font-semibold ${
@@ -813,6 +763,8 @@ const MotorList: React.FC = () => {
             variant="outline"
             onClick={() => setShowDeleteModal(false)}
             disabled={actionLoading}
+            size="sm"
+            className="w-full sm:w-auto"
           >
             Batal
           </Button>
@@ -820,6 +772,8 @@ const MotorList: React.FC = () => {
             variant="danger"
             onClick={handleDelete}
             isLoading={actionLoading}
+            size="sm"
+            className="w-full sm:w-auto"
           >
             Ya, Hapus
           </Button>
@@ -834,7 +788,11 @@ const MotorList: React.FC = () => {
         size="sm"
       >
         <ModalBody>
-          <p className={`${isDark ? "text-dark-secondary" : "text-gray-600"}`}>
+          <p
+            className={`text-sm ${
+              isDark ? "text-dark-secondary" : "text-gray-600"
+            }`}
+          >
             Tandai motor{" "}
             <span
               className={`font-semibold ${
@@ -851,10 +809,17 @@ const MotorList: React.FC = () => {
             variant="outline"
             onClick={() => setShowServiceModal(false)}
             disabled={actionLoading}
+            size="sm"
+            className="w-full sm:w-auto"
           >
             Batal
           </Button>
-          <Button onClick={handleMarkForService} isLoading={actionLoading}>
+          <Button
+            onClick={handleMarkForService}
+            isLoading={actionLoading}
+            size="sm"
+            className="w-full sm:w-auto"
+          >
             Ya, Tandai Service
           </Button>
         </ModalFooter>
